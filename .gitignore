@@ -1,0 +1,14 @@
+Application/Win32/
+Application/x64/Debug/Application.Build.CppClean.log
+Application/x64/Debug/
+Engine/.vs/
+Engine/Engine.sdf
+Engine/Engine.VC.db
+Application/Application.vcxproj.user
+Application/Application.vcxproj.filters
+Application/Application.vcxproj
+Engine/Engine/x64/
+Engine/x64/Debug/
+Engine/Engine/Engine.vcxproj.user
+Engine/Engine/Engine.vcxproj.filters
+Engine/Engine/Engine.vcxproj
