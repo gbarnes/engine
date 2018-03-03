@@ -1,4 +1,5 @@
 #include "inc_helpers.h"
+#include "../Array.h"
 #include "../inc_common.h"
 
 //-----------------------------------------------------------------------------
@@ -9,16 +10,16 @@
 /// http://www.infernodevelopment.com/perfect-c-string-explode-split
 /// </summary>
 //-----------------------------------------------------------------------------
-void StringExplode(CString InString, CString InSeparator, std::vector<std::string>* InResults)
+void StringExplode(CString InString, CString InSeparator, DS::CArray<std::string>* InResults)
 {
-	int found;
+	size_t found;
 	found = InString.find_first_of(InSeparator);
 
 	while (found != std::string::npos)
 	{
 		if (found > 0)
 		{
-			InResults->push_back(InString.substr(0, found));
+			InResults->Push(InString.substr(0, found));
 		}
 
 		InString = InString.substr(found + 1);
@@ -27,6 +28,6 @@ void StringExplode(CString InString, CString InSeparator, std::vector<std::strin
 
 	if (InString.length() > 0)
 	{
-		InResults->push_back(InString);
+		InResults->Push(InString);
 	}
 }
