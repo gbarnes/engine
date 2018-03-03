@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <assert.h>
 
 typedef enum EResult
 {

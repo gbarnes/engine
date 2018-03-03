@@ -11,8 +11,8 @@ namespace DS
 	{
 	private:
 		T* Values;
-		i64 Size;
-		i64 Capacity;
+		u64 Size;
+		u64 Capacity;
 
 	public:
 		CArray() 
@@ -26,7 +26,16 @@ namespace DS
 
 		~CArray() 
 		{
-			free(this->Values);
+			Clear();
+		}
+
+		void Clear()
+		{
+			if (this->Values) 
+			{
+				free(this->Values);
+				this->Values = nullptr;
+			}
 		}
 
 		void Push(T Data) 
@@ -53,16 +62,27 @@ namespace DS
 				return Pop();
 			}
 
+			// save the value thus we can return it later on!
+			T TempValue = *(this->Values + Index);
+
 			// otherwise we will have to allocate a new block of memory and copy 
 			// the elements over from the other one!
-			T* NewMemoryBlock = (T*)malloc(sizeof(this->Values) * Capacity);
-			*(NewMemoryBlock) = *this->Values;
-			*(NewMemoryBlock + (Index)) = *(this->Values + (Index + 1));
+			T* NewMemoryBlock = (T*)malloc(sizeof(T) * Capacity);
+
+			// Now lets copy over the first half of the memory From Index 0 to Index - 1
+			memcpy(NewMemoryBlock, this->Values, sizeof(T) * (Index));
+
+			// Afterwards we need to set the pointer to the Index+1 for the old data 
+			// and calculate the remaining bytes we want to copy over to the new 
+			// position in the array.
+			memcpy((NewMemoryBlock + Index), (this->Values + (Index+1)), sizeof(T) * (Size - (Index + 1)));
+			
 			this->Size--;
 
 			// free the old memory and set the temp allocated one!
 			free(this->Values);
 			this->Values = NewMemoryBlock;
+			return TempValue;
 		}
 
 

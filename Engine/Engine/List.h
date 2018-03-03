@@ -117,7 +117,7 @@ namespace DS
 		}
 
 		// Removes the head node of the list
-		void PopFront()
+		T PopFront()
 		{
 			if (Head != nullptr)
 			{
@@ -141,9 +141,15 @@ namespace DS
 					Head = nullptr;
 				}
 
+				T TempData = TempHead->Payload;
+
 				// finally free some memory!
 				delete TempHead;
+
+				return TempData;
 			}
+
+			return T();
 		}
 
 		// Pushes a new node to the front of the list!
@@ -165,7 +171,7 @@ namespace DS
 		}
 
 		// Removes the head node of the list
-		void PopBack()
+		T PopBack()
 		{
 			if (Tail != nullptr) 
 			{
@@ -189,9 +195,15 @@ namespace DS
 					Head = nullptr;
 				}
 
+				T TempData = TempTail->Payload;
+
 				// finally free some memory!
 				delete TempTail;
+
+				return TempData;
 			}
+
+			return T();
 		}
 
 		u32 Count() const
