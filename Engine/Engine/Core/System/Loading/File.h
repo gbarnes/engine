@@ -61,7 +61,7 @@ public:
 	//-------------------------------------------------------------------------
 	// Synchronous Methods
 	//-------------------------------------------------------------------------
-	EResult CFile::Open(CString InPath, int InMode, bool InIsAsync);
+	EResult CFile::Open(std::string InPath, int InMode, bool InIsAsync);
 	void CFile::Close();
 
 	size_t CFile::Read ( void* InBuffer, size_t InLength );
@@ -84,14 +84,14 @@ public:
 	//-------------------------------------------------------------------------
     // Public Static Mehtods
     //-------------------------------------------------------------------------
-	static CString CFile::GetStringFromMode ( int InMode );
+	static std::string CFile::GetStringFromMode ( int InMode );
 
 private:
 
 	//-------------------------------------------------------------------------
     // Private Members
     //-------------------------------------------------------------------------
-	CString Path; 
+	std::string Path; 
 	int Mode;
 	bool IsAsync;
 	EFileMode FileMode;

@@ -92,7 +92,7 @@ namespace DS
 		}
 
 	public:
-		T operator[](u32 Index)
+		T& operator[](u32 Index)
 		{
 			assert(Index < this->Size);
 			return *(this->Values + Index);

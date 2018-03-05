@@ -38,6 +38,7 @@
     <ClInclude Include="inc_common.h" />
     <ClInclude Include="List.h" />
     <ClInclude Include="Map.h" />
+    <ClInclude Include="Queue.h" />
     <ClInclude Include="Renderer\RenderCmd.h" />
     <ClInclude Include="Renderer\RenderCmdBucket.h" />
   </ItemGroup>

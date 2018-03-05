@@ -46,7 +46,7 @@ EResult CJobSystem::Initialize()
 
 EResult CJobSystem::Shutdown()
 {
-	Delete(WorkerThreadQueues);
+	SafeDelete(WorkerThreadQueues);
 
 	return EResult_OK;
 }

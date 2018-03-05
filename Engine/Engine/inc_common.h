@@ -3,9 +3,7 @@
 //        Copyright 2016  Immersive Pixels. All Rights Reserved.			//
 
 #include <iostream>
-#include <map>
 #include <memory>
-#include <vector>
 #include <assert.h>
 
 typedef enum EResult
@@ -36,7 +34,6 @@ typedef short s16;
 typedef int i32;
 typedef long i64;
 
-typedef std::string CString;
 
 #define TODO(x) __pragma(message("==========> TODO: "_STR(x) " :: " __FILE__ "@"STR(__LINE__)))
 #define HAS_FLAG(x,m) (x & m)
@@ -46,7 +43,12 @@ inline void Print(std::string InMessage)
 	std::cout << InMessage.c_str();
 }
 
-template<typename T> void Delete(T*& a) {
-	delete a;
-	a = NULL;
+template<typename T> 
+void SafeDelete(T*& a) 
+{
+	if (a != nullptr) 
+	{
+		delete a;
+		a = nullptr;
+	}
 }

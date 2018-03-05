@@ -40,8 +40,8 @@ CAsyncFileOperation::~CAsyncFileOperation(void)
 		if( !this->IsFinished () )
 			this->WaitUntilFinished ();
 
-		Delete(Data);
-		Delete(Thread);
+		SafeDelete(Data);
+		SafeDelete(Thread);
 	}
 }
 
@@ -51,8 +51,8 @@ CAsyncFileOperation::~CAsyncFileOperation(void)
 //-----------------------------------------------------------------------------
 void CAsyncFileOperation::Close(void)
 {
-	Delete(Data);
-	Delete(Thread);
+	SafeDelete(Data);
+	SafeDelete(Thread);
 }
 
 //-----------------------------------------------------------------------------

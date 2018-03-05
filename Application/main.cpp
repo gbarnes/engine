@@ -19,7 +19,7 @@ int main()
 	auto It = List.Begin();
 	while (It.HasNext())
 	{
-		int i = It.Remove();
+		int& i = It.Next();
 		std::cout << i << "\n";
 	}
 
@@ -44,7 +44,6 @@ int main()
 	TestMap.Push("Test", 1);
 	TestMap.Push("Test2", 3);
 	TestMap.Push("Test4", 5);
-	TestMap.Remove("");
 	int val = TestMap["Test"];
 	int val2 = TestMap["Test4"];
 

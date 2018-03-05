@@ -11,25 +11,24 @@
 namespace DS 
 {
 	template < class T >
-	struct SListNode
-	{
-		T Payload;
-		struct SListNode<T>* Next = nullptr;
-		struct SListNode<T>* Previous = nullptr;
-		//struct CEListNode* NextXORPrevious = nullptr;
-
-		// TODO (gb): Implement XOR linked list later on once we got 
-		// the normal list up and running!
-		static struct SListNode<T>* XOR(SListNode<T>* Head, SListNode<T>* Next)
-		{
-			return ((SListNode<T>*)((unsigned int)(Head) ^ (unsigned int)(Next)));
-		}
-	};
-
-	template < class T >
 	class CList
 	{
-		
+		template < class T >
+		struct SListNode
+		{
+			T Payload;
+			struct SListNode<T>* Next = nullptr;
+			struct SListNode<T>* Previous = nullptr;
+			//struct CEListNode* NextXORPrevious = nullptr;
+
+			// TODO (gb): Implement XOR linked list later on once we got 
+			// the normal list up and running!
+			static struct SListNode<T>* XOR(SListNode<T>* Head, SListNode<T>* Next)
+			{
+				return ((SListNode<T>*)((unsigned int)(Head) ^ (unsigned int)(Next)));
+			}
+		};
+
 	public:
 		class Iterator 
 		{
@@ -50,14 +49,14 @@ namespace DS
 				return HasNext();
 			}
 
-			T Next() 
+			T& Next() 
 			{
 				SListNode<T> * CurrentTemp = this->CurrentNode;
 				this->CurrentNode = CurrentTemp->Next;
 				return CurrentTemp->Payload;
 			}
 
-			T Previous()
+			T& Previous()
 			{
 				SListNode<T> * CurrentTemp = this->CurrentNode;
 				this->CurrentNode = CurrentTemp->Previous;
@@ -97,7 +96,7 @@ namespace DS
 
 
 				this->CurrentNode = NextTemp;
-				delete CurrentTemp;
+				SafeDelete(CurrentTemp);
 				return TempPayload;
 			}
 
@@ -183,7 +182,7 @@ namespace DS
 				T TempData = TempHead->Payload;
 
 				// finally free some memory!
-				delete TempHead;
+				SafeDelete(TempHead);
 
 				return TempData;
 			}
@@ -237,7 +236,7 @@ namespace DS
 				T TempData = TempTail->Payload;
 
 				// finally free some memory!
-				delete TempTail;
+				SafeDelete(TempTail);
 
 				return TempData;
 			}

@@ -32,7 +32,7 @@ CFile::CFile()
 CFile::~CFile( void )
 {
 	Close();
-	Delete(this->CriticalSection);
+	SafeDelete(this->CriticalSection);
 }
 
 
@@ -43,7 +43,7 @@ CFile::~CFile( void )
 //-----------------------------------------------------------------------------
 // Opens a given file for reading. Async mode is still in progress!
 //-----------------------------------------------------------------------------
-EResult CFile::Open( CString InPath, int InMode, bool InIsAsync )
+EResult CFile::Open( std::string InPath, int InMode, bool InIsAsync )
 {
 	this->IsAsync = InIsAsync;
 
@@ -53,7 +53,7 @@ EResult CFile::Open( CString InPath, int InMode, bool InIsAsync )
 		this->CriticalSection = new CCriticalSection();
 	}
 
-	CString stringMode = CFile::GetStringFromMode(InMode);
+	std::string stringMode = CFile::GetStringFromMode(InMode);
 	
 	errno_t error = fopen_s(&File, InPath.c_str(), stringMode.c_str());
 	if (error)
@@ -240,9 +240,9 @@ void CFile::WriteBufferAsync(SFileThreadData InData)
 //-----------------------------------------------------------------------------
 /// Returns the correct file mode from the enum EFileMode. 
 //-----------------------------------------------------------------------------
-CString CFile::GetStringFromMode ( int InMode )
+std::string CFile::GetStringFromMode ( int InMode )
 {
-	CString Mode = "r";
+	std::string Mode = "r";
 
 	if(InMode)
 	{

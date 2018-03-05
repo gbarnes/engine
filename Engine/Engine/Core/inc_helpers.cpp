@@ -10,7 +10,7 @@
 /// http://www.infernodevelopment.com/perfect-c-string-explode-split
 /// </summary>
 //-----------------------------------------------------------------------------
-void StringExplode(CString InString, CString InSeparator, DS::CArray<std::string>* InResults)
+void StringExplode(std::string InString, std::string InSeparator, DS::CArray<std::string>* InResults)
 {
 	size_t found;
 	found = InString.find_first_of(InSeparator);
