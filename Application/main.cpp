@@ -14,15 +14,16 @@ int main()
 	List.PopBack();
 	List.PushBack(3);
 	List.PopFront();
+	List.Remove(0);
 
 	auto It = List.Begin();
 	while (It.HasNext())
 	{
-		int i = It.Next();
+		int i = It.Remove();
 		std::cout << i << "\n";
 	}
 
-	List.Clear();
+	//List.Clear();
 
 	CArray<int> Stuff;
 	Stuff.Push(1); // 0
@@ -43,7 +44,7 @@ int main()
 	TestMap.Push("Test", 1);
 	TestMap.Push("Test2", 3);
 	TestMap.Push("Test4", 5);
-
+	TestMap.Remove("");
 	int val = TestMap["Test"];
 	int val2 = TestMap["Test4"];
 

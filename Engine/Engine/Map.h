@@ -70,9 +70,28 @@ namespace DS
 			Bucket->PushBack(new CKeyValuePair<K, V>(Key, Value));
 		}
 
-		void Remove(K Key)
+		V Remove(K Key)
 		{
+			Hash KeyHashed;
+			i64 Index = KeyHashed(Key) % MAP_TABLE_SIZE;
+			DS::CList<CKeyValuePair<K, V>*>* Bucket = &this->Nodes[Index];
+			if (Bucket->Count() > 0)
+			{
+				DS::CList<CKeyValuePair<K, V>*>::Iterator It = Bucket->Begin();
+				while (It.HasNext())
+				{
+					CKeyValuePair<K, V>* ValuePair = It.Next();
+					if (ValuePair->Key() == Key)
+					{
+						V TempValue = ValuePair->Value();
+						It.Remove();
+						delete ValuePair;
+						return TempValue;
+					}
+				}
+			}
 
+			return V();
 		}
 
 		void Clear()

@@ -11,18 +11,18 @@
 namespace DS 
 {
 	template < class T >
-	struct CListNode
+	struct SListNode
 	{
 		T Payload;
-		struct CListNode<T>* Next = nullptr;
-		struct CListNode<T>* Previous = nullptr;
+		struct SListNode<T>* Next = nullptr;
+		struct SListNode<T>* Previous = nullptr;
 		//struct CEListNode* NextXORPrevious = nullptr;
 
 		// TODO (gb): Implement XOR linked list later on once we got 
 		// the normal list up and running!
-		static struct CListNode<T>* XOR(CListNode<T>* Head, CListNode<T>* Next)
+		static struct SListNode<T>* XOR(SListNode<T>* Head, SListNode<T>* Next)
 		{
-			return ((CListNode<T>*)((unsigned int)(Head) ^ (unsigned int)(Next)));
+			return ((SListNode<T>*)((unsigned int)(Head) ^ (unsigned int)(Next)));
 		}
 	};
 
@@ -36,7 +36,8 @@ namespace DS
 			friend class CList;
 
 		protected:
-			CListNode<T> * CurrentNode = nullptr;
+			SListNode<T> * CurrentNode = nullptr;
+			CList<T>* List;
 
 		public:
 			bool HasNext() const
@@ -51,28 +52,66 @@ namespace DS
 
 			T Next() 
 			{
-				CListNode<T> * CurrentTemp = this->CurrentNode;
+				SListNode<T> * CurrentTemp = this->CurrentNode;
 				this->CurrentNode = CurrentTemp->Next;
 				return CurrentTemp->Payload;
 			}
 
 			T Previous()
 			{
-				CListNode<T> * CurrentTemp = this->CurrentNode;
+				SListNode<T> * CurrentTemp = this->CurrentNode;
 				this->CurrentNode = CurrentTemp->Previous;
 				return CurrentTemp->Payload;
 			}
 
+			T Remove()
+			{
+				if (CurrentNode == nullptr)
+					return T();
+
+				T TempPayload = CurrentNode->Payload;
+				SListNode<T> * CurrentTemp = this->CurrentNode;
+
+				SListNode<T> * PreviousTemp = CurrentTemp->Previous;
+				SListNode<T> * NextTemp = CurrentTemp->Next;
+
+				// We need to take care of connecting 
+				// the next node with the previous of the 
+				// current one. If the previous node is null
+				// we know that the next node has to be 
+				// the new head!
+				if (PreviousTemp != nullptr)
+					PreviousTemp->Next = NextTemp;
+				else
+					List->Head = NextTemp;
+
+				// We need to take care of connecting 
+				// the next node with the previous of the 
+				// current one. If the next node is null
+				// we know that the previous node has to be 
+				// the new tail!
+				if (NextTemp != nullptr)
+					NextTemp->Previous = PreviousTemp;
+				else
+					List->Tail = PreviousTemp;
+
+
+				this->CurrentNode = NextTemp;
+				delete CurrentTemp;
+				return TempPayload;
+			}
+
 		public:
-			Iterator operator*(CListNode<T>* Node)
+			Iterator operator*(SListNode<T>* Node)
 			{
 				this->CurrentNode = Node;
 			}
 		};
 
+		friend class Iterator;
 	protected:
-		struct CListNode<T> * Head = nullptr;
-		struct CListNode<T> * Tail = nullptr;
+		struct SListNode<T> * Head = nullptr;
+		struct SListNode<T> * Tail = nullptr;
 
 	public:
 		~CList()
@@ -83,10 +122,10 @@ namespace DS
 		// Clears the entire list and its nodes!
 		void Clear() 
 		{
-			CListNode<T>* Node = Tail;
+			SListNode<T>* Node = Tail;
 			while (Node != nullptr)
 			{
-				CListNode<T>* temp = Node;
+				SListNode<T>* temp = Node;
 				Node = Node->Previous;
 				delete temp;
 			}
@@ -99,7 +138,7 @@ namespace DS
 		// data to the front of the list.
 		void PushFront(T data)
 		{
-			CListNode<T>* NewNode = new CListNode<T>();
+			SListNode<T>* NewNode = new SListNode<T>();
 			NewNode->Payload = data;
 			
 			if (Head != nullptr) 
@@ -121,11 +160,11 @@ namespace DS
 		{
 			if (Head != nullptr)
 			{
-				CListNode<T>* TempHead = Head;
+				SListNode<T>* TempHead = Head;
 
 				// since we are clearing out the current head we need 
 				// to seed the Previous of the head's next node to null
-				CListNode<T>* TempNext = Head->Next;
+				SListNode<T>* TempNext = Head->Next;
 				if (TempNext != nullptr)
 				{
 					TempNext->Previous = nullptr;
@@ -155,7 +194,7 @@ namespace DS
 		// Pushes a new node to the front of the list!
 		void PushBack(T data)
 		{
-			CListNode<T>* NewNode = new CListNode<T>();
+			SListNode<T>* NewNode = new SListNode<T>();
 			NewNode->Payload = data;
 
 			if (Head == nullptr && Tail == nullptr)
@@ -175,11 +214,11 @@ namespace DS
 		{
 			if (Tail != nullptr) 
 			{
-				CListNode<T>* TempTail = Tail;
+				SListNode<T>* TempTail = Tail;
 
 				// since we are clearing out the current tail we need 
 				// to seed the Previous of the tails's previous node to null
-				CListNode<T>* TempPrevious = Tail->Previous;
+				SListNode<T>* TempPrevious = Tail->Previous;
 				if (TempPrevious != nullptr)
 				{
 					TempPrevious->Next = nullptr;
@@ -206,10 +245,31 @@ namespace DS
 			return T();
 		}
 
+		T Remove(u32 Index)
+		{
+			if (Index >= this->Count())
+				return T();
+
+			Iterator It = this->Begin();
+			u32 Counter = 0;
+			while (It.HasNext())
+			{
+				if (Index == Counter)
+				{
+					return It.Remove();
+				}
+
+				It.Next();
+				Counter++;
+			}
+
+			return T();
+		}
+
 		u32 Count() const
 		{
 			u32 nodesInList = 0;
-			CListNode<T>* Next = Head;
+			SListNode<T>* Next = Head;
 
 			while (Next != nullptr)
 			{
@@ -220,18 +280,20 @@ namespace DS
 			return nodesInList;
 		}
 
-		Iterator Begin() const 
+		Iterator Begin() 
 		{
-			Iterator it;
-			it.CurrentNode = this->Head;
-			return it;
+			Iterator It;
+			It.List = this;
+			It.CurrentNode = this->Head;
+			return It;
 		}
 
-		Iterator End() const
+		Iterator End()
 		{
-			Iterator it;
-			it.CurrentNode = this->Tail;
-			return it;
+			Iterator It;
+			It.List = this;
+			It.CurrentNode = this->Tail;
+			return It;
 		}
 	};
 }
