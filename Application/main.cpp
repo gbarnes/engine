@@ -2,6 +2,7 @@
 #include "List.h"
 #include "Array.h"
 #include "Map.h"
+#include "Queue.h"
 
 using namespace DS;
 
@@ -49,7 +50,15 @@ int main()
 
 	TestMap.Clear();
 
+	CQueue<int> QueueTest;
+	QueueTest.Push(1);
+	QueueTest.Push(2);
+	QueueTest.Push(3);
+
+	int i = QueueTest.Pop();
+
+
 	_CrtDumpMemoryLeaks();
 	system("pause");
-
+	return 0;
 }
