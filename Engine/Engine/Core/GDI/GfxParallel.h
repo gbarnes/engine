@@ -26,5 +26,5 @@ namespace GfxParallel
 	void FreeResources();
 	CGfxQueue* ObtainQueue();
 
-	//static void AsyncCompute(CGfxDevice* InDevice, int InThreadIndex);
+	static void AsyncCompute(CGfxDevice* InDevice, int InThreadIndex);
 };

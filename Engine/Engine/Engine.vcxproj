@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Array.h" />
+    <ClInclude Include="Core\GDI\d3dx12.h" />
     <ClInclude Include="Core\GDI\GfxDevice.h" />
     <ClInclude Include="Core\GDI\GfxParallel.h" />
     <ClInclude Include="Core\GDI\GfxBackend.h" />

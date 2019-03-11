@@ -11,26 +11,11 @@
 
 SCmdListHandle CmdListHandles[GfxParallel::ThreadCount];
 CGfxFence* Fences[GfxParallel::ThreadCount];
-CGfxQueue* CmdQueue = nullptr;
+ComPtr<CGfxQueue> CmdQueue;
 
 EResult GfxParallel::AllocateResources(CGfxDevice* GfxDevice)
 {
-	// Initialize the description of the command queue.
-	CGfxQueueDesc CommandQueueDesc;
-	ZeroMemory(&CommandQueueDesc, sizeof(CommandQueueDesc));
-
-	// Set up the description of the command queue.
-	CommandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-	CommandQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-	CommandQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-	CommandQueueDesc.NodeMask = 0;
-
-	// Now create the command queue
-	if (GfxBackend::CreateQueue(CommandQueueDesc, *GfxDevice, &CmdQueue) == EResult_ERROR)
-	{
-		return EResult_ERROR;
-	}
-
+	/*CmdQueue = GfxDevice->CreateQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
 	for (int i = 0; i < GfxParallel::ThreadCount; i++)
 	{
@@ -46,7 +31,7 @@ EResult GfxParallel::AllocateResources(CGfxDevice* GfxDevice)
 
 		// Obtain the list and close it so we can use it later!
 		List->Close();
-	}
+	}*/
 
 	return EResult_OK;
 }
@@ -65,14 +50,14 @@ void GfxParallel::FreeResources()
 	}
 
 
-	if (CmdQueue)
+/*	if (CmdQueue)
 	{
 		CmdQueue->Release();
 		CmdQueue = nullptr;
-	}
+	}*/
 }
 
 CGfxQueue* GfxParallel::ObtainQueue()
 {
-	return CmdQueue;
+	return CmdQueue.Get();
 }

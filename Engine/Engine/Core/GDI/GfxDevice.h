@@ -10,6 +10,7 @@
 #include <wrl/client.h>
 #include "inc_gfx.h"
 
+const u8 g_NumFrames = 3;
 
 //-----------------------------------------------------------------------------
 // Main Class Declarations
@@ -32,49 +33,57 @@ public:
 	EResult CGfxDevice::Initialize(int InWidth, int InHeight, HWND InHWnd, bool InUseVSync = false, bool InIsFullscreen = false);
 	void CGfxDevice::Present();
 	void CGfxDevice::Shutdown();
-	CGfxResource* CGfxDevice::GetCurrentBackbuffer();
-	void WaitForPreviousFrame();
 
-	ID3D12PipelineState* GetPipelineState() 
-	{
-		return this->PipelineState;
+	const u32 CGfxDevice::GetCurrentBufferIndex() const {
+		return BackBufferIndex;
 	}
 
-	ID3D12DescriptorHeap* CGfxDevice::GetBackbufferHeap()
-	{
+	ComPtr<CGfxQueue> CGfxDevice::GetBackbufferQueue() const {
+		return this->BackbufferQueue;
+	}
+
+	ComPtr<CGfxResource> CGfxDevice::GetBackbuffer() const {
+		return this->BackBufferRenderTarget[BackBufferIndex];
+	}
+
+	ComPtr<CGfxHeapDesciptor> CGfxDevice::GetRenderTargetViewHeap() const {
 		return this->RenderTargetViewHeap;
 	}
 
-	unsigned int CGfxDevice::GetBufferIndex()
-	{
-		return this->BufferIndex;
+	u32 CGfxDevice::GetRTVDescriptorSize() const {
+		return this->RTVDescriptorSize;
 	}
 
-	//-------------------------------------------------------------------------
-	// Operator
-	//-------------------------------------------------------------------------
-	operator ID3D12Device*() {
-		return this->Device;
-	}
+	ComPtr<CGfxQueue> CGfxDevice::CreateQueue(D3D12_COMMAND_LIST_TYPE InType);
+	ComPtr<CGfxHeapDesciptor> CGfxDevice::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InNumDescriptors);
+	ComPtr<CGfxCmdAllocator> CGfxDevice::CreateCmdAllocator(D3D12_COMMAND_LIST_TYPE InType);
+	ComPtr<CGfxCmdList> CGfxDevice::CreateCmdList(ComPtr<CGfxCmdAllocator> InAllocator, D3D12_COMMAND_LIST_TYPE InType);
+	ComPtr<CGfxFence> CGfxDevice::CreateFence();
+
+
 
 private:
-	ID3D12Device* Device;
-	IDXGISwapChain3* SwapChain;
-	ID3D12PipelineState* PipelineState;
-	ID3D12Fence* Fence;
-	ID3D12DescriptorHeap* RenderTargetViewHeap;
-	ID3D12Resource* BackBufferRenderTarget[2];
-	char VideoCardDescription[128];
-	HANDLE FenceEvent;
-	unsigned long long FenceValue;
+	ComPtr<ID3D12Device> Device;
+	ComPtr<IDXGISwapChain3> SwapChain;
+	ComPtr<CGfxHeapDesciptor> RenderTargetViewHeap;
+	ComPtr<CGfxResource> BackBufferRenderTarget[g_NumFrames];
+	ComPtr<CGfxQueue> BackbufferQueue;
+	ComPtr<CGfxFence> BackbufferFence;
+
+	u32 RTVDescriptorSize;
 	bool bUseVSync;
 	bool bIsFullscreen;
-	unsigned int BufferIndex;
+	bool bIsTearingSupported;
+	u32 BackBufferIndex;
 
 	//-------------------------------------------------------------------------
 	// Private Members
 	//-------------------------------------------------------------------------
-	EResult CGfxDevice::CreateSwapChain(int InWidth, int InHeight, HWND InHWnd, bool InIsFullscreen, unsigned int* InNumerator, unsigned int* InDenominator, IDXGIFactory4* InFactory);
-	EResult CGfxDevice::CreateBackbufferRT();
-	EResult CGfxDevice::DetermineAdapterInfo(IDXGIFactory4* InFactory, int InWidth, int InHeight, unsigned int* InNumerator, unsigned int* InDenominator);
+	void CGfxDevice::EnableDebugLayer();
+	bool CGfxDevice::CheckForTearingSupport();
+	void CGfxDevice::UpdateRenderTargetViews();
+
+	ComPtr<ID3D12Device> CGfxDevice::CreateDevice(ComPtr<IDXGIAdapter3> InAdapter);
+	ComPtr<IDXGIAdapter3> CGfxDevice::GetAdapter(bool InUseWrap);
+	ComPtr<IDXGISwapChain3> CGfxDevice::CreateSwapChain(HWND InHwnd, ComPtr<CGfxQueue> InQueue, u32 InWidth, u32 InHeight, u32 InBufferCount);
 };

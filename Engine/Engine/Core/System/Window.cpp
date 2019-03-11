@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <windowsx.h>
 
+
 ///////////////////////////////////////////////////////////////////////////////
 // CWindow Member Definitions
 ///////////////////////////////////////////////////////////////////////////////
@@ -51,33 +52,32 @@ EResult CWindow::Initialize (std::wstring InTitle, int InWidth, int InHeight, bo
 	this->AlphaBits = InAlphaBits;
 
 	// create the window class with necessary settings
-	WNDCLASSEXW wndclass = { sizeof(WNDCLASSEXW), 
-							CS_DBLCLKS, CWindow::WndProc,
-							0, 0, 
-							GetModuleHandle(0), LoadIcon(0,IDI_APPLICATION),
-							LoadCursor(0,IDC_ARROW), (HBRUSH) GetStockObject ( BLACK_BRUSH ),
-							0, this->ClassName.c_str(),
+	WNDCLASSEXW wndclass = { 
+							sizeof(WNDCLASSEXW), 
+							CS_DBLCLKS, 
+							CWindow::WndProc,
+							0, 
+							0, 
+							GetModuleHandle(0), 
+							LoadIcon(0,IDI_APPLICATION),
+							LoadCursor(0,IDC_ARROW), 
+							(HBRUSH) GetStockObject ( BLACK_BRUSH ),
+							0, 
+							this->ClassName.c_str(),
 							LoadIcon(0,IDI_APPLICATION) 
 						  };
-
 	this->WndClassEx = wndclass;
 
 	// if we fail to successfully initialize the window ex class
 	// please return an according error result.
 	if( !RegisterClassExW( &this->WndClassEx ) ) 
 	{
-		//SKY_PRINT_CONSOLE("skyDXWin32View", "while creating the win32 window something went wrong! Couldn't register ClassEx. Aborting now...", 0x0D);
-		//SKY_FATAL_ERROR(skyLogChannel::TXT_FILE, "skyDXWin32View: while creating the win32 window something went wrong! Couldn't register ClassEx. Aborting now...");
-
 		return EResult_ERROR;
 	}
 
 	// once everything worked we can successfully say that 
 	// we initialized the window!
 	IsInitialized = true;
-
-	//SKY_PRINT_CONSOLE("skyDXWin32View", "window class ex registered and created!", 0x0D);
-	//SKY_INFO(skyLogChannel::TXT_FILE, "skyDXWin32View: window class ex registered and created!");
 
 	return EResult_OK;
 }
@@ -91,25 +91,41 @@ EResult CWindow::Create (void)
 	if(!IsInitialized)
 		return EResult_ERROR;
 
-	this->HWnd = CreateWindowW ( ClassName.c_str(), Title.c_str() , WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-								CW_USEDEFAULT, CW_USEDEFAULT, Width, Height, 
+
+	int screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
+	int screenHeight = ::GetSystemMetrics(SM_CYSCREEN);
+
+	RECT windowRect = { 0, 0, static_cast<LONG>(Width), static_cast<LONG>(Height) };
+	::AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
+
+	int windowWidth = windowRect.right - windowRect.left;
+	int windowHeight = windowRect.bottom - windowRect.top;
+
+	// Center the window within the screen. Clamp to 0, 0 for the top-left corner.
+	int windowX = std::max<int>(0, (screenWidth - windowWidth) / 2);
+	int windowY = std::max<int>(0, (screenHeight - windowHeight) / 2);
+
+	this->HWnd = CreateWindowW ( ClassName.c_str(), 
+								 Title.c_str() , 
+								WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+								windowX,
+								windowY, 
+								Width, 
+								Height, 
 								NULL, NULL, Instance, NULL);
 
 	// if anything went wrong we'd like to return an 
 	// error thus we may be able to process it further
 	if( !this->HWnd ) 
 	{
-		//SKY_FATAL_ERROR(skyLogChannel::TXT_FILE, "skyDXWin32View: couldn't create the actual window.");
-		//SKY_PRINT_CONSOLE("skyDXWin32View", "couldn't create the actual window.", 0x0D);
 		return EResult_ERROR;
 	}
 
+	SetProp(HWnd, L"CWindow", (HANDLE)this);
 	ShowWindow ( this->HWnd, this->CmdShow );
 	UpdateWindow ( this->HWnd ) ;
 	IsCreated = true;
 
-	//SKY_INFO(0, "skyDXWin32View: window shown and updated.");
-	//SKY_PRINT_CONSOLE("skyDXWin32View", "window shown and updated.", 0x0D);
 
 	return EResult_OK;
 }
@@ -141,10 +157,19 @@ bool CWindow::PeekMessages (void)
 // Handles the message pumping and takes care of successfully delivering 
 // the message to the window. 
 //-----------------------------------------------------------------------------
-LRESULT CALLBACK CWindow::WndProc(HWND InHWnd, UINT InMsg, WPARAM InWParam, LPARAM InLParam)
+LRESULT CALLBACK CWindow::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch (InMsg)
+	switch (message)
 	{
+		case WM_PAINT:
+			{
+				CWindow* Window = (CWindow*)GetProp(hwnd, L"CWindow");
+				if (NULL != Window)
+				{
+					Window->OnWindowPaint();
+				}
+				break;
+			}
 		case WM_SIZE: 
 			{
 				break;
@@ -173,7 +198,7 @@ LRESULT CALLBACK CWindow::WndProc(HWND InHWnd, UINT InMsg, WPARAM InWParam, LPAR
 			}
 		default: 
 			{
-				return DefWindowProc(InHWnd, InMsg, InWParam, InLParam);
+				return DefWindowProc(hwnd, message, wParam, lParam);
 				break;
 			}
 	}

@@ -6,9 +6,11 @@
 
 using namespace DS;
 
-int main() 
+/*int main() 
 {
-	CList<int> List;
+
+	//test();
+	/*CList<int> List;
 	List.PushBack(1);
 	List.PushBack(2);
 	List.PushFront(0);
@@ -61,4 +63,4 @@ int main()
 	_CrtDumpMemoryLeaks();
 	system("pause");
 	return 0;
-}
+}*/

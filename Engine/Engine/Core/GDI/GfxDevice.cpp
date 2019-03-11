@@ -18,10 +18,6 @@ CGfxDevice::CGfxDevice()
 {
 	this->Device = nullptr;
 	this->SwapChain = nullptr;
-	this->PipelineState = nullptr;
-	this->Fence = nullptr;
-	this->BackBufferRenderTarget[0] = nullptr;
-	this->BackBufferRenderTarget[1] = nullptr;
 }
 
 CGfxDevice::~CGfxDevice(void)
@@ -35,83 +31,19 @@ CGfxDevice::~CGfxDevice(void)
 //-----------------------------------------------------------------------------
 EResult CGfxDevice::Initialize(int InWidth, int InHeight, HWND InHWnd, bool InUseVSync, bool InIsFullscreen)
 {
-	HRESULT Result;
-
-	/*********************************************************/
-	D3D_FEATURE_LEVEL FeatureLevel;
-	IDXGIFactory4* Factory;
-	unsigned int Numerator = 0, Denominator = 0;
-	/*********************************************************/
-
-	// Store the vsync setting.
-	this->bUseVSync = InUseVSync;
-	FeatureLevel = D3D_FEATURE_LEVEL_12_1;
-
-	// Start creating the DirectX Device;
-	Result = D3D12CreateDevice(NULL, FeatureLevel, __uuidof(ID3D12Device), (void**)&this->Device);
-	if (FAILED(Result))
-	{
-		MessageBox(InHWnd, L"Could not create a DirectX 12.1 device.  The default video card does not support DirectX 12.1.", L"DirectX Device Failure", MB_OK);
-		return EResult_OUT_OF_MEMORY;
-	}
-
-	// Now create the command queue
-	if (GfxParallel::AllocateResources(this) == EResult_ERROR)
-	{
-		return EResult_ERROR;
-	}
-
-	// Create a DirectX graphics interface factory.
-	Result = CreateDXGIFactory1(__uuidof(IDXGIFactory4), (void**)&Factory);
-	if (FAILED(Result))
-	{
-		return EResult_ERROR;
-	}
-
-	// Determine the adapter info (which graphic card do we use?).
-	if (DetermineAdapterInfo(Factory, InWidth, InHeight, &Numerator, &Denominator) == EResult_ERROR)
-	{
-		return EResult_ERROR;
-	}
-
-	// Initialize the swap chain 
-	if (CreateSwapChain(InWidth, InHeight, InHWnd, InIsFullscreen, &Numerator, &Denominator, Factory) == EResult_ERROR)
-	{
-		return EResult_ERROR;
-	}
-
-
-	// Release the factory now that the swap chain has been created.
-	Factory->Release();
-	Factory = 0;
+	ComPtr<IDXGIAdapter3> Adapter = GetAdapter(false);
+	this->Device = CreateDevice(Adapter);
 	
-	// creates the back buffer render targets for the swap chain
-	// this might be outsourced to specific render target classes
-	if (CreateBackbufferRT() == EResult_ERROR)
-	{
-		return EResult_ERROR;
-	}
+	this->BackbufferQueue = this->CreateQueue(D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-	// Finally get the initial index to which buffer is the current back buffer.
-	BufferIndex = SwapChain->GetCurrentBackBufferIndex();
+	this->SwapChain = CreateSwapChain(InHWnd, this->BackbufferQueue, InWidth, InHeight, g_NumFrames);
+	this->BackBufferIndex = this->SwapChain->GetCurrentBackBufferIndex();
 
-	// Create a fence for GPU synchronization.
-	Result = Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(ID3D12Fence), (void**)&Fence);
-	if (FAILED(Result))
-	{
-		return EResult_ERROR;
-	}
+	this->RenderTargetViewHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, g_NumFrames);
+	this->RTVDescriptorSize = this->Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-	// Create an event object for the fence.
-	FenceEvent = CreateEventEx(NULL, FALSE, FALSE, EVENT_ALL_ACCESS);
-	if (FenceEvent == NULL)
-	{
-		return EResult_ERROR;
-	}
+	UpdateRenderTargetViews();
 
-	// Initialize the starting fence value. 
-	FenceValue = 1;
-	
 	return EResult_OK;
 }
 
@@ -120,348 +52,275 @@ EResult CGfxDevice::Initialize(int InWidth, int InHeight, HWND InHWnd, bool InUs
 //-----------------------------------------------------------------------------
 void CGfxDevice::Shutdown()
 {
-	int Error = 0;
-
-	// Before shutting down set to windowed mode or when you release the swap chain it will throw an exception.
-	if (SwapChain)
-	{
-		SwapChain->SetFullscreenState(false, NULL);
-	}
-
-	Error = CloseHandle(FenceEvent);
-	if (Error == 0)
-	{
-	}
-
-	// Release the fence.
-	if (Fence)
-	{
-		Fence->Release();
-		Fence = 0;
-	}
-
-
-	// Release the empty pipe line state.
-	if (PipelineState)
-	{
-		PipelineState->Release();
-		PipelineState = 0;
-	}
-
-
-	// Release the back buffer render target views.
-	if (BackBufferRenderTarget[0])
-	{
-		BackBufferRenderTarget[0]->Release();
-		BackBufferRenderTarget[0] = 0;
-	}
-	if (BackBufferRenderTarget[1])
-	{
-		BackBufferRenderTarget[1]->Release();
-		BackBufferRenderTarget[1] = 0;
-	}
-
-	// Release the render target view heap.
-	if (RenderTargetViewHeap)
-	{
-		RenderTargetViewHeap->Release();
-		RenderTargetViewHeap = 0;
-	}
-
-	// Release the swap chain.
-	if (SwapChain)
-	{
-		SwapChain->Release();
-		SwapChain = 0;
-	}
-
-	//free resources
-	GfxParallel::FreeResources();
-
-	// Release the device.
-	if (Device)
-	{
-		Device->Release();
-		Device = 0;
-	}
-
 	return;
 }
 
-//-----------------------------------------------------------------------------
-// Creates a new swap chain object.
-//-----------------------------------------------------------------------------
-EResult CGfxDevice::CreateSwapChain(int InWidth, int InHeight, HWND InHWnd, bool InIsFullscreen, unsigned int* InNumerator, unsigned int* InDenominator, IDXGIFactory4* InFactory)
+//
+// Creates the basic D3D12 Device from a given adapter. In case the debug mode 
+// is enable it will log specific statements.
+//
+ComPtr<ID3D12Device> CGfxDevice::CreateDevice(ComPtr<IDXGIAdapter3> InAdapter)
 {
-	/*********************************************************/
-	HRESULT Result;
-	DXGI_SWAP_CHAIN_DESC SwapChainDesc;
-	IDXGISwapChain* LSwapChain = nullptr;
-	/*********************************************************/
+	ComPtr<ID3D12Device> device;
 
-	ZeroMemory(&SwapChainDesc, sizeof(SwapChainDesc));
+	ThrowIfFailed(D3D12CreateDevice(InAdapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&device)));
 
-	// Set the swap chain to use double buffering.
-	SwapChainDesc.BufferCount = 2;
 
-	// Set the height and width of the back buffers in the swap chain.
-	SwapChainDesc.BufferDesc.Height = InHeight;
-	SwapChainDesc.BufferDesc.Width = InWidth;
-
-	// Set a regular 32-bit surface for the back buffers.
-	SwapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-	// Set the usage of the back buffers to be render target outputs.
-	SwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-
-	// Set the swap effect to discard the previous buffer contents after swapping.
-	SwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-
-	// Set the handle for the window to render to.
-	SwapChainDesc.OutputWindow = InHWnd;
-
-	// Set to full screen or windowed mode.
-	SwapChainDesc.Windowed = !InIsFullscreen;
-
-	// Set the refresh rate of the back buffer.
-	if (bUseVSync)
+#if defined(_DEBUG)
+	
+	ComPtr<ID3D12InfoQueue> pInfoQueue;
+	if (SUCCEEDED(device.As(&pInfoQueue))) 
 	{
-		SwapChainDesc.BufferDesc.RefreshRate.Numerator = *InNumerator;
-		SwapChainDesc.BufferDesc.RefreshRate.Denominator = *InDenominator;
+		pInfoQueue->GetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION);
+		pInfoQueue->GetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR);
+		pInfoQueue->GetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING);
+
+		D3D12_MESSAGE_SEVERITY Severities[] = {
+
+			D3D12_MESSAGE_SEVERITY_INFO
+
+		};
+
+		D3D12_MESSAGE_ID DenyIds[] = {
+
+			D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,
+			D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
+			D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
+		};
+
+		D3D12_INFO_QUEUE_FILTER NewFilter = {};
+		NewFilter.DenyList.NumSeverities = _countof(Severities);
+		NewFilter.DenyList.pSeverityList = Severities;
+		NewFilter.DenyList.NumIDs = _countof(DenyIds);
+		NewFilter.DenyList.pIDList = DenyIds;
+
+		ThrowIfFailed(pInfoQueue->PushStorageFilter(&NewFilter));
+	}
+ #endif
+
+	return device;
+}
+
+//
+// Always enable the debug layer before doing anything DX12 related
+// so all possible errors generated while creating DX12 objects
+// are caught by the debug layer.
+//
+void CGfxDevice::EnableDebugLayer() 
+{
+#if defined(_DEBUG)
+		
+		ComPtr<ID3D12Debug> debugInterface;
+		ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
+		debugInterface->EnableDebugLayer();
+#endif
+}
+
+//
+// Checks whether or not tearing is supported on the target hardware.
+//
+bool CGfxDevice::CheckForTearingSupport()
+{
+	//
+	// Check why we have an older version of the Windows SDK?!
+	//
+	return false;
+}
+
+//
+// Creates / updated the render target views depending on the created descriptor handle.
+//
+void CGfxDevice::UpdateRenderTargetViews()
+{
+	auto RtvDescriptorSize = this->Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE RtvHandle(this->RenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart());
+
+	for (int i = 0; i < g_NumFrames; ++i)
+	{
+		ComPtr<CGfxResource> BackBuffer;
+		ThrowIfFailed(this->SwapChain->GetBuffer(i, IID_PPV_ARGS(&BackBuffer)));
+
+		Device->CreateRenderTargetView(BackBuffer.Get(), nullptr, RtvHandle);
+
+		this->BackBufferRenderTarget[i] = BackBuffer;
+
+		RtvHandle.Offset(RtvDescriptorSize);
+	}
+}
+
+//
+// Returns a valid adapter that can be passed when creating the d3d12device
+//
+ComPtr<IDXGIAdapter3> CGfxDevice::GetAdapter(bool useWrap)
+{
+	ComPtr<IDXGIFactory4> Factory;
+	u32 createFactoryFlags = 0;
+#if defined(_DEBUG)
+	createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+#endif
+
+	ThrowIfFailed(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&Factory)));
+
+	ComPtr<IDXGIAdapter1> Adapter1;
+	ComPtr<IDXGIAdapter3> Adapter3;
+
+	if (useWrap) 
+	{
+		ThrowIfFailed(Factory->EnumWarpAdapter(IID_PPV_ARGS(&Adapter1)));
+		ThrowIfFailed(Adapter1.As(&Adapter3));
 	}
 	else
 	{
-		SwapChainDesc.BufferDesc.RefreshRate.Numerator = 0;
-		SwapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
-	}
-
-	// Turn multisampling off.
-	SwapChainDesc.SampleDesc.Count = 1;
-	SwapChainDesc.SampleDesc.Quality = 0;
-
-	// Set the scan line ordering and scaling to unspecified.
-	SwapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	SwapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-
-	// Don't set the advanced flags.
-	SwapChainDesc.Flags = 0;
-
-	// Finally create the swap chain using the swap chain description.	
-	Result = InFactory->CreateSwapChain(GfxParallel::ObtainQueue(), &SwapChainDesc, &LSwapChain);
-	if (FAILED(Result))
-	{
-		return EResult_ERROR;
-	}
-
-	// Next upgrade the IDXGISwapChain to a IDXGISwapChain3 interface and store it in a private member variable named m_swapChain.
-	// This will allow us to use the newer functionality such as getting the current back buffer index.
-	Result = LSwapChain->QueryInterface(__uuidof(IDXGISwapChain3), (void**)&this->SwapChain);
-	if (FAILED(Result))
-	{
-		return EResult_ERROR;
-	}
-
-	// Clear pointer to original swap chain interface since we are using version 3 instead (m_swapChain).
-	LSwapChain = 0;
-
-
-	return EResult_OK;
-}
-
-//-----------------------------------------------------------------------------
-// Increses the reference count by one. Call this whenever you reference the 
-// object!
-//-----------------------------------------------------------------------------
-EResult CGfxDevice::CreateBackbufferRT()
-{
-	/*********************************************************/
-	HRESULT Result;
-	D3D12_DESCRIPTOR_HEAP_DESC RenderTargetViewHeapDesc;
-	D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetViewHandle;
-	int RenderTargetViewDescriptorSize;
-	/*********************************************************/
-
-	// Initialize the render target view heap description for the two back buffers.
-	ZeroMemory(&RenderTargetViewHeapDesc, sizeof(RenderTargetViewHeapDesc));
-
-	// Set the number of descriptors to two for our two back buffers.  Also set the heap tyupe to render target views.
-	RenderTargetViewHeapDesc.NumDescriptors = 2;
-	RenderTargetViewHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	RenderTargetViewHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-
-	// Create the render target view heap for the back buffers.
-	Result = Device->CreateDescriptorHeap(&RenderTargetViewHeapDesc, __uuidof(ID3D12DescriptorHeap), (void**)&RenderTargetViewHeap);
-	if (FAILED(Result))
-	{
-		return EResult_ERROR;
-	}
-
-	// Get a handle to the starting memory location in the render target view heap to identify where the render target views will be located for the two back buffers.
-	RenderTargetViewHandle = RenderTargetViewHeap->GetCPUDescriptorHandleForHeapStart();
-
-	// Get the size of the memory location for the render target view descriptors.
-	RenderTargetViewDescriptorSize = Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-	// Get a pointer to the first back buffer from the swap chain.
-	Result = SwapChain->GetBuffer(0, __uuidof(ID3D12Resource), (void**)&BackBufferRenderTarget[0]);
-	if (FAILED(Result))
-	{
-		return EResult_ERROR;
-	}
-
-	// Create a render target view for the first back buffer.
-	Device->CreateRenderTargetView(BackBufferRenderTarget[0], NULL, RenderTargetViewHandle);
-
-	// Increment the view handle to the next descriptor location in the render target view heap.
-	RenderTargetViewHandle.ptr += RenderTargetViewDescriptorSize;
-
-	// Get a pointer to the second back buffer from the swap chain.
-	Result = SwapChain->GetBuffer(1, __uuidof(ID3D12Resource), (void**)&BackBufferRenderTarget[1]);
-	if (FAILED(Result))
-	{
-		return EResult_ERROR;
-	}
-
-	// Create a render target view for the second back buffer.
-	Device->CreateRenderTargetView(BackBufferRenderTarget[1], NULL, RenderTargetViewHandle);
-
-	return EResult_OK;
-}
-
-//-----------------------------------------------------------------------------
-// Increses the reference count by one. Call this whenever you reference the 
-// object!
-//-----------------------------------------------------------------------------
-EResult CGfxDevice::DetermineAdapterInfo(IDXGIFactory4* InFactory, int InWidth, int InHeight, unsigned int* InNumerator, unsigned int* InDenominator)
-{
-	/*********************************************************/
-	HRESULT Result;
-	IDXGIAdapter* Adapter;
-	IDXGIOutput* AdapterOutput;
-	DXGI_MODE_DESC* DisplayModeList = nullptr;
-	DXGI_ADAPTER_DESC AdapterDesc;
-
-	int Error;
-	unsigned int NumModes = 0, i = 0, Numerator = 0, Denominator = 0;
-	size_t StringLength;
-	/*********************************************************/
-
-	// Use the factory to create an adapter for the primary graphics interface (video card).
-	Result = InFactory->EnumAdapters(0, &Adapter);
-	if (FAILED(Result))
-	{
-		return EResult_ERROR;
-	}
-
-	// Enumerate the primary adapter output (monitor).
-	Result = Adapter->EnumOutputs(0, &AdapterOutput);
-	if (FAILED(Result))
-	{
-		return EResult_ERROR;
-	}
-
-
-	// Get the number of modes that fit the DXGI_FORMAT_R8G8B8A8_UNORM display format for the adapter output (monitor).
-	Result = AdapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &NumModes, NULL);
-	if (FAILED(Result))
-	{
-		return EResult_ERROR;
-	}
-
-	DisplayModeList = new DXGI_MODE_DESC[NumModes];
-
-
-	// Get the number of modes that fit the DXGI_FORMAT_R8G8B8A8_UNORM display format for the adapter output (monitor).
-	Result = AdapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &NumModes, DisplayModeList);
-	if (FAILED(Result))
-	{
-		return EResult_ERROR;
-	}
-
-	// Now go through all the display modes and find the one that matches the screen height and width.
-	// When a match is found store the numerator and denominator of the refresh rate for that monitor.
-	for (i = 0; i< NumModes; i++)
-	{
-		if (DisplayModeList[i].Height == (unsigned int)InHeight)
+		u64 maxDedicatedVideoMemory = 0;
+		for (u32 i = 0; Factory->EnumAdapters1(i, &Adapter1) != DXGI_ERROR_NOT_FOUND; ++i)
 		{
-			if (DisplayModeList[i].Width == (unsigned int)InWidth)
+			DXGI_ADAPTER_DESC1 AdapterDesc1;
+			Adapter1->GetDesc1(&AdapterDesc1);
+
+			// Check to see if the adapter can create a D3D12 device without actually 
+			// creating it. The adapter with the largest dedicated video memory
+			// is favored
+			if ((AdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
+				SUCCEEDED(D3D12CreateDevice(Adapter1.Get(), D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr)) &&
+				AdapterDesc1.DedicatedVideoMemory > maxDedicatedVideoMemory) 
 			{
-				Numerator = DisplayModeList[i].RefreshRate.Numerator;
-				Denominator = DisplayModeList[i].RefreshRate.Denominator;
+				maxDedicatedVideoMemory = AdapterDesc1.DedicatedVideoMemory;
+				ThrowIfFailed(Adapter1.As(&Adapter3));
 			}
 		}
 	}
 
-	(*InNumerator) = Numerator;
-	(*InDenominator) = Denominator;
-
-	// Get the adapter (video card) description.
-	Result = Adapter->GetDesc(&AdapterDesc);
-	if (FAILED(Result))
-	{
-		return EResult_ERROR;
-	}
-
-	// Store the dedicated video card memory in megabytes.
-	int VideoCardMemory = (int)(AdapterDesc.DedicatedVideoMemory / 1024 / 1024);
-
-	// &StringLength, &VideoCardDescription[0], 128, AdapterDesc.Description, 128);
-	// Convert the name of the video card to a character array and store it.
-	Error = wcstombs_s(&StringLength, VideoCardDescription, 128, AdapterDesc.Description, 128);
-	if (Error != 0)
-	{
-		return EResult_ERROR;
-	}
-
-	// Release the display mode list.
-	delete[] DisplayModeList;
-	DisplayModeList = 0;
-
-	// Release the adapter output.
-	AdapterOutput->Release();
-	AdapterOutput = 0;
-
-	// Release the adapter.
-	Adapter->Release();
-	Adapter = 0;
-
-	return EResult_OK;
+	return Adapter3;
 }
 
+//
+// Create a new descriptor heap needed in order to allocate resource views such as 
+// RenderTargetView, ShaderResourceView, UnorderedAccessView or ConstantBufferView.
+//
+ComPtr<CGfxHeapDesciptor> CGfxDevice::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InNumDescriptors)
+{
+	ComPtr<ID3D12DescriptorHeap> DescriptorHeap;
+
+	D3D12_DESCRIPTOR_HEAP_DESC Desc = {
+		InType,
+		InNumDescriptors
+	};
+
+	ThrowIfFailed(this->Device->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&DescriptorHeap)));
+
+	return DescriptorHeap;
+}
+
+//
+// Create a new command queue from the given list type
+//
+ComPtr<CGfxQueue> CGfxDevice::CreateQueue(D3D12_COMMAND_LIST_TYPE type)
+{
+	ComPtr<CGfxQueue> Queue;
+
+	D3D12_COMMAND_QUEUE_DESC Desc = {
+		type,
+		D3D12_COMMAND_QUEUE_PRIORITY_NORMAL,
+		D3D12_COMMAND_QUEUE_FLAG_NONE,
+		0
+	};
+
+	ThrowIfFailed(this->Device->CreateCommandQueue(&Desc, IID_PPV_ARGS(&Queue)));
+
+	return Queue;
+}
+
+//
+// A command allocator is the backing memory used by a command list. The command allocator does not provide any functionality 
+// and can only be accessed indirectly through a command list.  A command allocator can only be used by a single command list at a time 
+// but can be reused after the commands that were recorded into the command list have finished executing on the GPU.
+//
+ComPtr<CGfxCmdAllocator> CGfxDevice::CreateCmdAllocator(D3D12_COMMAND_LIST_TYPE InType)
+{
+	ComPtr<CGfxCmdAllocator> CommandAllocator;
+	ThrowIfFailed(this->Device->CreateCommandAllocator(InType, IID_PPV_ARGS(&CommandAllocator)));
+	return CommandAllocator;
+}
+
+//
+// A command list is used for recording commands that are executed on the GPU.Unlike
+// previous versions of DirectX, execution of commands recorded into a command list are 
+// always deferred.That is, invoking draw or dispatch commands on a command list are 
+// not executed until the command list is sent to the command queue.
+//
+ComPtr<CGfxCmdList> CGfxDevice::CreateCmdList(ComPtr<CGfxCmdAllocator> InAllocator, D3D12_COMMAND_LIST_TYPE InType)
+{
+	ComPtr<CGfxCmdList> List;
+
+	ThrowIfFailed(this->Device->CreateCommandList(0, InType, InAllocator.Get(), nullptr, IID_PPV_ARGS(&List)));
+
+	// Immediate closing of list is necessary so we can use it directly.
+	ThrowIfFailed(List->Close());
+
+	return List;
+}
+
+//
+// The ID3D12Fence is an interface for a GPU / CPU synchronization object. 
+// Fences can be used to perform synchronization on either the CPU or the GPU.
+//
+ComPtr<CGfxFence> CGfxDevice::CreateFence()
+{
+	ComPtr<ID3D12Fence> Fence;
+
+	ThrowIfFailed(Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence)));
+
+	return Fence;
+}
+
+//
+// Creates a new swapchain from a given queue and hwnd.
+//
+ComPtr<IDXGISwapChain3> CGfxDevice::CreateSwapChain(HWND InHwnd, ComPtr<CGfxQueue> InQueue, u32 InWidth, u32 InHeight, u32 InBufferCount)
+{
+	ComPtr<IDXGISwapChain3> SwapChain3;
+	ComPtr<IDXGIFactory4> Factory;
+	u32 createFactoryFlags = 0;
+#if defined(_DEBUG)
+	createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+#endif
+
+	ThrowIfFailed(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&Factory)));
+
+	DXGI_SWAP_CHAIN_DESC1 SwapChainDesc = {};
+	SwapChainDesc.Width = InWidth;
+	SwapChainDesc.Height = InHeight;
+	SwapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	SwapChainDesc.Stereo = false;
+	SwapChainDesc.SampleDesc = { 1, 0 };
+	SwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	SwapChainDesc.BufferCount = InBufferCount;
+	SwapChainDesc.Scaling = DXGI_SCALING_STRETCH;
+	SwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	SwapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
+	SwapChainDesc.Flags = CheckForTearingSupport() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+
+	ComPtr<IDXGISwapChain1> SwapChain1;
+	ThrowIfFailed(Factory->CreateSwapChainForHwnd(InQueue.Get(), InHwnd, &SwapChainDesc, nullptr, nullptr, &SwapChain1));
+
+	//Switching to a full screen state will be handled manually using a full - screen borderless window.
+	//In order to prevent DXGI from switching to a full screen state automatically when pressing the Alt + Enter key 
+	//combination on the keyboard
+	ThrowIfFailed(Factory->MakeWindowAssociation(InHwnd, DXGI_MWA_NO_ALT_ENTER));
+	ThrowIfFailed(SwapChain1.As(&SwapChain3));
+
+	return SwapChain3;
+}
+
+//
+//
+//
 void CGfxDevice::Present()
 {
 	if (!SwapChain)
 		return;
 
 	SwapChain->Present((this->bUseVSync) ? 1 : 0, 0);
-}
-
-CGfxResource* CGfxDevice::GetCurrentBackbuffer()
-{
-	return this->BackBufferRenderTarget[this->BufferIndex];
-}
-
-void CGfxDevice::WaitForPreviousFrame()
-{
-	// Signal and increment the fence value.
-	unsigned long long FenceToWaitFor = FenceValue;
-	HRESULT Result = GfxParallel::ObtainQueue()->Signal(Fence, FenceToWaitFor);
-	if (FAILED(Result))
-	{
-		return;
-	}
-
-	FenceValue++;
-
-	// Wait until the GPU is done rendering.
-	if (Fence->GetCompletedValue() < FenceToWaitFor)
-	{
-		Result = Fence->SetEventOnCompletion(FenceToWaitFor, FenceEvent);
-		if (FAILED(Result))
-		{
-			return;
-		}
-
-		WaitForSingleObject(FenceEvent, INFINITE);
-	}
+	this->BackBufferIndex = this->SwapChain->GetCurrentBackBufferIndex();
 }

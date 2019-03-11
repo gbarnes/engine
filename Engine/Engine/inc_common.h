@@ -2,9 +2,27 @@
 //---------------------------------------------------------------------------//
 //        Copyright 2016  Immersive Pixels. All Rights Reserved.			//
 
+// Windows Runtime Library. Needed for Microsoft::WRL::ComPtr<> template class.
+#include <wrl.h>
+using namespace Microsoft::WRL;
+
+// STL Headers
+#include <algorithm>
+#include <cassert>
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <assert.h>
+
+// The min/max macros conflict with like-named member functions.
+// Only use std::min and std::max defined in <algorithm>.
+#if defined(min)
+#undef min
+#endif
+
+#if defined(max)
+#undef max
+#endif
 
 typedef enum EResult
 {

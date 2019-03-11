@@ -7,8 +7,8 @@
 #include <mutex>
 #include "Core\JobSystem\JobSystem.h"
 
-//int x = 1;
-//std::mutex cout2_mutex;
+int x = 1;
+std::mutex cout2_mutex;
 
 /*CJobSystem::Initialize();
 
@@ -25,14 +25,14 @@ CJobSystem::Run(Root);
 CJobSystem::Wait(Root);*/
 
 
-/*void empty_job2(SJob* InJob)
+void empty_job2(SJob* InJob)
 {
-cout2_mutex.lock();
-std::cout << "Hello world - Thread Index: " << CJobSystem::ThreadIndex << "\n";
-cout2_mutex.unlock();
+	cout2_mutex.lock();
+	std::cout << "Hello world - Thread Index: " << CJobSystem::ThreadIndex << "\n";
+	cout2_mutex.unlock();
 }
 
-void empty_job(SJob* InJob)
+/*void empty_job(SJob* InJob)
 {
 cout2_mutex.lock();
 int i = 12 + 12;
@@ -48,22 +48,53 @@ CJobSystem::Run(newJob);
 CJobSystem::Wait(newJob);
 }*/
 
-int test()
+u32 g_ClientWidth = 1280;
+u32 g_ClientHeight = 720;
+
+void Update()
 {
+	static uint64_t frameCounter = 0;
+	static double elapsedSeconds = 0.0;
+	static std::chrono::high_resolution_clock clock;
+	static auto t0 = clock.now();
 
-	//CEObjectPtr Ptr(new CEObject());
+	frameCounter++;
+	auto t1 = clock.now();
+	auto deltaTime = t1 - t0;
+	t0 = t1;
 
+	elapsedSeconds += deltaTime.count() * 1e-9;
+	if (elapsedSeconds > 1.0)
+	{
+		wchar_t buffer[500];
+		auto fps = frameCounter / elapsedSeconds;
+
+		swprintf(buffer, 500, L"FPS: %f\n", fps);
+		OutputDebugString(buffer);
+
+		frameCounter = 0;
+		elapsedSeconds = 0.0;
+	}
+}
+
+DirectX::XMFLOAT4 g_ClearColor = { 0.4f, 0.6f, 0.9f, 1.0f };
+
+int main()
+{
 	CWindow Window;
-	CGfxDevice GfxDevice;
-	//CGfxCmdList List;
-	//CGfxQueue;
-	//CGfxCmdAllocator Alloc;
-	//CGfxRenderTarget
-	//CGfxCmd
+	
+	Window.Initialize(L"Test", g_ClientWidth, g_ClientHeight, false, 32, 32, 8);
+	Window.OnWindowPaint = []()
+	{
+		Update();
+		
+		if (!GfxBackend::IsInitialized())
+			return;
 
-	//GfxParallel::AsyncCompute(&GfxDevice, 0);
-
-	Window.Initialize(L"Test", 800, 600, false, 32, 32, 8);
+		GfxBackend::Reset();
+		GfxBackend::ClearBackbuffer(g_ClearColor);
+		GfxBackend::Present();
+	};
 
 	if (Window.Create() != EResult_OK)
 	{
@@ -72,26 +103,26 @@ int test()
 		return 0;
 	}
 
-	if (GfxDevice.Initialize(800, 600, Window.GetHwnd(), false, false) != EResult_OK)
+	if (GfxBackend::Initialize(g_ClientWidth, g_ClientHeight, Window.GetHwnd(), true, false) != EResult_OK)
 	{
 		std::cout << "Couldn't initialize graphics device!\n";
 		system("pause");
 		return 0;
 	}
 
-	//CJobSystem::Initialize();
+	/*CJobSystem::Initialize();
 
-	//unsigned int ThreadIndex = CJobSystem::ThreadIndex;
+	unsigned int ThreadIndex = CJobSystem::ThreadIndex;
 
-	/*SJob* Root = CJobSystem::CreateJob(&empty_job);
+	SJob* Root = CJobSystem::CreateJob(&empty_job2);
 	for (unsigned int i = 0; i < 500; ++i)
 	{
-	SJob* Job = CJobSystem::CreateJobAsChild(Root, &empty_job);
-	CJobSystem::Run(Job);
-	}*/
+		SJob* Job = CJobSystem::CreateJobAsChild(Root, &empty_job2);
+		CJobSystem::Run(Job);
+	}
 
-	//CJobSystem::Run(Root);
-	//CJobSystem::Wait(Root);
+	CJobSystem::Run(Root);
+	CJobSystem::Wait(Root);*/
 
 	//RenderCommand::Packet p = RenderCommand::Create<Draw>(sizeof(Draw));
 	//Draw* d = RenderCommand::GetCommand<Draw>(p);
@@ -103,71 +134,10 @@ int test()
 	{
 		if (Window.PeekMessages())
 			break;
-
-
-		CGfxCmdList* CmdList = GfxBackend::ObtainCmdListByIndex(0);
-		CGfxCmdAllocator* Allocator = GfxBackend::ObtainCmdAllocator(0);
-
-		D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetViewHandle;
-		unsigned int RenderTargetViewDescriptorSize = 0;
-
-		// Reset (re-use) the memory associated command allocator.
-		HRESULT Result = Allocator->Reset();
-		if (FAILED(Result))
-			continue;
-
-		Result = CmdList->Reset(Allocator, GfxDevice.GetPipelineState());
-		if (FAILED(Result))
-			continue;
-
-		// Record commands in the command list now.
-		// Start by setting the resource barrier.
-		D3D12_RESOURCE_BARRIER Barrier;
-		Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		Barrier.Transition.pResource = GfxDevice.GetCurrentBackbuffer();
-		Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-		Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-		Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		CmdList->ResourceBarrier(1, &Barrier);
-
-		ID3D12Device* Device = GfxDevice;
-		// Get the render target view handle for the current back buffer.
-		RenderTargetViewHandle = GfxDevice.GetBackbufferHeap()->GetCPUDescriptorHandleForHeapStart();
-		RenderTargetViewDescriptorSize = Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-		if (GfxDevice.GetBufferIndex() == 1)
-		{
-			RenderTargetViewHandle.ptr += RenderTargetViewDescriptorSize;
-		}
-
-		CmdList->OMSetRenderTargets(1, &RenderTargetViewHandle, FALSE, NULL);
-
-		float color[4];
-		color[0] = 0.5;
-		color[1] = 0.5;
-		color[2] = 0.5;
-		color[3] = 1.0;
-		CmdList->ClearRenderTargetView(RenderTargetViewHandle, color, 0, NULL);
-
-		Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		Barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-		CmdList->ResourceBarrier(1, &Barrier);
-
-		// Close the list of commands.
-		Result = CmdList->Close();
-		if (FAILED(Result))
-		{
-			continue;
-		}
-
-		ID3D12CommandList* ppCommandLists[] = { CmdList };
-		GfxParallel::ObtainQueue()->ExecuteCommandLists(1, ppCommandLists);
-
-		GfxDevice.Present();
-		GfxDevice.WaitForPreviousFrame();
 	}
 
-	GfxDevice.Shutdown();
+	//CJobSystem::Shutdown();
+	GfxBackend::Shutdown();
 
 	return 1;
 };

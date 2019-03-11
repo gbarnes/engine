@@ -21,3 +21,13 @@ struct SGenericHandle
 	u32 Index : N1;
 	u32 Generation : N2;
 };
+
+inline HANDLE CreateEventHandle()
+{
+	HANDLE FenceEvent;
+
+	FenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+	assert(FenceEvent && "Failed to create fence event.");
+
+	return FenceEvent;
+}

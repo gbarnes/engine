@@ -6,188 +6,143 @@
 // Inclusions
 //-----------------------------------------------------------------------------
 #include "inc_gfx.h"
+#include "GfxDevice.h"
 #include "GfxParallel.h"
 #include "GfxBackend.h"
 
+CGfxDevice g_Device;
+HANDLE g_FenceEvent;
+ComPtr<CGfxFence> g_Fence;
+ComPtr<CGfxCmdList> g_CommandList;
+ComPtr<CGfxCmdAllocator> g_CommandAllocators[g_NumFrames];
+u64 g_FrameFenceValues[g_NumFrames] = {};
+u64 g_FenceValue = 0;
+bool g_Initialized = false;
 
-//-------------------------------------------------------------------------
-// Creates a new dx12 command queue. 
-//-------------------------------------------------------------------------
-EResult GfxBackend::CreateQueue(CGfxQueueDesc& InDescription, ID3D12Device* InDevice, CGfxQueue** OutQueue)
+bool GfxBackend::IsInitialized()
 {
-	HRESULT Result;
-	Result = InDevice->CreateCommandQueue(&InDescription, __uuidof(ID3D12CommandQueue), (void**)&(*OutQueue));
-	if (FAILED(Result))
-	{
+	return g_Initialized;
+}
+
+EResult GfxBackend::Initialize(int InWidth, int InHeight, HWND InHWnd, bool InUseVSync = false, bool InIsFullscreen = false)
+{
+	if (g_Device.Initialize(InWidth, InHeight, InHWnd, InUseVSync, InIsFullscreen) != EResult_OK)
 		return EResult_ERROR;
+
+	for (int i = 0; i < g_NumFrames; ++i)
+	{
+		g_CommandAllocators[i] = g_Device.CreateCmdAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	}
 
-	
+	g_CommandList = g_Device.CreateCmdList(g_CommandAllocators[g_Device.GetCurrentBufferIndex()], D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+	g_Fence = g_Device.CreateFence();
+	g_FenceEvent = CreateEventHandle();
+
+	g_Initialized = true;
 
 	return EResult_OK;
 }
 
-//-------------------------------------------------------------------------
-// Creates a new dx12 allocator! 
-//-------------------------------------------------------------------------
-CGfxCmdAllocator* g_GfxCmdAllocators[8];
-uint32_t g_GfxCmdAllocatorCount = 0;
-
-EResult GfxBackend::CreateCmdAllocator(D3D12_COMMAND_LIST_TYPE InType, ID3D12Device* InDevice, CGfxCmdAllocator** OutAllocator)
+//
+//
+//
+void GfxBackend::Shutdown()
 {
-	HRESULT Result;
-	Result = InDevice->CreateCommandAllocator(InType, __uuidof(CGfxCmdAllocator), (void**)(&g_GfxCmdAllocators[g_GfxCmdAllocatorCount]));
-	if (FAILED(Result))
+	Flush(g_Device.GetBackbufferQueue(), g_Fence, g_FenceValue, g_FenceEvent);
+	::CloseHandle(g_FenceEvent);
+	g_Device.Shutdown();
+}
+
+void GfxBackend::ClearBackbuffer(DirectX::XMFLOAT4 InColor)
+{
+	// Clear the render target.
 	{
-		return EResult_ERROR;
+		u32 BackBufferIndex = g_Device.GetCurrentBufferIndex();
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			g_Device.GetBackbuffer().Get(),
+			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+		g_CommandList->ResourceBarrier(1, &barrier);
+
+		FLOAT clearColor[] = { InColor.x, InColor.y, InColor.z, InColor.w };
+
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(
+			g_Device.GetRenderTargetViewHeap()->GetCPUDescriptorHandleForHeapStart(),
+			BackBufferIndex,
+			g_Device.GetRTVDescriptorSize()
+		);
+
+		g_CommandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 	}
-
-	*OutAllocator = g_GfxCmdAllocators[g_GfxCmdAllocatorCount];
-
-	g_GfxCmdAllocatorCount++;
-
-	return EResult_OK;
 }
 
-CGfxCmdAllocator* GfxBackend::ObtainCmdAllocator(const int index) 
+//
+//
+//
+void GfxBackend::Reset()
 {
-	return g_GfxCmdAllocators[index];
-}
-	
-//-------------------------------------------------------------------------
-// Creates a new dx12 command list! 
-//-------------------------------------------------------------------------
-CGfxCmdList* g_GfxCmdLists[8];
-uint32_t g_GfxCmdListCount = 0;
-
-SCmdListHandle GfxBackend::CreateCommandList(D3D12_COMMAND_LIST_TYPE InType, CGfxCmdAllocator* InAllocator, ID3D12Device* InDevice, CGfxCmdList** OutList)
-{
-	assert(g_GfxCmdListCount < 8);
-
-	ThrowIfFailed(InDevice->CreateCommandList(0, InType, InAllocator, nullptr, __uuidof(CGfxCmdList), (void**)(&g_GfxCmdLists[g_GfxCmdListCount])));
-
-	SCmdListHandle Handle;
-	Handle.Index = g_GfxCmdListCount;
-	Handle.Generation = 0;
-
-	*OutList = g_GfxCmdLists[g_GfxCmdListCount];
-
-	g_GfxCmdListCount++;
-
-	return Handle;
+	u32 BackBufferIndex = g_Device.GetCurrentBufferIndex();
+	auto commandAllocator = g_CommandAllocators[BackBufferIndex];
+	commandAllocator->Reset();
+	g_CommandList->Reset(commandAllocator.Get(), nullptr);
 }
 
-TODO(Add fail checks!)
-CGfxCmdList* GfxBackend::ObtainCmdList(const SCmdListHandle& InStateHandle)
+//
+//
+//
+void GfxBackend::Present()
 {
-	CGfxCmdList* List = g_GfxCmdLists[InStateHandle.Index];
-	assert(List != nullptr);
-	return List;
-}
+	u32 BackBufferIndex = g_Device.GetCurrentBufferIndex();
 
-CGfxCmdList* GfxBackend::ObtainCmdListByIndex(int index)
-{
-	CGfxCmdList* List = g_GfxCmdLists[index];
-	assert(List != nullptr);
-	return List;
-}
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition
+	(
+		g_Device.GetBackbuffer().Get(),
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT
+	);
 
-/*void GfxBackend::DeleteCmdList(SCmdListHandle& InStateHandle)
-{
-	CGfxCmdList* List = g_GfxCmdLists[InStateHandle.Index];
-	if (List != nullptr)
+	g_CommandList->ResourceBarrier(1, &barrier);
+
+	ThrowIfFailed(g_CommandList->Close());
+
+	ID3D12CommandList* const commandLists[] = 
 	{
-		List->Release();
-		List = nullptr;
+		g_CommandList.Get()
+	};
+
+	g_Device.GetBackbufferQueue()->ExecuteCommandLists(_countof(commandLists), commandLists);
+
+	g_FrameFenceValues[BackBufferIndex] = SignalFence(g_Device.GetBackbufferQueue(), g_Fence, g_FenceValue);
+
+	g_Device.Present();
+	GfxBackend::WaitForFenceValue(g_Fence, g_FrameFenceValues[BackBufferIndex], g_FenceEvent);
+}
+
+//
+// 
+//
+u64 GfxBackend::SignalFence(ComPtr<CGfxQueue> InQueue, ComPtr<CGfxFence> InFence, u64& InFenceValue)
+{
+	u64 FenceValueForSignal = ++InFenceValue;
+	ThrowIfFailed(InQueue->Signal(InFence.Get(), FenceValueForSignal));
+
+	return FenceValueForSignal;
+}
+
+//
+//
+//
+void GfxBackend::WaitForFenceValue(ComPtr<CGfxFence> InFence, u64 InFenceValue, HANDLE InFenceEvent, std::chrono::milliseconds InDuration )
+{
+	if (InFence->GetCompletedValue() < InFenceValue)
+	{
+		ThrowIfFailed(InFence->SetEventOnCompletion(InFenceValue, InFenceEvent));
+		::WaitForSingleObject(InFenceEvent, static_cast<DWORD>(InDuration.count()));
 	}
-}*/
-
-//-------------------------------------------------------------------------
-// Handles fence creation for dx12
-//-------------------------------------------------------------------------
-CGfxFence* g_GfxFences[8];
-uint32_t g_GfxFenceCount = 0;
-
-SFenceHandle GfxBackend::CreateFence(D3D12_FENCE_FLAGS InFlag, CGfxCmdAllocator* InAllocator, ID3D12Device* InDevice)
-{
-	assert(g_GfxFenceCount < 7);
-
-	CGfxFence* Fence;
-	SFenceHandle Handle;
-	ThrowIfFailed(InDevice->CreateFence(0, InFlag, __uuidof(ID3D12Fence), (void**)& g_GfxFences[g_GfxFenceCount]));
-	Handle.Index = g_GfxFenceCount;
-	Handle.Generation = 0;
-	g_GfxFenceCount++;
-	return Handle;
 }
 
-const CGfxFence* GfxBackend::ObtainFence(SFenceHandle& InStateHandle)
+void GfxBackend::Flush(ComPtr<CGfxQueue> InCommandQueue, ComPtr<CGfxFence> InFence, u64& InFenceValue, HANDLE InFenceEvent)
 {
-	assert(InStateHandle.Index < 8);
-
-	CGfxFence* Fence = g_GfxFences[InStateHandle.Index];
-	assert(Fence != nullptr);
-	return Fence;
-}
-
-//void DeleteFence(SCmdListHandle& InStateHandle);
-
-//-------------------------------------------------------------------------
-// State Object handling
-//-------------------------------------------------------------------------
-CGfxState* g_GfxStates[500];
-uint32_t g_GfxStatesCount = 0;
-
-SPipelineStateHandle GfxBackend::CreateStateObject(D3D12_GRAPHICS_PIPELINE_STATE_DESC InDescription, ID3D12Device* InDevice)
-{
-	SPipelineStateHandle Handle;
-
-	ThrowIfFailed(InDevice->CreateGraphicsPipelineState(&InDescription, IID_PPV_ARGS(&g_GfxStates[g_GfxStatesCount])));
-
-	Handle.Index = g_GfxStatesCount;
-	Handle.Generation = 0;
-	g_GfxStatesCount++;
-	return Handle;
-}
-
-CGfxState* GfxBackend::ObtainStateObject(SPipelineStateHandle& InStateHandle)
-{
-	assert(InStateHandle.Index < 500);
-
-	CGfxState* State = g_GfxStates[InStateHandle.Index];
-	assert(State != nullptr);
-	return State;
-}
-
-//-------------------------------------------------------------------------
-// Vertex Buffer Handling
-//-------------------------------------------------------------------------
-CGfxResource* g_GfxVertexBuffers[4000];
-uint32_t g_GfxVertexBufferCount = 0;
-
-SVertexBufferHandle GfxBackend::CreateVertexBuffer(const UINT InBufferSize, ID3D12Device* InDevice)
-{
-	SVertexBufferHandle Handle;
-
-	D3D12_HEAP_PROPERTIES Properties;
-	Properties.Type = D3D12_HEAP_TYPE_UPLOAD;
-
-	ThrowIfFailed(InDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(InBufferSize),
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&g_GfxVertexBuffers[g_GfxVertexBufferCount])
-		));
-
-	Handle.Index = g_GfxVertexBufferCount;
-	Handle.Generation = 0;
-	g_GfxVertexBufferCount++;
-	return Handle;
-}
-
-CGfxResource* ObtainVertexBuffer(SVertexBufferHandle& InStateHandle)
-{
-	return 0;
+	u64 FenceValueForSignal = SignalFence(InCommandQueue, InFence, InFenceValue);
+	WaitForFenceValue(InFence, FenceValueForSignal, InFenceEvent);
 }

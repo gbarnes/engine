@@ -1,11 +1,12 @@
 #pragma once
 //---------------------------------------------------------------------------//
 //        Copyright 2016  Immersive Pixels. All Rights Reserved.			 //
-
+#define WIN32_LEAN_AND_MEAN
 //-----------------------------------------------------------------------------
 // Inclusions
 //-----------------------------------------------------------------------------
 #include "../../inc_common.h"
+#include <functional>
 #include <Windows.h>
 
 //-----------------------------------------------------------------------------
@@ -21,6 +22,8 @@ class CWindow
 {
 
 public:
+	std::function<void()> OnWindowPaint;
+
 	//-------------------------------------------------------------------------
     // Constructors & Destructors
     //-------------------------------------------------------------------------
@@ -71,5 +74,5 @@ private:
 	//-------------------------------------------------------------------------
     // Static Private Methods
     //-------------------------------------------------------------------------
-	static LRESULT CALLBACK CWindow::WndProc ( HWND InHWnd, UINT InMsg, WPARAM InWParam, LPARAM InLParam);
+	static LRESULT CALLBACK CWindow::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 };

@@ -35,7 +35,7 @@ std::mutex cout_mutex;
 //-----------------------------------------------------------------------------
 EResult CJobSystem::Initialize()
 {
-	ThreadCount = 1;//std::thread::hardware_concurrency();
+	ThreadCount = std::thread::hardware_concurrency();
 	WorkerThreadQueues = new CJobQueue[ThreadCount];
 	WorkerThreads.resize(ThreadCount - 1);
 	IsThreadActive.resize(ThreadCount - 1);
@@ -204,7 +204,7 @@ void CJobSystem::Execute(SJob* InJob)
 //-----------------------------------------------------------------------------
 void CJobSystem::Finish(SJob* InJob)
 {
-	const unsigned int UnfinishedJobs = InJob->UnfinishedJobs.fetch_sub(1);
+	const unsigned int UnfinishedJobs = (--InJob->UnfinishedJobs);
 
 	if ((UnfinishedJobs == 0) && (InJob->Parent != nullptr))
 	{
