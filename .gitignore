@@ -12,3 +12,12 @@ Engine/Engine/Engine.vcxproj.user
 Engine/Engine/Engine.vcxproj.filters
 Engine/Engine.VC.VC.opendb
 Application/.vs/
+Dawn/.vs/
+Dawn/bin-int/
+Dawn/bin/
+Dawn/Dawn/Dawn.vcxproj.user
+Dawn/Dawn/Dawn.vcxproj.filters
+Dawn/Dawn/Dawn.vcxproj
+Dawn/Dawn.sln
+Dawn/Sandbox/Sandbox.vcxproj.user
+Dawn/Sandbox/Sandbox.vcxproj.filters
