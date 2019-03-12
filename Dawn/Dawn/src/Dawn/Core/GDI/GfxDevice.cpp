@@ -26,7 +26,7 @@ namespace Dawn
 	EResult CGfxDevice::Initialize(int InWidth, int InHeight, HWND InHWnd, bool InUseVSync, bool InIsFullscreen)
 	{
 		ComPtr<IDXGIAdapter3> Adapter = GetAdapter(false);
-		this->Device = CreateDevice(Adapter);
+		this->Device = CreateDevice(Adapter).Get();
 
 		this->BackbufferQueue = this->CreateQueue(D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT);
 
@@ -46,17 +46,17 @@ namespace Dawn
 	//
 	void CGfxDevice::Shutdown()
 	{
-
 		for (int i = 0; i < g_NumFrames; ++i)
 		{
-			this->BackBufferRenderTarget[i]->Release();
+			this->BackBufferRenderTarget[i].Reset();
 		}
 
-		this->RenderTargetViewHeap->Release();
+		this->RenderTargetViewHeap.Reset();
 
-		this->BackbufferQueue->Release();
-		this->SwapChain->Release();
-		this->Device->Release();
+		this->BackbufferQueue.Reset();
+		this->SwapChain.Reset();
+		this->Device.Reset();
+
 		return;
 	}
 

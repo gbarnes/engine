@@ -64,21 +64,15 @@ namespace Dawn
 		Flush(g_Device.GetBackbufferQueue(), g_Fence, g_FenceValue, g_FenceEvent);
 		::CloseHandle(g_FenceEvent);
 
+		g_CommandList->Close();
+		g_CommandList.Reset();
 
 		for (int i = 0; i < g_NumFrames; ++i)
 		{
-			g_CommandAllocators[i]->Release();
+			g_CommandAllocators[i].Reset();
 		}
 
-		g_Device.GetRenderTargetViewHeap()->Release();
-		g_Device.GetBackbuffer()->Release();
-		g_Device.GetBackbufferQueue()->Release();
-
-		g_CommandList->Close();
-
-		g_CommandList->Release();
-		g_Fence->Release();
-
+		g_Fence.Reset();
 		g_Device.Shutdown();
 	}
 
