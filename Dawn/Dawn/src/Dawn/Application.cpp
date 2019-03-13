@@ -1,6 +1,9 @@
 #include "Application.h"
 
 #include "Core/GDI/GfxBackend.h"
+#include "imgui.h"
+#include "Vendor/ImGui/imgui_impl_win32.h"
+#include "Vendor/ImGui/imgui_impl_dx12.h"
 //#include "Core/JobSystem/JobSystem.h"
 
 namespace Dawn
@@ -39,6 +42,17 @@ namespace Dawn
 			return;
 		}
 
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGui::StyleColorsDark();
+
+		ImGuiIO& io = ImGui::GetIO(); 
+		io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
+		io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
+
+		ImGui_ImplWin32_Init(this->Window.GetHwnd());
+		GfxBackend::ImGuiDX12Init();
+
 		/*if (CJobSystem::Initialize() != EResult_OK)
 		{
 			std::cout << "Couldn't initialize job system!\n";
@@ -52,6 +66,9 @@ namespace Dawn
 				break;
 		}
 
+		ImGui_ImplDX12_Shutdown();
+		ImGui_ImplWin32_Shutdown();
+		ImGui::DestroyContext();
 
 		//CJobSystem::Shutdown();
 		GfxBackend::Shutdown();

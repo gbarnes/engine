@@ -48,7 +48,7 @@ namespace Dawn
 
 		void Shutdown();
 		void Reset();
-		void ClearBackbuffer(DirectX::XMFLOAT4 InColor);
+		void ClearRenderTarget(ComPtr<CGfxResource> InRenderTarget, DirectX::XMFLOAT4 InColor);
 		void Present();
 
 		//-------------------------------------------------------------------------
@@ -57,5 +57,10 @@ namespace Dawn
 		u64 SignalFence(ComPtr<CGfxQueue> InQueue, ComPtr<CGfxFence> InFence, u64& InFenceValue);
 		void WaitForFenceValue(ComPtr<CGfxFence> InFence, u64 InFenceValue, HANDLE InFenceEvent, std::chrono::milliseconds InDuration = std::chrono::milliseconds::max());
 		void Flush(ComPtr<CGfxQueue> InCommandQueue, ComPtr<CGfxFence> InFence, u64& InFenceValue, HANDLE InFenceEvent);
+
+		void TransitionResource(ComPtr<CGfxResource> InResource, D3D12_RESOURCE_STATES InState);
+
+
+		void ImGuiDX12Init();
 	}
 };

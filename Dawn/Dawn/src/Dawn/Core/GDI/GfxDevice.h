@@ -52,12 +52,16 @@ namespace Dawn
 			return this->RenderTargetViewHeap;
 		}
 
+		ComPtr<ID3D12Device> CGfxDevice::GetD3D12Device() const {
+			return this->Device;
+		}
+
 		u32 CGfxDevice::GetRTVDescriptorSize() const {
 			return this->RTVDescriptorSize;
 		}
 
 		ComPtr<CGfxQueue> CGfxDevice::CreateQueue(D3D12_COMMAND_LIST_TYPE InType);
-		ComPtr<CGfxHeapDesciptor> CGfxDevice::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InNumDescriptors);
+		ComPtr<CGfxHeapDesciptor> CGfxDevice::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 		ComPtr<CGfxCmdAllocator> CGfxDevice::CreateCmdAllocator(D3D12_COMMAND_LIST_TYPE InType);
 		ComPtr<CGfxCmdList> CGfxDevice::CreateCmdList(ComPtr<CGfxCmdAllocator> InAllocator, D3D12_COMMAND_LIST_TYPE InType);
 		ComPtr<CGfxFence> CGfxDevice::CreateFence();

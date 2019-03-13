@@ -10,6 +10,11 @@ workspace "Dawn"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+IncludeDir = {}
+IncludeDir["ImGui"] = "Dawn/vendor/imgui"
+
+include "Dawn/vendor/imgui"
+
 project "Dawn"
 	location "Dawn"
 	kind "SharedLib"
@@ -27,7 +32,13 @@ project "Dawn"
 	includedirs
 	{
 		"Dawn/vendor/spdlog/include/",
-		"%{prj.name}/src/Dawn/"
+		"%{prj.name}/src/Dawn/",
+		"%{IncludeDir.ImGui}"
+	}
+
+	links 
+	{
+		"ImGui"
 	}
 
 	filter "system:windows"

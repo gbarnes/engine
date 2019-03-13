@@ -203,14 +203,15 @@ namespace Dawn
 	// Create a new descriptor heap needed in order to allocate resource views such as 
 	// RenderTargetView, ShaderResourceView, UnorderedAccessView or ConstantBufferView.
 	//
-	ComPtr<CGfxHeapDesciptor> CGfxDevice::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InNumDescriptors)
+	ComPtr<CGfxHeapDesciptor> CGfxDevice::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)
 	{
 		ComPtr<ID3D12DescriptorHeap> DescriptorHeap;
 
-		D3D12_DESCRIPTOR_HEAP_DESC Desc = {
-			InType,
-			InNumDescriptors
-		};
+		D3D12_DESCRIPTOR_HEAP_DESC Desc = { };
+		Desc.Type = InType;
+		Desc.NumDescriptors = InNumDescriptors;
+		Desc.Flags = InFlags;
+		Desc.NodeMask = 1;
 
 		ThrowIfFailed(this->Device->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&DescriptorHeap)));
 
