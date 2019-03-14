@@ -16,6 +16,7 @@ using namespace Microsoft::WRL;
 // STL Headers
 #include <algorithm>
 #include <cassert>
+#include <sstream>
 #include <chrono>
 #include <iostream>
 #include <memory>

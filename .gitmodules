@@ -4,3 +4,6 @@
 [submodule "Dawn/Dawn/vendor/imgui"]
 	path = Dawn/Dawn/vendor/imgui
 	url = https://github.com/TheCherno/imgui
+[submodule "Dawn/Dawn/vendor/physx"]
+	path = Dawn/Dawn/vendor/physx
+	url = https://github.com/NVIDIAGameWorks/PhysX

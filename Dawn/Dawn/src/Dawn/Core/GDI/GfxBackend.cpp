@@ -20,7 +20,6 @@ namespace Dawn
 	ComPtr<CGfxFence> g_Fence;
 	ComPtr<CGfxCmdList> g_CommandList;
 	ComPtr<CGfxCmdAllocator> g_CommandAllocators[g_NumFrames];
-	ComPtr<CGfxHeapDesciptor> g_D3DSrvDescHeap;
 	u64 g_FrameFenceValues[g_NumFrames] = {};
 	u64 g_FenceValue = 0;
 	bool g_Initialized = false;
@@ -36,6 +35,8 @@ namespace Dawn
 
 		return FenceEvent;
 	}
+
+	
 
 	bool GfxBackend::IsInitialized()
 	{
@@ -70,8 +71,6 @@ namespace Dawn
 		Flush(g_Device.GetBackbufferQueue(), g_Fence, g_FenceValue, g_FenceEvent);
 		::CloseHandle(g_FenceEvent);
 
-		g_D3DSrvDescHeap.Reset();
-
 		g_CommandList->Close();
 		g_CommandList.Reset();
 
@@ -88,29 +87,22 @@ namespace Dawn
 	{
 		FLOAT clearColor[] = { InColor.x, InColor.y, InColor.z, InColor.w };
 
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtv
-		(
-			g_Device.GetRenderTargetViewHeap()->GetCPUDescriptorHandleForHeapStart(),
-			g_Device.GetCurrentBufferIndex(),
-			g_Device.GetRTVDescriptorSize()
-		);
-
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtv = GfxBackend::GetCurrentBackbufferDescHandle();
 		g_CommandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 	}
 
-	void GfxBackend::TransitionResource(ComPtr<CGfxResource> InResource, D3D12_RESOURCE_STATES InState)
+	void GfxBackend::TransitionResource(ComPtr<CGfxResource> InResource, D3D12_RESOURCE_STATES InPreviousState, D3D12_RESOURCE_STATES InState)
 	{
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition
 		(
 			InResource.Get(),
-			g_LastResourceTransitionState,
+			InPreviousState,
 			InState,
 			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 			D3D12_RESOURCE_BARRIER_FLAG_NONE
 		);
 
 		g_CommandList->ResourceBarrier(1, &barrier);
-		g_LastResourceTransitionState = InState;
 	}
 
 	//
@@ -118,37 +110,11 @@ namespace Dawn
 	//
 	void GfxBackend::Reset()
 	{
-		// This is only temporary
-		ImGui_ImplDX12_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-
-		{
-			static float f = 0.0f;
-			static int counter = 0;
-
-			ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-			ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-			//ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-			//ImGui::Checkbox("Another Window", &show_another_window);
-
-			ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-			//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-			if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-				counter++;
-			ImGui::SameLine();
-			ImGui::Text("counter = %d", counter);
-
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-			ImGui::End();
-		}
-
 		u32 BackBufferIndex = g_Device.GetCurrentBufferIndex();
 		auto commandAllocator = g_CommandAllocators[BackBufferIndex];
 		commandAllocator->Reset();
 		g_CommandList->Reset(commandAllocator.Get(), nullptr);
+		TransitionResource(g_Device.GetBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 
 	//
@@ -156,25 +122,8 @@ namespace Dawn
 	//
 	void GfxBackend::Present()
 	{
-		u32 BackBufferIndex = g_Device.GetCurrentBufferIndex();
-
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(
-			g_Device.GetRenderTargetViewHeap()->GetCPUDescriptorHandleForHeapStart(),
-			BackBufferIndex,
-			g_Device.GetRTVDescriptorSize()
-		);
 		
-		TransitionResource(g_Device.GetBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET);
-		ClearRenderTarget(g_Device.GetBackbuffer(), );
-		g_CommandList->OMSetRenderTargets(1, &rtv, FALSE, NULL);
-		g_CommandList->SetDescriptorHeaps(1, g_D3DSrvDescHeap.GetAddressOf());
-
-
-		ImGui::Render();
-		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), g_CommandList.Get());
-
-		TransitionResource(g_Device.GetBackbuffer(), D3D12_RESOURCE_STATE_PRESENT);
-
+		TransitionResource(GfxBackend::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 		ThrowIfFailed(g_CommandList->Close());
 
 		ID3D12CommandList* const commandLists[] = {
@@ -183,8 +132,8 @@ namespace Dawn
 
 		g_Device.GetBackbufferQueue()->ExecuteCommandLists(1, commandLists);
 
+		u32 BackBufferIndex = g_Device.GetCurrentBufferIndex();
 		g_FrameFenceValues[BackBufferIndex] = SignalFence(g_Device.GetBackbufferQueue(), g_Fence, g_FenceValue);
-
 		g_Device.Present();
 		GfxBackend::WaitForFenceValue(g_Fence, g_FrameFenceValues[BackBufferIndex], g_FenceEvent);
 	}
@@ -217,16 +166,32 @@ namespace Dawn
 		u64 FenceValueForSignal = SignalFence(InCommandQueue, InFence, InFenceValue);
 		WaitForFenceValue(InFence, FenceValueForSignal, InFenceEvent);
 	}
-
-
-	void GfxBackend::ImGuiDX12Init() 
+	
+	CGfxDevice* GfxBackend::GetDevice()
 	{
-		g_D3DSrvDescHeap = g_Device.CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-
-		ImGui_ImplDX12_Init(g_Device.GetD3D12Device().Get(), 
-			g_NumFrames,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
-			g_D3DSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
-			g_D3DSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
+		return &g_Device;
 	}
+
+	ComPtr<CGfxCmdList> GfxBackend::GetCommandList()
+	{
+		return g_CommandList;
+	}
+
+	ComPtr<CGfxResource> GfxBackend::GetCurrentBackbuffer()
+	{
+		return g_Device.GetBackbuffer();
+	}
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE GfxBackend::GetCurrentBackbufferDescHandle()
+	{
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtv
+		(
+			g_Device.GetRTVHeap()->GetCPUDescriptorHandleForHeapStart(),
+			g_Device.GetCurrentBufferIndex(),
+			g_Device.GetRTVDescriptorSize()
+		);
+
+		return rtv;
+	}
+
 }

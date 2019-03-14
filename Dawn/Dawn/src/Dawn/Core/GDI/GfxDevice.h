@@ -48,7 +48,7 @@ namespace Dawn
 			return this->BackBufferRenderTarget[BackBufferIndex];
 		}
 
-		ComPtr<CGfxHeapDesciptor> CGfxDevice::GetRenderTargetViewHeap() const {
+		ComPtr<CGfxHeapDesciptor> CGfxDevice::GetRTVHeap() const {
 			return this->RenderTargetViewHeap;
 		}
 

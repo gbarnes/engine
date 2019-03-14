@@ -15,10 +15,12 @@
 #include <DirectXMath.h>
 #include <d3d12.h>
 #include <dxgi1_4.h>
+#include "d3dx12.h"
 #include "inc_common.h"
 
 namespace Dawn 
 {
+	
 	//-----------------------------------------------------------------------------
 	// Typedefs
 	//-----------------------------------------------------------------------------
@@ -39,6 +41,8 @@ namespace Dawn
 	typedef SGenericHandle<12, 20> SPipelineStateHandle;
 	typedef SGenericHandle<12, 20> SCmdListHandle;
 	typedef SGenericHandle<12, 20> SFenceHandle;
+	
+	class CGfxDevice;
 
 	namespace GfxBackend 
 	{
@@ -58,9 +62,10 @@ namespace Dawn
 		void WaitForFenceValue(ComPtr<CGfxFence> InFence, u64 InFenceValue, HANDLE InFenceEvent, std::chrono::milliseconds InDuration = std::chrono::milliseconds::max());
 		void Flush(ComPtr<CGfxQueue> InCommandQueue, ComPtr<CGfxFence> InFence, u64& InFenceValue, HANDLE InFenceEvent);
 
-		void TransitionResource(ComPtr<CGfxResource> InResource, D3D12_RESOURCE_STATES InState);
-
-
-		void ImGuiDX12Init();
+		void TransitionResource(ComPtr<CGfxResource> InResource, D3D12_RESOURCE_STATES InPreviousState, D3D12_RESOURCE_STATES InState);
+		ComPtr<CGfxCmdList> GetCommandList();
+		CGfxDevice* GetDevice();
+		CD3DX12_CPU_DESCRIPTOR_HANDLE GetCurrentBackbufferDescHandle();
+		ComPtr<CGfxResource> GetCurrentBackbuffer();
 	}
 };

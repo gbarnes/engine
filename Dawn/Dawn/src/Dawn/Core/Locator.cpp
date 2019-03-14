@@ -5,11 +5,6 @@ namespace Dawn
 {
 	Dawn::CMap< std::string, Dawn::CEObject* > CLocator::Instances;
 
-	Dawn::CEObject* CLocator::Get(std::string& InId)
-	{
-		return Instances[InId];
-	}
-
 	void CLocator::Add(std::string& InId, Dawn::CEObject* InInstance)
 	{
 		InInstance->AddRef();

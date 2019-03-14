@@ -5,7 +5,7 @@
 #include "Window.h"
 #include <windows.h>
 #include <windowsx.h>
-
+#include "../Vendor/ImGui/imgui_impl_win32.h"
 
 namespace Dawn
 {
@@ -158,6 +158,9 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	LRESULT CALLBACK CWindow::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
+		if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam))
+			return true;
+
 		switch (message)
 		{
 		case WM_PAINT:
@@ -180,11 +183,24 @@ namespace Dawn
 			break;
 		}
 		case WM_MOUSEMOVE:
+		{
+			//int xPos = GET_X_LPARAM(lParam);
+			//int yPos = GET_Y_LPARAM(lParam);
+			//CEventDispatcher::Trigger(EVENT_KEY("MouseMoved"), CMouseMovedEvent(xPos, yPos));
+			break;
+		}
+			
 		case WM_LBUTTONDOWN:
-		case WM_LBUTTONUP:
 		case WM_RBUTTONDOWN:
+		{
+			CEventDispatcher::Trigger(EVENT_KEY("MousePressed"), CEvent());
+			break;
+		}
+
+		case WM_LBUTTONUP:
 		case WM_RBUTTONUP:
 		{
+			CEventDispatcher::Trigger(EVENT_KEY("MouseReleased"), CEvent());
 			break;
 		}
 		case WM_CHAR:

@@ -19,6 +19,8 @@ namespace Dawn
 		bool UseVsync;
 	};
 
+	class CEvent;
+
 	class DAWN_API Application : public CEObject
 	{
 	public:
@@ -28,15 +30,19 @@ namespace Dawn
 
 		inline static CRefPtr<Application> Get()
 		{
-			Application* App = dynamic_cast<Application*>(CLocator::Get(std::string("App")));
-			return CRefPtr<Application>(App);
+			return CRefPtr<Application>(CLocator::Get<Application>(std::string("App")));
 		}
 
+		void OnMouseMovedEvent(CEvent& InEvent);
+		void OnMousePressedEvent(CEvent& InEvent);
+		void OnMouseReleasedEvent(CEvent& InEvent);
 	protected:
 		CWindow Window;
 		SAppSettings Settings;
 
 		virtual void Tick();
+
+
 	};
 
 	typedef CRefPtr<Application> CReferenceAppPtr;
