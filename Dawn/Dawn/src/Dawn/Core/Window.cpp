@@ -5,7 +5,8 @@
 #include "Window.h"
 #include <windows.h>
 #include <windowsx.h>
-#include "../Vendor/ImGui/imgui_impl_win32.h"
+#include "Core/GDI/GfxBackend.h"
+#include "Vendor/ImGui/ImGuiWrapper.h"
 
 namespace Dawn
 {
@@ -49,6 +50,12 @@ namespace Dawn
 		this->ColorBits = InColorBits;
 		this->DepthBits = InDepthBits;
 		this->AlphaBits = InAlphaBits;
+
+		// Windows 10 Creators update adds Per Monitor V2 DPI awareness context.
+		// Using this awareness context allows the client area of the window 
+		// to achieve 100% scaling while still allowing non-client window content to 
+		// be rendered in a DPI sensitive fashion.
+		SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
 		// create the window class with necessary settings
 		WNDCLASSEXW wndclass = {
@@ -109,8 +116,8 @@ namespace Dawn
 			WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 			windowX,
 			windowY,
-			Width,
-			Height,
+			windowWidth,
+			windowHeight,
 			NULL, NULL, Instance, NULL);
 
 		// if anything went wrong we'd like to return an 
@@ -127,6 +134,56 @@ namespace Dawn
 
 
 		return EResult_OK;
+	}
+
+	//
+	//
+	//
+	void CWindow::ToggleFullscreen()
+	{
+		IsFullscreen = !IsFullscreen;
+		if (IsFullscreen) // Switching to fullscreen.
+		{
+			// Store the current window dimensions so they can be restored 
+			// when switching out of fullscreen state.
+			::GetWindowRect(HWnd, &this->WindowRect);
+
+			// Set the window style to a borderless window so the client area fills
+			// the entire screen.
+			UINT windowStyle = WS_OVERLAPPEDWINDOW & ~(WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
+			::SetWindowLongW(HWnd, GWL_STYLE, windowStyle);
+
+			// Query the name of the nearest display device for the window.
+			// This is required to set the fullscreen dimensions of the window
+			// when using a multi-monitor setup.
+			HMONITOR hMonitor = ::MonitorFromWindow(HWnd, MONITOR_DEFAULTTONEAREST);
+			MONITORINFOEX monitorInfo = {};
+			monitorInfo.cbSize = sizeof(MONITORINFOEX);
+			::GetMonitorInfo(hMonitor, &monitorInfo);
+
+			::SetWindowPos(HWnd, HWND_TOP,
+				monitorInfo.rcMonitor.left,
+				monitorInfo.rcMonitor.top,
+				monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
+				monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
+				SWP_FRAMECHANGED | SWP_NOACTIVATE);
+
+			::ShowWindow(HWnd, SW_MAXIMIZE);
+		}
+		else
+		{
+			// Restore all the window decorators.
+			::SetWindowLong(HWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+
+			::SetWindowPos(HWnd, HWND_NOTOPMOST,
+				WindowRect.left,
+				WindowRect.top,
+				WindowRect.right - WindowRect.left,
+				WindowRect.bottom - WindowRect.top,
+				SWP_FRAMECHANGED | SWP_NOACTIVATE);
+
+			::ShowWindow(HWnd, SW_NORMAL);
+		}
 	}
 
 
@@ -158,9 +215,6 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	LRESULT CALLBACK CWindow::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam))
-			return true;
-
 		switch (message)
 		{
 		case WM_PAINT:
@@ -175,6 +229,13 @@ namespace Dawn
 		}
 		case WM_SIZE:
 		{
+			RECT clientRect = {};
+			::GetClientRect(hwnd, &clientRect);
+
+			int width = clientRect.right - clientRect.left;
+			int height = clientRect.bottom - clientRect.top;
+			GfxBackend::Resize(width, height);
+			//ImGuiWrapper::Resize(); DO we really need this?! 
 			break;
 		}
 		case WM_DESTROY:
@@ -189,18 +250,32 @@ namespace Dawn
 			//CEventDispatcher::Trigger(EVENT_KEY("MouseMoved"), CMouseMovedEvent(xPos, yPos));
 			break;
 		}
-			
-		case WM_LBUTTONDOWN:
-		case WM_RBUTTONDOWN:
-		{
-			CEventDispatcher::Trigger(EVENT_KEY("MousePressed"), CEvent());
-			break;
-		}
-
 		case WM_LBUTTONUP:
 		case WM_RBUTTONUP:
+		case WM_MBUTTONUP:
+		case WM_XBUTTONUP:
 		{
-			CEventDispatcher::Trigger(EVENT_KEY("MouseReleased"), CEvent());
+			int button = 0;
+			if (message == WM_LBUTTONUP) { button = 0; }
+			if (message == WM_RBUTTONUP) { button = 1; }
+			if (message == WM_MBUTTONUP) { button = 2; }
+			if (message == WM_XBUTTONUP) { button = (GET_XBUTTON_WPARAM(wParam) == XBUTTON1) ? 3 : 4; }
+
+			CEventDispatcher::Trigger(EVENT_KEY("MouseReleased"), CMouseReleasedEvent(button));
+			break;
+		}
+		case WM_LBUTTONDOWN: case WM_LBUTTONDBLCLK:
+		case WM_RBUTTONDOWN: case WM_RBUTTONDBLCLK:
+		case WM_MBUTTONDOWN: case WM_MBUTTONDBLCLK:
+		case WM_XBUTTONDOWN: case WM_XBUTTONDBLCLK:
+		{
+			int button = 0;
+			if (message == WM_LBUTTONDOWN || message == WM_LBUTTONDBLCLK) { button = 0; }
+			if (message == WM_RBUTTONDOWN || message == WM_RBUTTONDBLCLK) { button = 1; }
+			if (message == WM_MBUTTONDOWN || message == WM_MBUTTONDBLCLK) { button = 2; }
+			if (message == WM_XBUTTONDOWN || message == WM_XBUTTONDBLCLK) { button = (GET_XBUTTON_WPARAM(wParam) == XBUTTON1) ? 3 : 4; }
+
+			CEventDispatcher::Trigger(EVENT_KEY("MousePressed"), CMousePressedEvent(button));
 			break;
 		}
 		case WM_CHAR:
@@ -210,6 +285,26 @@ namespace Dawn
 		case WM_SYSKEYUP:
 		case WM_SYSCHAR:
 		{
+			bool alt = (::GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+
+			switch (wParam)
+			{
+			case VK_ESCAPE:
+				::PostQuitMessage(0);
+				break;
+			case VK_RETURN:
+				if (alt)
+				{
+				case VK_F11:
+					CWindow* Window = (CWindow*)GetProp(hwnd, L"CWindow");
+					if (NULL != Window)
+					{
+						Window->ToggleFullscreen();
+					}
+				}
+				break;
+			}
+
 			break;
 		}
 		default:

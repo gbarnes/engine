@@ -13,7 +13,7 @@ namespace Dawn
 {
 	SCmdListHandle CmdListHandles[GfxParallel::ThreadCount];
 	CGfxFence* Fences[GfxParallel::ThreadCount];
-	ComPtr<CGfxQueue> CmdQueue;
+	ComPtr<CGfxInternalQueue> CmdQueue;
 
 	EResult GfxParallel::AllocateResources(CGfxDevice* GfxDevice)
 	{
@@ -59,7 +59,7 @@ namespace Dawn
 			}*/
 	}
 
-	CGfxQueue* GfxParallel::ObtainQueue()
+	CGfxInternalQueue* GfxParallel::ObtainQueue()
 	{
 		return CmdQueue.Get();
 	}

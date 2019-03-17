@@ -12,13 +12,13 @@ namespace Dawn
 
 	void ImGuiWrapper::Create(void* InHwnd)
 	{
-		// Todo: Add error checking & Logs
+		// Todo: Add error checking & Logs 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGui::StyleColorsDark();
 
 		ImGuiIO& io = ImGui::GetIO();
-		io.DisplaySize = ImVec2(1280, 720);
+		//io.DisplaySize = ImVec2(1280, 720);
 		io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 		io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
 
@@ -28,6 +28,7 @@ namespace Dawn
 			DWN_CORE_ERROR("There is no available graphics device!");
 			return;
 		}
+
 
 		g_D3DSrvDescHeap = Device->CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
@@ -55,20 +56,18 @@ namespace Dawn
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-
-		bool openWindow = true;
-		ImGui::ShowDemoWindow(&openWindow);
 	}
 
-	void ImGuiWrapper::Render()
+	void ImGuiWrapper::Resize()
 	{
-		ComPtr<CGfxCmdList> CmdList = GfxBackend::GetCommandList();
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtv = GfxBackend::GetCurrentBackbufferDescHandle();
+		ImGui_ImplDX12_CreateDeviceObjects();
+	}
 
-		CmdList->OMSetRenderTargets(1, &rtv, FALSE, NULL);
-		CmdList->SetDescriptorHeaps(1, g_D3DSrvDescHeap.GetAddressOf());
+	void ImGuiWrapper::Render(CGfxCmdList* InCmdList)
+	{
+		InCmdList->SetDescriptorHeaps(1, g_D3DSrvDescHeap.GetAddressOf());
 
 		ImGui::Render();
-		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), CmdList.Get());
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), InCmdList);
 	}
 }

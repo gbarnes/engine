@@ -25,6 +25,7 @@ namespace Dawn
 
 	public:
 		std::function<void()> OnWindowPaint;
+		std::function<void()> OnWindowProcHook;
 
 		//-------------------------------------------------------------------------
 		// Constructors & Destructors
@@ -39,6 +40,8 @@ namespace Dawn
 			int InColorBits, int InDepthBits, int InAlphaBits);
 		virtual EResult Create(void);
 		virtual bool PeekMessages(void);
+
+		void ToggleFullscreen();
 
 		virtual HWND GetHwnd(void)
 		{
@@ -58,6 +61,7 @@ namespace Dawn
 
 		std::wstring Title;
 
+		RECT WindowRect;
 		int Width;
 		int Height;
 		int CmdShow;

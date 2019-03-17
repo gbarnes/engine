@@ -12,11 +12,11 @@ public:
 Dawn::Application* Dawn::CreateApplication()
 {
 	Dawn::SAppSettings Settings = {
-		L"Test", 
+		L"Sandbox Game", 
 		1280,
 		720,
 		false,
-		false
+		true
 	};
 
 	return new SandboxApp(Settings);

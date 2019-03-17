@@ -26,7 +26,8 @@ project "Dawn"
 	files
 	{
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp"
+		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/shader/**.hlsl"
 	}
 
 	includedirs
@@ -68,6 +69,32 @@ project "Dawn"
 	filter "configurations:Dist" 
 		defines "DAWN_DIST"
 		symbols "On"
+
+
+    shadermodel("5.0")
+
+    shaderassembler("AssemblyCode")
+
+    local shader_dir = "../bin/" .. outputdir .. "/Sandbox/"
+
+   -- HLSL files that don't end with 'Extensions' will be ignored as they will be
+   -- used as includes
+   filter("files:**.hlsl")
+      flags("ExcludeFromBuild")
+      shaderobjectfileoutput(shader_dir.."%{file.basename}"..".cso")
+      shaderassembleroutput(shader_dir.."%{file.basename}"..".asm")
+
+   filter("files:**_ps.hlsl")
+      removeflags("ExcludeFromBuild")
+      shadertype("Pixel")
+
+   filter("files:**_vs.hlsl")
+      removeflags("ExcludeFromBuild")
+      shadertype("Vertex")
+
+
+   -- Warnings as errors
+   shaderoptions({"/WX"})
 
 project "Sandbox"
 	location "Sandbox"

@@ -5,44 +5,22 @@
 //-----------------------------------------------------------------------------
 // Inclusions
 //-----------------------------------------------------------------------------
-#pragma comment(lib, "d3d12.lib")
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "d3dcompiler.lib")
+//#pragma comment(lib, "d3d12.lib")
+//#pragma comment(lib, "dxgi.lib")
+//#pragma comment(lib, "d3dcompiler.lib")
 
 //-----------------------------------------------------------------------------
 // Inclusions
 //-----------------------------------------------------------------------------
-#include <DirectXMath.h>
-#include <d3d12.h>
-#include <dxgi1_4.h>
-#include "d3dx12.h"
+#include "inc_gfx.h"
 #include "inc_common.h"
+//#include "GfxQueue.h"
 
 namespace Dawn 
 {
 	
-	//-----------------------------------------------------------------------------
-	// Typedefs
-	//-----------------------------------------------------------------------------
-	typedef ID3D12CommandQueue CGfxQueue;
-	typedef D3D12_COMMAND_QUEUE_DESC CGfxQueueDesc;
-	typedef ID3D12CommandAllocator CGfxCmdAllocator;
-	typedef ID3D12GraphicsCommandList CGfxCmdList;
-	typedef ID3D12Fence CGfxFence;
-	typedef D3D12_RESOURCE_BARRIER SGfxResBarrier;
-	typedef ID3D12Resource CGfxResource;
-	typedef ID3D12PipelineState CGfxState;
-	typedef ID3D12DescriptorHeap CGfxHeapDesciptor;
-
-	typedef SGenericHandle<12, 20> SGfxResourceHandle;
-	typedef SGenericHandle<12, 20> SVertexBufferHandle;
-	typedef SGenericHandle<12, 20> SIndexBufferHandle;
-	typedef SGenericHandle<12, 20> SConstantBufferHandle;
-	typedef SGenericHandle<12, 20> SPipelineStateHandle;
-	typedef SGenericHandle<12, 20> SCmdListHandle;
-	typedef SGenericHandle<12, 20> SFenceHandle;
-	
 	class CGfxDevice;
+	class CGfxQueue;
 
 	namespace GfxBackend 
 	{
@@ -51,21 +29,27 @@ namespace Dawn
 		bool IsInitialized();
 
 		void Shutdown();
-		void Reset();
-		void ClearRenderTarget(ComPtr<CGfxResource> InRenderTarget, DirectX::XMFLOAT4 InColor);
-		void Present();
+		void Reset(ComPtr<CGfxCmdList> InCmdList);
+		void ClearRenderTarget(ComPtr<CGfxCmdList> InCmdList, ComPtr<CGfxResource> InRenderTarget, DirectX::XMFLOAT4 InColor);
+		void ClearDepthBuffer(ComPtr<CGfxCmdList> InCmdList, float InDepth);
+		void Present(ComPtr<CGfxCmdList> InCmdList);
+		void Resize(u32 InWidth, u32 InHeight);
 
-		//-------------------------------------------------------------------------
-		// DX12 Fence Handling
-		//-------------------------------------------------------------------------
-		u64 SignalFence(ComPtr<CGfxQueue> InQueue, ComPtr<CGfxFence> InFence, u64& InFenceValue);
-		void WaitForFenceValue(ComPtr<CGfxFence> InFence, u64 InFenceValue, HANDLE InFenceEvent, std::chrono::milliseconds InDuration = std::chrono::milliseconds::max());
-		void Flush(ComPtr<CGfxQueue> InCommandQueue, ComPtr<CGfxFence> InFence, u64& InFenceValue, HANDLE InFenceEvent);
+		void TransitionResource(ComPtr<CGfxCmdList> InCmdList, ComPtr<CGfxResource> InResource, D3D12_RESOURCE_STATES InPreviousState, D3D12_RESOURCE_STATES InState);
 
-		void TransitionResource(ComPtr<CGfxResource> InResource, D3D12_RESOURCE_STATES InPreviousState, D3D12_RESOURCE_STATES InState);
-		ComPtr<CGfxCmdList> GetCommandList();
+		HRESULT CompileShader(LPCWSTR InSrcFile, LPCSTR InEntryPoint, LPCSTR InProfile, ID3DBlob** OutBlob);
+		HRESULT ReadShader(LPCWSTR InSrcFile, ID3DBlob** OutBlob);
+
+		void UpdateBufferResource(ComPtr<CGfxCmdList> InCommandList, CGfxResource** OutDestinationResource, CGfxResource** OutIntermediateResource,
+			size_t InNumElements, size_t InElementSize, const void* InBufferData, D3D12_RESOURCE_FLAGS Inflags);
+
+		std::shared_ptr<CGfxQueue> GetQueue(D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT);
 		CGfxDevice* GetDevice();
+
 		CD3DX12_CPU_DESCRIPTOR_HANDLE GetCurrentBackbufferDescHandle();
 		ComPtr<CGfxResource> GetCurrentBackbuffer();
+
+		D3D12_CPU_DESCRIPTOR_HANDLE GetDepthBufferDescHandle();
+		ComPtr<CGfxResource> GetDepthBuffer();
 	}
 };

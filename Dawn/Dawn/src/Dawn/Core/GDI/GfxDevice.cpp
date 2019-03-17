@@ -5,7 +5,16 @@
 // Inclusions
 //-----------------------------------------------------------------------------
 #include "GfxDevice.h"
+#include "GfxQueue.h"
 #include "GfxParallel.h"
+#include <algorithm> // For std::min and std::max.
+#if defined(min)
+#undef min
+#endif
+
+#if defined(max)
+#undef max
+#endif
 
 namespace Dawn
 {
@@ -23,20 +32,26 @@ namespace Dawn
 	//
 	// Takes care of initializing the directx12 api, swap chain and backbuffers
 	//
-	EResult CGfxDevice::Initialize(int InWidth, int InHeight, HWND InHWnd, bool InUseVSync, bool InIsFullscreen)
+	EResult CGfxDevice::Initialize(u32 InWidth, u32 InHeight, HWND InHWnd, bool InUseVSync, bool InIsFullscreen)
 	{
 		ComPtr<IDXGIAdapter3> Adapter = GetAdapter(false);
 		this->Device = CreateDevice(Adapter).Get();
 
-		this->BackbufferQueue = this->CreateQueue(D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT);
+		this->DirectCommandQueue = std::make_shared<CGfxQueue>(D3D12_COMMAND_LIST_TYPE_DIRECT);
+		this->CopyCommandQueue = std::make_shared<CGfxQueue>(D3D12_COMMAND_LIST_TYPE_COPY);
+		this->ComputeCommandQueue = std::make_shared<CGfxQueue>(D3D12_COMMAND_LIST_TYPE_COMPUTE);
 
-		this->SwapChain = CreateSwapChain(InHWnd, this->BackbufferQueue, InWidth, InHeight, g_NumFrames);
+		this->SwapChain = CreateSwapChain(InHWnd, this->DirectCommandQueue->GetD3D12CommandQueue().Get(), InWidth, InHeight, g_NumFrames);
 		this->BackBufferIndex = this->SwapChain->GetCurrentBackBufferIndex();
 
 		this->RenderTargetViewHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, g_NumFrames);
+		this->DepthBufferHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
 		this->RTVDescriptorSize = this->Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 		UpdateRenderTargetViews();
+
+		this->Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(InWidth), static_cast<float>(InHeight));
+		this->ScissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
 
 		return EResult_OK;
 	}
@@ -46,27 +61,114 @@ namespace Dawn
 	//
 	void CGfxDevice::Shutdown()
 	{
+		DirectCommandQueue->Flush();
+		DirectCommandQueue->Reset();
+		DirectCommandQueue.reset();
+
+		CopyCommandQueue->Flush();
+		CopyCommandQueue->Reset();
+		CopyCommandQueue.reset();
+
+		ComputeCommandQueue->Flush();
+		ComputeCommandQueue->Reset();
+		ComputeCommandQueue.reset();
+
 		for (int i = 0; i < g_NumFrames; ++i)
 		{
 			this->BackBufferRenderTarget[i].Reset();
 		}
 
+		this->DepthBuffer.Reset();
+		this->DepthBufferHeap.Reset();
 		this->RenderTargetViewHeap.Reset();
-
-		this->BackbufferQueue.Reset();
 		this->SwapChain.Reset();
 		this->Device.Reset();
 
 		return;
 	}
 
+	void CGfxDevice::CreateDepthBuffer(u32 InWidth, u32 InHeight)
+	{
+		//InWidth = std::max(1, InWidth);
+		//InHeight = std::max(1, InHeight);
+
+		D3D12_CLEAR_VALUE optimizedClearValue = {};
+		optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+		optimizedClearValue.DepthStencil = { 1.0f, 0 };
+
+		ThrowIfFailed(this->Device->CreateCommittedResource
+		(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Tex2D
+			(
+				DXGI_FORMAT_D32_FLOAT, 
+				InWidth, 
+				InHeight,
+				1, 0, 1, 0, 
+				D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
+			),
+			D3D12_RESOURCE_STATE_DEPTH_WRITE,
+			&optimizedClearValue,
+			IID_PPV_ARGS(&this->DepthBuffer)
+		));
+
+		// Update the depth-stencil view.
+		D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
+		dsv.Format = DXGI_FORMAT_D32_FLOAT;
+		dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+		dsv.Texture2D.MipSlice = 0;
+		dsv.Flags = D3D12_DSV_FLAG_NONE;
+
+		Device->CreateDepthStencilView
+		(
+			DepthBuffer.Get(), 
+			&dsv,
+			this->DepthBufferHeap->GetCPUDescriptorHandleForHeapStart()
+		);
+	}
+
+	void CGfxDevice::Resize(u32 InWidth, u32 InHeight)
+	{
+		DirectCommandQueue->Flush();
+		CopyCommandQueue->Flush();
+		ComputeCommandQueue->Flush();
+
+		for (int i = 0; i < g_NumFrames; ++i)
+		{
+			// Any references to the back buffers must be released
+			// before the swap chain can be resized.
+			BackBufferRenderTarget[i].Reset();
+		}
+
+		DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
+		ThrowIfFailed(this->SwapChain->GetDesc(&swapChainDesc));
+		ThrowIfFailed(this->SwapChain->ResizeBuffers(g_NumFrames, InWidth, InHeight,
+			swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
+
+		this->BackBufferIndex = this->SwapChain->GetCurrentBackBufferIndex();
+		UpdateRenderTargetViews();
+
+
+		Viewport = CD3DX12_VIEWPORT
+		(
+			0.0f, 0.0f,
+			static_cast<float>(InWidth), 
+			static_cast<float>(InHeight)
+		);
+
+		CreateDepthBuffer(InWidth, InHeight);
+	}
+
 	//
 	// Creates the basic D3D12 Device from a given adapter. In case the debug mode 
 	// is enable it will log specific statements.
 	//
-	ComPtr<ID3D12Device> CGfxDevice::CreateDevice(ComPtr<IDXGIAdapter3> InAdapter)
+	ComPtr<ID3D12Device2> CGfxDevice::CreateDevice(ComPtr<IDXGIAdapter3> InAdapter)
 	{
-		ComPtr<ID3D12Device> device;
+		EnableDebugLayer();
+
+		ComPtr<ID3D12Device2> device;
 
 		ThrowIfFailed(D3D12CreateDevice(InAdapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&device)));
 
@@ -129,7 +231,7 @@ namespace Dawn
 		//
 		// Check why we have an older version of the Windows SDK?!
 		//
-		return false;
+		return true;
 	}
 
 	//
@@ -152,6 +254,7 @@ namespace Dawn
 
 			RtvHandle.Offset(RtvDescriptorSize);
 		}
+
 	}
 
 	//
@@ -190,7 +293,7 @@ namespace Dawn
 					SUCCEEDED(D3D12CreateDevice(Adapter1.Get(), D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr)) &&
 					AdapterDesc1.DedicatedVideoMemory > maxDedicatedVideoMemory)
 				{
-					maxDedicatedVideoMemory = AdapterDesc1.DedicatedVideoMemory;
+					maxDedicatedVideoMemory = (u64)AdapterDesc1.DedicatedVideoMemory;
 					ThrowIfFailed(Adapter1.As(&Adapter3));
 				}
 			}
@@ -218,24 +321,6 @@ namespace Dawn
 		return DescriptorHeap;
 	}
 
-	//
-	// Create a new command queue from the given list type
-	//
-	ComPtr<CGfxQueue> CGfxDevice::CreateQueue(D3D12_COMMAND_LIST_TYPE type)
-	{
-		ComPtr<CGfxQueue> Queue;
-
-		D3D12_COMMAND_QUEUE_DESC Desc = {
-			type,
-			D3D12_COMMAND_QUEUE_PRIORITY_NORMAL,
-			D3D12_COMMAND_QUEUE_FLAG_NONE,
-			0
-		};
-
-		ThrowIfFailed(this->Device->CreateCommandQueue(&Desc, IID_PPV_ARGS(&Queue)));
-
-		return Queue;
-	}
 
 	//
 	// A command allocator is the backing memory used by a command list. The command allocator does not provide any functionality 
@@ -283,7 +368,7 @@ namespace Dawn
 	//
 	// Creates a new swapchain from a given queue and hwnd.
 	//
-	ComPtr<IDXGISwapChain3> CGfxDevice::CreateSwapChain(HWND InHwnd, ComPtr<CGfxQueue> InQueue, u32 InWidth, u32 InHeight, u32 InBufferCount)
+	ComPtr<IDXGISwapChain3> CGfxDevice::CreateSwapChain(HWND InHwnd, ComPtr<CGfxInternalQueue> InQueue, u32 InWidth, u32 InHeight, u32 InBufferCount)
 	{
 		ComPtr<IDXGISwapChain3> SwapChain3;
 		ComPtr<IDXGIFactory4> Factory;
@@ -322,12 +407,13 @@ namespace Dawn
 	//
 	//
 	//
-	void CGfxDevice::Present()
+	u64 CGfxDevice::Present()
 	{
 		if (!SwapChain)
-			return;
+			return 0;
 
 		SwapChain->Present((this->bUseVSync) ? 1 : 0, 0);
 		this->BackBufferIndex = this->SwapChain->GetCurrentBackBufferIndex();
+		return this->BackBufferIndex;
 	}
 }

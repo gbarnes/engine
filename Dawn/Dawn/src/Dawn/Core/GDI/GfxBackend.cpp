@@ -10,16 +10,15 @@
 #include "GfxParallel.h"
 #include "GfxBackend.h"
 #include "imgui.h"
+#include "GfxQueue.h"
 #include "Vendor/ImGui/imgui_impl_win32.h"
 #include "Vendor/ImGui/imgui_impl_dx12.h"
 
 namespace Dawn
 {
 	CGfxDevice g_Device;
-	HANDLE g_FenceEvent;
-	ComPtr<CGfxFence> g_Fence;
+
 	ComPtr<CGfxCmdList> g_CommandList;
-	ComPtr<CGfxCmdAllocator> g_CommandAllocators[g_NumFrames];
 	u64 g_FrameFenceValues[g_NumFrames] = {};
 	u64 g_FenceValue = 0;
 	bool g_Initialized = false;
@@ -36,8 +35,6 @@ namespace Dawn
 		return FenceEvent;
 	}
 
-	
-
 	bool GfxBackend::IsInitialized()
 	{
 		return g_Initialized;
@@ -45,18 +42,20 @@ namespace Dawn
 
 	EResult GfxBackend::Initialize(int InWidth, int InHeight, HWND InHWnd, bool InUseVSync = false, bool InIsFullscreen = false)
 	{
+		// Check for DirectX Math library support.
+		if (!DirectX::XMVerifyCPUSupport())
+		{
+			MessageBoxA(NULL, "Failed to verify DirectX Math library support.", "Error", MB_OK | MB_ICONERROR);
+			return EResult_ERROR;
+		}
+
 		if (g_Device.Initialize(InWidth, InHeight, InHWnd, InUseVSync, InIsFullscreen) != EResult_OK)
 			return EResult_ERROR;
 
-		for (int i = 0; i < g_NumFrames; ++i)
-		{
-			g_CommandAllocators[i] = g_Device.CreateCmdAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT);
-		}
-
-		g_CommandList = g_Device.CreateCmdList(g_CommandAllocators[g_Device.GetCurrentBufferIndex()], D3D12_COMMAND_LIST_TYPE_DIRECT);
-
-		g_Fence = g_Device.CreateFence();
-		g_FenceEvent = CreateEventHandle();
+		g_Device.GetQueue()->Flush();
+		g_Device.GetQueue(D3D12_COMMAND_LIST_TYPE_COPY)->Flush();
+		g_Device.GetQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE)->Flush();
+		g_Device.CreateDepthBuffer(InWidth, InHeight);
 
 		g_Initialized = true;
 
@@ -68,30 +67,82 @@ namespace Dawn
 	//
 	void GfxBackend::Shutdown()
 	{
-		Flush(g_Device.GetBackbufferQueue(), g_Fence, g_FenceValue, g_FenceEvent);
-		::CloseHandle(g_FenceEvent);
-
-		g_CommandList->Close();
-		g_CommandList.Reset();
-
-		for (int i = 0; i < g_NumFrames; ++i)
-		{
-			g_CommandAllocators[i].Reset();
-		}
-
-		g_Fence.Reset();
 		g_Device.Shutdown();
 	}
 
-	void GfxBackend::ClearRenderTarget(ComPtr<CGfxResource> InRenderTarget, DirectX::XMFLOAT4 InColor)
+	void GfxBackend::Resize(u32 InWidth, u32 InHeight)
+	{
+		//if (g_Device.Width != width || g_ClientHeight != height)
+		//{
+		if (!IsInitialized())
+			return;
+
+		g_Device.Resize(InWidth, InHeight);
+
+		//}
+	}
+
+	void GfxBackend::ClearRenderTarget(ComPtr<CGfxCmdList> InCmdList, ComPtr<CGfxResource> InRenderTarget, DirectX::XMFLOAT4 InColor)
 	{
 		FLOAT clearColor[] = { InColor.x, InColor.y, InColor.z, InColor.w };
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE rtv = GfxBackend::GetCurrentBackbufferDescHandle();
-		g_CommandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+		InCmdList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 	}
 
-	void GfxBackend::TransitionResource(ComPtr<CGfxResource> InResource, D3D12_RESOURCE_STATES InPreviousState, D3D12_RESOURCE_STATES InState)
+	void GfxBackend::ClearDepthBuffer(ComPtr<CGfxCmdList> InCmdList, float InDepth)
+	{
+		auto Handle = GfxBackend::GetDepthBufferDescHandle();
+		InCmdList->ClearDepthStencilView(Handle, D3D12_CLEAR_FLAG_DEPTH, InDepth, 0, 0, nullptr);
+	}
+
+	//
+	// The UpdateBufferResource method is used to create a ID3D12Resource 
+	// that is large enough to store the buffer data passed to the function 
+	// and to create an intermediate buffer that is used to copy the CPU buffer data to the GPU.
+	//
+	void GfxBackend::UpdateBufferResource(ComPtr<CGfxCmdList> InCommandList, CGfxResource** OutDestinationResource, CGfxResource** OutIntermediateResource,
+		size_t InNumElements, size_t InElementSize, const void* InBufferData, D3D12_RESOURCE_FLAGS InFlags)
+	{
+		size_t BufferSize = InNumElements * InElementSize;
+
+		ComPtr<ID3D12Device> Device = g_Device.GetD3D12Device();
+
+		ThrowIfFailed(Device->CreateCommittedResource
+		(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(BufferSize, InFlags),
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			nullptr,
+			IID_PPV_ARGS(OutDestinationResource)
+		));
+
+		if (InBufferData)
+		{
+			ThrowIfFailed(Device->CreateCommittedResource
+			(
+				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+				D3D12_HEAP_FLAG_NONE,
+				&CD3DX12_RESOURCE_DESC::Buffer(BufferSize),
+				D3D12_RESOURCE_STATE_GENERIC_READ,
+				nullptr,
+				IID_PPV_ARGS(OutIntermediateResource)
+			));
+
+			D3D12_SUBRESOURCE_DATA subresourceData = {};
+			subresourceData.pData = InBufferData;
+			subresourceData.RowPitch = BufferSize;
+			subresourceData.SlicePitch = subresourceData.RowPitch;
+
+			UpdateSubresources(InCommandList.Get(), *OutDestinationResource, *OutIntermediateResource, 0, 0, 1, &subresourceData);
+		}
+	}
+
+	//
+	// Issues a switch state command for a speicfic resource to a passed command list 
+	//
+	void GfxBackend::TransitionResource(ComPtr<CGfxCmdList> InCmdList, ComPtr<CGfxResource> InResource, D3D12_RESOURCE_STATES InPreviousState, D3D12_RESOURCE_STATES InState)
 	{
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition
 		(
@@ -102,79 +153,112 @@ namespace Dawn
 			D3D12_RESOURCE_BARRIER_FLAG_NONE
 		);
 
-		g_CommandList->ResourceBarrier(1, &barrier);
+		InCmdList->ResourceBarrier(1, &barrier);
 	}
 
 	//
+	// Reads a pre-compiled shader file into a blob!
 	//
-	//
-	void GfxBackend::Reset()
+	HRESULT GfxBackend::ReadShader(LPCWSTR InSrcFile, ID3DBlob** OutBlob)
 	{
-		u32 BackBufferIndex = g_Device.GetCurrentBufferIndex();
-		auto commandAllocator = g_CommandAllocators[BackBufferIndex];
-		commandAllocator->Reset();
-		g_CommandList->Reset(commandAllocator.Get(), nullptr);
-		TransitionResource(g_Device.GetBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		if (!InSrcFile || !OutBlob)
+			return E_INVALIDARG;
+
+		ID3DBlob* shaderBlob = nullptr;
+		*OutBlob = nullptr;
+		HRESULT hr = D3DReadFileToBlob(InSrcFile, &shaderBlob);
+
+		if (FAILED(hr))
+		{
+			if (shaderBlob)
+				shaderBlob->Release();
+
+			return hr;
+		}
+
+		*OutBlob = shaderBlob;
+
+		return hr;
 	}
 
 	//
+	// Compiles a shader from a file!
+	// Function taken from https://docs.microsoft.com/en-us/windows/desktop/direct3d11/how-to--compile-a-shader
 	//
-	//
-	void GfxBackend::Present()
+	HRESULT GfxBackend::CompileShader(LPCWSTR InSrcFile, LPCSTR InEntryPoint, LPCSTR InProfile, ID3DBlob** OutBlob)
 	{
-		
-		TransitionResource(GfxBackend::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-		ThrowIfFailed(g_CommandList->Close());
+		if (!InSrcFile || !InEntryPoint || !InProfile || !OutBlob)
+			return E_INVALIDARG;
 
-		ID3D12CommandList* const commandLists[] = {
-			g_CommandList.Get()
+		*OutBlob = nullptr;
+
+		UINT flags = D3DCOMPILE_ENABLE_STRICTNESS;
+#if defined( DEBUG ) || defined( _DEBUG )
+		//flags |= D3DCOMPILE_DEBUG;
+#endif
+
+		const D3D_SHADER_MACRO defines[] =
+		{
+			"EXAMPLE_DEFINE", "1",
+			NULL, NULL
 		};
 
-		g_Device.GetBackbufferQueue()->ExecuteCommandLists(1, commandLists);
+		ID3DBlob* shaderBlob = nullptr;
+		ID3DBlob* errorBlob = nullptr;
+		HRESULT hr = D3DCompileFromFile(InSrcFile, defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+			InEntryPoint, InProfile,
+			flags, 0, &shaderBlob, &errorBlob);
 
-		u32 BackBufferIndex = g_Device.GetCurrentBufferIndex();
-		g_FrameFenceValues[BackBufferIndex] = SignalFence(g_Device.GetBackbufferQueue(), g_Fence, g_FenceValue);
-		g_Device.Present();
-		GfxBackend::WaitForFenceValue(g_Fence, g_FrameFenceValues[BackBufferIndex], g_FenceEvent);
-	}
-
-	//
-	// 
-	//
-	u64 GfxBackend::SignalFence(ComPtr<CGfxQueue> InQueue, ComPtr<CGfxFence> InFence, u64& InFenceValue)
-	{
-		u64 FenceValueForSignal = ++InFenceValue;
-		ThrowIfFailed(InQueue->Signal(InFence.Get(), FenceValueForSignal));
-
-		return FenceValueForSignal;
-	}
-
-	//
-	//
-	//
-	void GfxBackend::WaitForFenceValue(ComPtr<CGfxFence> InFence, u64 InFenceValue, HANDLE InFenceEvent, std::chrono::milliseconds InDuration)
-	{
-		if (InFence->GetCompletedValue() < InFenceValue)
+		if (FAILED(hr))
 		{
-			ThrowIfFailed(InFence->SetEventOnCompletion(InFenceValue, InFenceEvent));
-			::WaitForSingleObject(InFenceEvent, static_cast<DWORD>(InDuration.count()));
+			if (errorBlob)
+			{
+				OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+				errorBlob->Release();
+			}
+
+			if (shaderBlob)
+				shaderBlob->Release();
+
+			return hr;
 		}
+
+		*OutBlob = shaderBlob;
+
+		return hr;
 	}
 
-	void GfxBackend::Flush(ComPtr<CGfxQueue> InCommandQueue, ComPtr<CGfxFence> InFence, u64& InFenceValue, HANDLE InFenceEvent)
+	//
+	//
+	//
+	void GfxBackend::Reset(ComPtr<CGfxCmdList> InCmdList)
 	{
-		u64 FenceValueForSignal = SignalFence(InCommandQueue, InFence, InFenceValue);
-		WaitForFenceValue(InFence, FenceValueForSignal, InFenceEvent);
+		TransitionResource(InCmdList, GfxBackend::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		ClearRenderTarget(InCmdList, GfxBackend::GetCurrentBackbuffer(), DirectX::XMFLOAT4({ 0.4f, 0.6f, 0.9f, 1.0f }));
 	}
-	
+
+	//
+	//
+	//
+	void GfxBackend::Present(ComPtr<CGfxCmdList> InCmdList)
+	{
+		auto CommandQueue = g_Device.GetQueue();
+
+		TransitionResource(InCmdList, GfxBackend::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		u32 BackBufferIndex = g_Device.GetCurrentBufferIndex();
+		g_FrameFenceValues[BackBufferIndex] = CommandQueue->ExecuteCommandList(InCmdList);
+		BackBufferIndex = g_Device.Present();
+		CommandQueue->WaitForFenceValue(g_FrameFenceValues[BackBufferIndex]);
+	}
+
 	CGfxDevice* GfxBackend::GetDevice()
 	{
 		return &g_Device;
 	}
 
-	ComPtr<CGfxCmdList> GfxBackend::GetCommandList()
+	std::shared_ptr<CGfxQueue> GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE type)
 	{
-		return g_CommandList;
+		return g_Device.GetQueue(type);
 	}
 
 	ComPtr<CGfxResource> GfxBackend::GetCurrentBackbuffer()
@@ -192,6 +276,16 @@ namespace Dawn
 		);
 
 		return rtv;
+	}
+
+	D3D12_CPU_DESCRIPTOR_HANDLE GfxBackend::GetDepthBufferDescHandle()
+	{
+		return g_Device.GetDSVHeap()->GetCPUDescriptorHandleForHeapStart();
+	}
+
+	ComPtr<CGfxResource> GfxBackend::GetDepthBuffer()
+	{
+		return g_Device.GetDepthBuffer();
 	}
 
 }
