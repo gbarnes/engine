@@ -13,6 +13,10 @@ namespace Dawn
 		void Update();
 		void Render(ComPtr<CGfxCmdList> InCmdList);
 		void Free();
+
+		void OnFOVChanged(CEvent& InEvent);
+		void OnCamPosChanged(CEvent& InEvent);
+
 	private:
 		// Vertex buffer for the cube.
 		ComPtr<CGfxResource> VertexBuffer;
@@ -28,6 +32,9 @@ namespace Dawn
 		DirectX::XMMATRIX ModelMatrix;
 		DirectX::XMMATRIX ViewMatrix;
 		DirectX::XMMATRIX ProjectionMatrix;
+
+		float FoV = 45.0f;
+		float CamPosition[3] = { 0, 0, -10 };
 	};
 
 }

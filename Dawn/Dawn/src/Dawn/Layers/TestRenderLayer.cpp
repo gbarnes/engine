@@ -6,6 +6,8 @@
 #include <d3d12.h>
 #include "Core/GDI/d3dx12.h"
 #include "Application.h"
+#include "inc_core.h"
+#include "UI/UIEditorEvents.h"
 
 namespace Dawn
 {
@@ -44,8 +46,32 @@ namespace Dawn
 	ComPtr<ID3DBlob> vsBlob;
 	ComPtr<ID3DBlob> psBlob;
 
+
+	void CTestRenderLayer::OnFOVChanged(CEvent& InEvent)
+	{
+		CUIFovChangedEvent& e = static_cast<CUIFovChangedEvent&>(InEvent);
+		this->FoV = e.GetFov();
+	}
+
+	void CTestRenderLayer::OnCamPosChanged(CEvent& InEvent)
+	{
+		CUICamPosChangedEvent& e = static_cast<CUICamPosChangedEvent&>(InEvent);
+		float* positionArray = e.GetPos();
+
+		if (positionArray[0] == 0.0f && positionArray[1] == 0.0f && positionArray[2] == 0.0f)
+			return;
+
+		this->CamPosition[0] = positionArray[0];
+		this->CamPosition[1] = positionArray[1];
+		this->CamPosition[2] = positionArray[2];
+	}
+
 	void CTestRenderLayer::Setup()
 	{
+		CEventDispatcher::Subscribe(FOVChangedEvtKey, BIND_EVENT_MEMBER(CTestRenderLayer::OnFOVChanged));
+		CEventDispatcher::Subscribe(CamPosChangedEvtKey, BIND_EVENT_MEMBER(CTestRenderLayer::OnCamPosChanged));
+
+	
 		ComPtr<ID3D12Device2> Device = GfxBackend::GetDevice()->GetD3D12Device();
 		auto CommandQueue = GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 		auto CommandList = CommandQueue->GetCommandList();
@@ -159,7 +185,7 @@ namespace Dawn
 		ModelMatrix = DirectX::XMMatrixRotationAxis(rotationAxis, DirectX::XMConvertToRadians(angle));
 
 		// Update the view matrix.
-		const DirectX::XMVECTOR eyePosition = DirectX::XMVectorSet(0, 0, -10, 1);
+		const DirectX::XMVECTOR eyePosition = DirectX::XMVectorSet(CamPosition[0], CamPosition[1], CamPosition[2], 1);
 		const DirectX::XMVECTOR focusPoint = DirectX::XMVectorSet(0, 0, 0, 1);
 		const DirectX::XMVECTOR upDirection = DirectX::XMVectorSet(0, 1, 0, 0);
 		ViewMatrix = DirectX::XMMatrixLookAtLH(eyePosition, focusPoint, upDirection);
@@ -168,7 +194,7 @@ namespace Dawn
 
 		// Update the projection matrix.
 		float aspectRatio = Settings->WindowWidth / static_cast<float>(Settings->WindowHeight);
-		ProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(45.0), aspectRatio, 0.1f, 100.0f);
+		ProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(this->FoV), aspectRatio, 0.1f, 100.0f);
 	}
 
 	void CTestRenderLayer::Render(ComPtr<CGfxCmdList> InCmdList)

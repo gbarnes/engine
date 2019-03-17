@@ -194,7 +194,7 @@ namespace Dawn
 
 		UINT flags = D3DCOMPILE_ENABLE_STRICTNESS;
 #if defined( DEBUG ) || defined( _DEBUG )
-		//flags |= D3DCOMPILE_DEBUG;
+		flags |= D3DCOMPILE_DEBUG;
 #endif
 
 		const D3D_SHADER_MACRO defines[] =

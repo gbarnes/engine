@@ -11,6 +11,7 @@ namespace Dawn
 		void Shutdown();
 		void BeginNewFrame();
 		void Render(CGfxCmdList* InCmdList);
+		LRESULT InputHandling(HWND InHwnd, UINT InMsg, WPARAM InWParam, LPARAM InLParam);
 		void Resize();
 	}
 }

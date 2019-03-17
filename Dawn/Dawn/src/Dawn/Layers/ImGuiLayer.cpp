@@ -1,5 +1,6 @@
 #include "ImGuiLayer.h"
 #include "Vendor/ImGui/ImGuiWrapper.h"
+#include "UI/Editor/imgui_editor_functions.h"
 #include "imgui.h"
 
 namespace Dawn
@@ -15,13 +16,13 @@ namespace Dawn
 
 	void CImGuiLayer::Setup()
 	{
-		ImGuiWrapper::Create(&WindowHandle);
+		ImGuiWrapper::Create(WindowHandle);
 	}
 
 	void CImGuiLayer::Update()
 	{
 		ImGuiWrapper::BeginNewFrame();
-		ConstructFpsDisplay();
+		RenderEditorUI();
 	}
 
 	void CImGuiLayer::Render(ComPtr<CGfxCmdList> InCmdList)
@@ -35,17 +36,5 @@ namespace Dawn
 	void CImGuiLayer::Free()
 	{
 		ImGuiWrapper::Shutdown();
-	}
-
-	void CImGuiLayer::ConstructFpsDisplay()
-	{
-		bool isOpen = false;
-		ImGui::Begin("Stats", &isOpen, ImGuiWindowFlags_NoTitleBar |
-			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
-			ImGuiWindowFlags_NoInputs);
-		ImGui::SetWindowPos(ImVec2(20, 20));
-		ImGui::TextColored(ImVec4(0, 1, 0, 1), "%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		ImGui::End();
 	}
 }

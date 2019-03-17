@@ -7,6 +7,7 @@
 #include <windowsx.h>
 #include "Core/GDI/GfxBackend.h"
 #include "Vendor/ImGui/ImGuiWrapper.h"
+#include "imgui.h"
 
 namespace Dawn
 {
@@ -215,6 +216,10 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	LRESULT CALLBACK CWindow::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
+		if (ImGuiWrapper::InputHandling(hwnd, message, wParam, lParam))
+			return true;
+
+
 		switch (message)
 		{
 		case WM_PAINT:
@@ -235,7 +240,7 @@ namespace Dawn
 			int width = clientRect.right - clientRect.left;
 			int height = clientRect.bottom - clientRect.top;
 			GfxBackend::Resize(width, height);
-			//ImGuiWrapper::Resize(); DO we really need this?! 
+			//ImGuiWrapper::Resize(); //DO we really need this?! 
 			break;
 		}
 		case WM_DESTROY:
@@ -278,7 +283,14 @@ namespace Dawn
 			CEventDispatcher::Trigger(EVENT_KEY("MousePressed"), CMousePressedEvent(button));
 			break;
 		}
-		case WM_CHAR:
+		/*case WM_CHAR:
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			// You can also use ToAscii()+GetKeyboardState() to retrieve characters.
+			if (wParam > 0 && wParam < 0x10000)
+				io.AddInputCharacter((unsigned short)wParam);
+			break;
+		}*/
 		case WM_KEYDOWN:
 		case WM_KEYUP:
 		case WM_SYSKEYDOWN:

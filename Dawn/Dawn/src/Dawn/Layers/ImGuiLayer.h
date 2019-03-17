@@ -18,7 +18,6 @@ namespace Dawn
 
 	private:
 		HWND WindowHandle;
-		void ConstructFpsDisplay();
 	};
 
 };

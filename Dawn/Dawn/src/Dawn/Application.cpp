@@ -78,23 +78,23 @@ namespace Dawn
 
 	void Application::OnMouseMovedEvent(CEvent& InEvent)
 	{
-		CMouseMovedEvent& e = static_cast<CMouseMovedEvent&>(InEvent);
+		/*CMouseMovedEvent& e = static_cast<CMouseMovedEvent&>(InEvent);
 		ImGuiIO& io = ImGui::GetIO();
-		io.MousePos = ImVec2(e.GetX(), e.GetY());
+		io.MousePos = ImVec2(e.GetX(), e.GetY());*/
 	}
 
 	void Application::OnMousePressedEvent(CEvent& InEvent)
 	{
-		ImGuiIO& io = ImGui::GetIO();
+		/*ImGuiIO& io = ImGui::GetIO();
 		CMousePressedEvent& e = static_cast<CMousePressedEvent&>(InEvent);
-		io.MouseDown[e.GetButton()] = true;
+		io.MouseDown[e.GetButton()] = true;*/
 	}
 
 	void Application::OnMouseReleasedEvent(CEvent& InEvent)
 	{
-		ImGuiIO& io = ImGui::GetIO();
+		/*ImGuiIO& io = ImGui::GetIO();
 		CMouseReleasedEvent& e = static_cast<CMouseReleasedEvent&>(InEvent);
-		io.MouseDown[e.GetButton()] = false;
+		io.MouseDown[e.GetButton()] = false;*/
 	}
 
 
@@ -157,11 +157,6 @@ namespace Dawn
 		if (!GfxBackend::IsInitialized())
 			return;
 
-		for (CLayer* layer : Layers)
-		{
-			layer->Update();
-		}
-
 		auto rtv = GfxBackend::GetCurrentBackbufferDescHandle();
 		auto dsv = GfxBackend::GetDepthBufferDescHandle();
 		auto CmdList = GfxBackend::GetQueue()->GetCommandList();
@@ -175,6 +170,7 @@ namespace Dawn
 
 		for (CLayer* layer : Layers)
 		{
+			layer->Update();
 			layer->Render(CmdList);
 		}
 		
@@ -184,7 +180,7 @@ namespace Dawn
 	void Application::SetupLayers()
 	{
 		LayerInsertCount = Layers.begin();
-		//this->PushLayer(new CTestRenderLayer());
+		this->PushLayer(new CTestRenderLayer());
 		this->PushLayer(new CImGuiLayer(Window.GetHwnd()));
 
 		for (CLayer* layer : Layers)
