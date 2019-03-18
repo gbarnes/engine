@@ -14,7 +14,7 @@ namespace Dawn
 {
 	const u8 g_NumFrames = 3;
 
-	class CGfxQueue;
+	class GfxQueue;
 
 	//-----------------------------------------------------------------------------
 	// Main Class Declarations
@@ -22,29 +22,29 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// The GrahpicsDevice is used to setup DirectX12 and provide usage of it!
 	//-----------------------------------------------------------------------------
-	class CGfxDevice
+	class GfxDevice
 	{
 	public:
 		//-------------------------------------------------------------------------
 		// Constructors & Destructors
 		//-------------------------------------------------------------------------
-		CGfxDevice::CGfxDevice();
-		CGfxDevice::~CGfxDevice(void);
+		GfxDevice::GfxDevice();
+		GfxDevice::~GfxDevice(void);
 
 		//-------------------------------------------------------------------------
 		// Public Members
 		//-------------------------------------------------------------------------
-		EResult CGfxDevice::Initialize(u32 InWidth, u32 InHeight, HWND InHWnd, bool InUseVSync = false, bool InIsFullscreen = false);
-		u64 CGfxDevice::Present();
-		void CGfxDevice::Shutdown();
+		EResult GfxDevice::Initialize(u32 InWidth, u32 InHeight, HWND InHWnd, bool InUseVSync = false, bool InIsFullscreen = false);
+		u64 GfxDevice::Present();
+		void GfxDevice::Shutdown();
 
-		const u32 CGfxDevice::GetCurrentBufferIndex() const {
+		const u32 GfxDevice::GetCurrentBufferIndex() const {
 			return BackBufferIndex;
 		}
 
-		std::shared_ptr<CGfxQueue> CGfxDevice::GetQueue(D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT) const {
+		std::shared_ptr<GfxQueue> GfxDevice::GetQueue(D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT) const {
 
-			std::shared_ptr<CGfxQueue> CommandQueue;
+			std::shared_ptr<GfxQueue> CommandQueue;
 			switch (type)
 			{
 			case D3D12_COMMAND_LIST_TYPE_DIRECT:
@@ -63,45 +63,45 @@ namespace Dawn
 			return CommandQueue;
 		}
 
-		ComPtr<CGfxResource> CGfxDevice::GetBackbuffer() const {
+		ComPtr<CGfxResource> GfxDevice::GetBackbuffer() const {
 			return this->BackBufferRenderTarget[BackBufferIndex];
 		}
 
-		ComPtr<CGfxHeapDesciptor> CGfxDevice::GetRTVHeap() const {
+		ComPtr<CGfxHeapDesciptor> GfxDevice::GetRTVHeap() const {
 			return this->RenderTargetViewHeap;
 		}
 
-		ComPtr<CGfxResource> CGfxDevice::GetDepthBuffer() const {
+		ComPtr<CGfxResource> GfxDevice::GetDepthBuffer() const {
 			return this->DepthBuffer;
 		}
 
-		ComPtr<CGfxHeapDesciptor> CGfxDevice::GetDSVHeap() const {
+		ComPtr<CGfxHeapDesciptor> GfxDevice::GetDSVHeap() const {
 			return this->DepthBufferHeap;
 		}
 
-		ComPtr<ID3D12Device2> CGfxDevice::GetD3D12Device() const {
+		ComPtr<ID3D12Device2> GfxDevice::GetD3D12Device() const {
 			return this->Device;
 		}
 
-		CD3DX12_VIEWPORT CGfxDevice::GetViewport() const {
+		CD3DX12_VIEWPORT GfxDevice::GetViewport() const {
 			return this->Viewport;
 		}
 
-		CD3DX12_RECT CGfxDevice::GetScissorRect() const {
+		CD3DX12_RECT GfxDevice::GetScissorRect() const {
 			return this->ScissorRect;
 		}
 
-		u32 CGfxDevice::GetRTVDescriptorSize() const {
+		u32 GfxDevice::GetRTVDescriptorSize() const {
 			return this->RTVDescriptorSize;
 		}
 
-		ComPtr<CGfxHeapDesciptor> CGfxDevice::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-		ComPtr<CGfxCmdAllocator> CGfxDevice::CreateCmdAllocator(D3D12_COMMAND_LIST_TYPE InType);
-		ComPtr<CGfxCmdList> CGfxDevice::CreateCmdList(ComPtr<CGfxCmdAllocator> InAllocator, D3D12_COMMAND_LIST_TYPE InType);
-		ComPtr<CGfxFence> CGfxDevice::CreateFence();
-		void CGfxDevice::CreateDepthBuffer(u32 InWidth, u32 InHeight);
+		ComPtr<CGfxHeapDesciptor> GfxDevice::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+		ComPtr<CGfxCmdAllocator> GfxDevice::CreateCmdAllocator(D3D12_COMMAND_LIST_TYPE InType);
+		ComPtr<CGfxCmdList> GfxDevice::CreateCmdList(ComPtr<CGfxCmdAllocator> InAllocator, D3D12_COMMAND_LIST_TYPE InType);
+		ComPtr<CGfxFence> GfxDevice::CreateFence();
+		void GfxDevice::CreateDepthBuffer(u32 InWidth, u32 InHeight);
 
-		void CGfxDevice::Resize(u32 InWidth, u32 InHeight);
+		void GfxDevice::Resize(u32 InWidth, u32 InHeight);
 		
 	private:
 		ComPtr<ID3D12Device2> Device;
@@ -114,9 +114,9 @@ namespace Dawn
 		ComPtr<CGfxHeapDesciptor> RenderTargetViewHeap;
 		ComPtr<CGfxResource> BackBufferRenderTarget[g_NumFrames];
 
-		std::shared_ptr<CGfxQueue> DirectCommandQueue;
-		std::shared_ptr<CGfxQueue> CopyCommandQueue;
-		std::shared_ptr<CGfxQueue> ComputeCommandQueue;
+		std::shared_ptr<GfxQueue> DirectCommandQueue;
+		std::shared_ptr<GfxQueue> CopyCommandQueue;
+		std::shared_ptr<GfxQueue> ComputeCommandQueue;
 
 		CD3DX12_VIEWPORT Viewport;
 		CD3DX12_RECT ScissorRect;
@@ -130,12 +130,12 @@ namespace Dawn
 		//-------------------------------------------------------------------------
 		// Private Members
 		//-------------------------------------------------------------------------
-		void CGfxDevice::EnableDebugLayer();
-		bool CGfxDevice::CheckForTearingSupport();
-		void CGfxDevice::UpdateRenderTargetViews();
+		void GfxDevice::EnableDebugLayer();
+		bool GfxDevice::CheckForTearingSupport();
+		void GfxDevice::UpdateRenderTargetViews();
 
-		ComPtr<ID3D12Device2> CGfxDevice::CreateDevice(ComPtr<IDXGIAdapter3> InAdapter);
-		ComPtr<IDXGIAdapter3> CGfxDevice::GetAdapter(bool InUseWrap);
-		ComPtr<IDXGISwapChain3> CGfxDevice::CreateSwapChain(HWND InHwnd, ComPtr<CGfxInternalQueue> InQueue, u32 InWidth, u32 InHeight, u32 InBufferCount);
+		ComPtr<ID3D12Device2> GfxDevice::CreateDevice(ComPtr<IDXGIAdapter3> InAdapter);
+		ComPtr<IDXGIAdapter3> GfxDevice::GetAdapter(bool InUseWrap);
+		ComPtr<IDXGISwapChain3> GfxDevice::CreateSwapChain(HWND InHwnd, ComPtr<GfxInternalQueue> InQueue, u32 InWidth, u32 InHeight, u32 InBufferCount);
 	};
 }

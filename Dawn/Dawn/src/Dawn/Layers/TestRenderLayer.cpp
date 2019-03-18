@@ -47,15 +47,15 @@ namespace Dawn
 	ComPtr<ID3DBlob> psBlob;
 
 
-	void CTestRenderLayer::OnFOVChanged(CEvent& InEvent)
+	void TestRenderLayer::OnFOVChanged(Event& InEvent)
 	{
-		CUIFovChangedEvent& e = static_cast<CUIFovChangedEvent&>(InEvent);
+		UIFovChangedEvent& e = static_cast<UIFovChangedEvent&>(InEvent);
 		this->FoV = e.GetFov();
 	}
 
-	void CTestRenderLayer::OnCamPosChanged(CEvent& InEvent)
+	void TestRenderLayer::OnCamPosChanged(Event& InEvent)
 	{
-		CUICamPosChangedEvent& e = static_cast<CUICamPosChangedEvent&>(InEvent);
+		UICamPosChangedEvent& e = static_cast<UICamPosChangedEvent&>(InEvent);
 		float* positionArray = e.GetPos();
 
 		if (positionArray[0] == 0.0f && positionArray[1] == 0.0f && positionArray[2] == 0.0f)
@@ -66,10 +66,10 @@ namespace Dawn
 		this->CamPosition[2] = positionArray[2];
 	}
 
-	void CTestRenderLayer::Setup()
+	void TestRenderLayer::Setup()
 	{
-		CEventDispatcher::Subscribe(FOVChangedEvtKey, BIND_EVENT_MEMBER(CTestRenderLayer::OnFOVChanged));
-		CEventDispatcher::Subscribe(CamPosChangedEvtKey, BIND_EVENT_MEMBER(CTestRenderLayer::OnCamPosChanged));
+		CEventDispatcher::Subscribe(FOVChangedEvtKey, BIND_EVENT_MEMBER(TestRenderLayer::OnFOVChanged));
+		CEventDispatcher::Subscribe(CamPosChangedEvtKey, BIND_EVENT_MEMBER(TestRenderLayer::OnCamPosChanged));
 
 	
 		ComPtr<ID3D12Device2> Device = GfxBackend::GetDevice()->GetD3D12Device();
@@ -178,10 +178,10 @@ namespace Dawn
 		CommandQueue->Flush();
 	}
 
-	void CTestRenderLayer::Update()
+	void TestRenderLayer::Update()
 	{
-		float angle = static_cast<float>(45);
-		const DirectX::XMVECTOR rotationAxis = DirectX::XMVectorSet(0, 1, 1, 0);
+		float angle = static_cast<float>(Timer::GetTime().GetTotalSeconds() * 90.0);
+		const DirectX::XMVECTOR rotationAxis = DirectX::XMVectorSet(0, 1, 0, 0);
 		ModelMatrix = DirectX::XMMatrixRotationAxis(rotationAxis, DirectX::XMConvertToRadians(angle));
 
 		// Update the view matrix.
@@ -197,7 +197,7 @@ namespace Dawn
 		ProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(this->FoV), aspectRatio, 0.1f, 100.0f);
 	}
 
-	void CTestRenderLayer::Render(ComPtr<CGfxCmdList> InCmdList)
+	void TestRenderLayer::Render(ComPtr<CGfxCmdList> InCmdList)
 	{
 		CGfxState* state = PipelineState.Get();
 
@@ -220,7 +220,7 @@ namespace Dawn
 		InCmdList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
 	}
 
-	void CTestRenderLayer::Free()
+	void TestRenderLayer::Free()
 	{
 		this->PipelineState.Reset();
 		this->IndexBuffer.Reset();

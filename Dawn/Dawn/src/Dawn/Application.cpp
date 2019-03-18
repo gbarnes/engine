@@ -13,6 +13,9 @@
 #include "Vendor/ImGui/imgui_impl_dx12.h"
 #include "Vendor/ImGui/imgui_impl_win32.h"
 #include <d3d12.h>
+
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tinyobjloader.h"
 //#include "Core/JobSystem/JobSystem.h"
 
 /*
@@ -68,32 +71,32 @@ namespace Dawn
 	Application::Application(SAppSettings& InSettings)
 	{
 		this->Settings = InSettings;
-		CLocator::Add(AppLocatorId, this);
+		Locator::Add(AppLocatorId, this);
 	}
 
 	Application::~Application()
 	{
-		CLocator::Remove(AppLocatorId);
+		Locator::Remove(AppLocatorId);
 	}
 
-	void Application::OnMouseMovedEvent(CEvent& InEvent)
+	void Application::OnMouseMovedEvent(Event& InEvent)
 	{
-		/*CMouseMovedEvent& e = static_cast<CMouseMovedEvent&>(InEvent);
+		/*MouseMovedEvent& e = static_cast<MouseMovedEvent&>(InEvent);
 		ImGuiIO& io = ImGui::GetIO();
 		io.MousePos = ImVec2(e.GetX(), e.GetY());*/
 	}
 
-	void Application::OnMousePressedEvent(CEvent& InEvent)
+	void Application::OnMousePressedEvent(Event& InEvent)
 	{
 		/*ImGuiIO& io = ImGui::GetIO();
-		CMousePressedEvent& e = static_cast<CMousePressedEvent&>(InEvent);
+		MousePressedEvent& e = static_cast<MousePressedEvent&>(InEvent);
 		io.MouseDown[e.GetButton()] = true;*/
 	}
 
-	void Application::OnMouseReleasedEvent(CEvent& InEvent)
+	void Application::OnMouseReleasedEvent(Event& InEvent)
 	{
 		/*ImGuiIO& io = ImGui::GetIO();
-		CMouseReleasedEvent& e = static_cast<CMouseReleasedEvent&>(InEvent);
+		MouseReleasedEvent& e = static_cast<MouseReleasedEvent&>(InEvent);
 		io.MouseDown[e.GetButton()] = false;*/
 	}
 
@@ -110,6 +113,7 @@ namespace Dawn
 			return;
 		}
 
+		Clock.Reset();
 		this->Window.OnWindowPaint = std::bind(&Application::Tick, this);
 		
 		// BEGIN Subscriptions
@@ -134,7 +138,21 @@ namespace Dawn
 
 		SetupLayers();
 
-		DWN_CORE_INFO("Core Context initialized.\n");
+		{
+			tinyobj::attrib_t attrib;
+			std::vector<tinyobj::shape_t> shapes;
+			std::vector<tinyobj::material_t> materials;
+
+			std::string warn;
+			std::string err;
+			bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, "Test.obj",
+				nullptr, true);
+			//shapes[0].mesh.indices[0].vertex_index
+			DWN_CORE_ERROR(err);
+
+		}
+
+		DWN_CORE_INFO("Core Context initialized.");
 
 		while (true)
 		{
@@ -145,7 +163,7 @@ namespace Dawn
 		ClearLayers();
 		GfxBackend::Shutdown();
 
-		DWN_CORE_INFO("Core Context shutdown.\n");
+		DWN_CORE_INFO("Core Context shutdown.");
 	}
 
 	void Application::Load()
@@ -156,6 +174,8 @@ namespace Dawn
 	{
 		if (!GfxBackend::IsInitialized())
 			return;
+
+		Clock.Tick();
 
 		auto rtv = GfxBackend::GetCurrentBackbufferDescHandle();
 		auto dsv = GfxBackend::GetDepthBufferDescHandle();
@@ -168,7 +188,7 @@ namespace Dawn
 			CmdList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
 		}
 
-		for (CLayer* layer : Layers)
+		for (Layer* layer : Layers)
 		{
 			layer->Update();
 			layer->Render(CmdList);
@@ -180,19 +200,20 @@ namespace Dawn
 	void Application::SetupLayers()
 	{
 		LayerInsertCount = Layers.begin();
-		this->PushLayer(new CTestRenderLayer());
-		this->PushLayer(new CImGuiLayer(Window.GetHwnd()));
 
-		for (CLayer* layer : Layers)
+		this->PushLayer(new ImGuiLayer(Window.GetHwnd()));
+		this->PushLayer(new TestRenderLayer());
+
+		for (Layer* layer : Layers)
 			layer->Setup();
 	}
 
-	void Application::PushLayer(CLayer* InLayer)
+	void Application::PushLayer(Layer* InLayer)
 	{
 		LayerInsertCount = Layers.emplace(LayerInsertCount, InLayer);
 	}
 
-	void Application::PopLayer(CLayer* InLayer)
+	void Application::PopLayer(Layer* InLayer)
 	{
 		auto it = std::find(this->Layers.begin(), this->Layers.end(), InLayer);
 		if (it != Layers.end())
@@ -204,7 +225,7 @@ namespace Dawn
 
 	void Application::ClearLayers()
 	{
-		for (CLayer* layer : Layers) 
+		for (Layer* layer : Layers) 
 		{
 			layer->Free();
 			delete layer;

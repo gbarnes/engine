@@ -5,11 +5,11 @@
 
 namespace Dawn
 {
-	class CImGuiLayer : public CLayer
+	class ImGuiLayer : public Layer
 	{
 	public:
-		CImGuiLayer(HWND InWindowHandle);
-		~CImGuiLayer();
+		ImGuiLayer(HWND InWindowHandle);
+		~ImGuiLayer();
 		
 		void Setup();
 		void Update();

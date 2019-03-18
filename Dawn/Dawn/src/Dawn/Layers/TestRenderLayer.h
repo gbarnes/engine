@@ -6,7 +6,7 @@
 namespace Dawn
 {
 
-	class CTestRenderLayer : public CLayer
+	class TestRenderLayer : public Layer
 	{
 	public:
 		void Setup();
@@ -14,8 +14,8 @@ namespace Dawn
 		void Render(ComPtr<CGfxCmdList> InCmdList);
 		void Free();
 
-		void OnFOVChanged(CEvent& InEvent);
-		void OnCamPosChanged(CEvent& InEvent);
+		void OnFOVChanged(Event& InEvent);
+		void OnCamPosChanged(Event& InEvent);
 
 	private:
 		// Vertex buffer for the cube.
@@ -34,7 +34,7 @@ namespace Dawn
 		DirectX::XMMATRIX ProjectionMatrix;
 
 		float FoV = 45.0f;
-		float CamPosition[3] = { 0, 0, -10 };
+		float CamPosition[3] = { 0, 3, -10 };
 	};
 
 }

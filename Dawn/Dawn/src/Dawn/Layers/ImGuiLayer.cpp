@@ -5,27 +5,27 @@
 
 namespace Dawn
 {
-	CImGuiLayer::CImGuiLayer(HWND InWindowHandle)
+	ImGuiLayer::ImGuiLayer(HWND InWindowHandle)
 		: WindowHandle(InWindowHandle)
 	{
 	}
 
-	CImGuiLayer::~CImGuiLayer()
+	ImGuiLayer::~ImGuiLayer()
 	{
 	}
 
-	void CImGuiLayer::Setup()
+	void ImGuiLayer::Setup()
 	{
 		ImGuiWrapper::Create(WindowHandle);
 	}
 
-	void CImGuiLayer::Update()
+	void ImGuiLayer::Update()
 	{
 		ImGuiWrapper::BeginNewFrame();
 		RenderEditorUI();
 	}
 
-	void CImGuiLayer::Render(ComPtr<CGfxCmdList> InCmdList)
+	void ImGuiLayer::Render(ComPtr<CGfxCmdList> InCmdList)
 	{
 		// TODO: passing a cmd list has to change since 
 		//		 we might want to use multiple cmd list for different
@@ -33,7 +33,7 @@ namespace Dawn
 		ImGuiWrapper::Render(InCmdList.Get());
 	}
 
-	void CImGuiLayer::Free()
+	void ImGuiLayer::Free()
 	{
 		ImGuiWrapper::Shutdown();
 	}

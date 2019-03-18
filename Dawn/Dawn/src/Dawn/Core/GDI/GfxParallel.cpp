@@ -11,11 +11,11 @@
 
 namespace Dawn
 {
-	SCmdListHandle CmdListHandles[GfxParallel::ThreadCount];
-	CGfxFence* Fences[GfxParallel::ThreadCount];
-	ComPtr<CGfxInternalQueue> CmdQueue;
+	//CmdListHandle CmdListHandles[GfxParallel::ThreadCount];
+	//CGfxFence* Fences[GfxParallel::ThreadCount];
+	//ComPtr<GfxInternalQueue> CmdQueue;
 
-	EResult GfxParallel::AllocateResources(CGfxDevice* GfxDevice)
+	EResult GfxParallel::AllocateResources(GfxDevice* GfxDevice)
 	{
 		/*CmdQueue = GfxDevice->CreateQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
@@ -59,8 +59,8 @@ namespace Dawn
 			}*/
 	}
 
-	CGfxInternalQueue* GfxParallel::ObtainQueue()
+	GfxInternalQueue* GfxParallel::ObtainQueue()
 	{
-		return CmdQueue.Get();
+		return nullptr;//CmdQueue.Get();
 	}
 }

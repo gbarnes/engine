@@ -37,10 +37,10 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Type definitions and forward declarations. 
 	//-----------------------------------------------------------------------------
-	class CAsyncFileOperation;
-	class CCriticalSection;
+	class AsyncFileOperation;
+	class CriticalSection;
 
-	typedef std::shared_ptr<CAsyncFileOperation> CSharedAsyncFileOperation;
+	typedef std::shared_ptr<AsyncFileOperation> CSharedAsyncFileOperation;
 
 	//-----------------------------------------------------------------------------
 	// Main Class Declarations
@@ -50,43 +50,43 @@ namespace Dawn
 	// and synchronous read and write operations for files. Furthermore files can
 	// be used in binary or ascii mode.
 	//-----------------------------------------------------------------------------
-	class CFile
+	class File
 	{
 	public:
 		//-------------------------------------------------------------------------
 		// Constructor & Destructor
 		//-------------------------------------------------------------------------
-		CFile::CFile();
-		CFile::~CFile(void);
+		File::File();
+		File::~File(void);
 
 
 		//-------------------------------------------------------------------------
 		// Synchronous Methods
 		//-------------------------------------------------------------------------
-		EResult CFile::Open(std::string InPath, int InMode, bool InIsAsync);
-		void CFile::Close();
+		EResult File::Open(std::string InPath, int InMode, bool InIsAsync);
+		void File::Close();
 
-		size_t CFile::Read(void* InBuffer, size_t InLength);
-		size_t CFile::Write(const void* InBuffer, size_t InLength);
+		size_t File::Read(void* InBuffer, size_t InLength);
+		size_t File::Write(const void* InBuffer, size_t InLength);
 
 		//-------------------------------------------------------------------------
 		// Asynchronous Methods
 		//-------------------------------------------------------------------------
-		CSharedAsyncFileOperation CFile::ReadAsync(void* InBuffer, size_t InLength);
-		CSharedAsyncFileOperation CFile::WriteAsync(void* InBuffer, size_t InLength);
+		CSharedAsyncFileOperation File::ReadAsync(void* InBuffer, size_t InLength);
+		CSharedAsyncFileOperation File::WriteAsync(void* InBuffer, size_t InLength);
 
 		//-------------------------------------------------------------------------
 		// Public Mehtods
 		//-------------------------------------------------------------------------
-		void CFile::Seek(size_t InPosition);
-		void CFile::SeekToEnd(void);
-		void CFile::Skip(size_t InBytes);
-		size_t CFile::Tell(void) const;
+		void File::Seek(size_t InPosition);
+		void File::SeekToEnd(void);
+		void File::Skip(size_t InBytes);
+		size_t File::Tell(void) const;
 
 		//-------------------------------------------------------------------------
 		// Public Static Mehtods
 		//-------------------------------------------------------------------------
-		static std::string CFile::GetStringFromMode(int InMode);
+		static std::string File::GetStringFromMode(int InMode);
 
 	private:
 
@@ -97,15 +97,15 @@ namespace Dawn
 		int Mode;
 		bool IsAsync;
 		EFileMode FileMode;
-		FILE* File;
-		CCriticalSection* CriticalSection;
+		FILE* WinFile;
+		CriticalSection* CriticalSection;
 
 		//-------------------------------------------------------------------------
 		// Private Methods
 		//-------------------------------------------------------------------------
-		EFileMode CFile::GetFileModeFromInt(int InMode);
-		void CFile::ReadBufferAsync(SFileThreadData InData);
-		void CFile::WriteBufferAsync(SFileThreadData InData);
+		EFileMode File::GetFileModeFromInt(int InMode);
+		void File::ReadBufferAsync(SFileThreadData InData);
+		void File::WriteBufferAsync(SFileThreadData InData);
 	};
 }
 

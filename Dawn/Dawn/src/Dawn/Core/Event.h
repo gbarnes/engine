@@ -10,7 +10,7 @@
 
 namespace Dawn
 {
-	class DAWN_API CEvent
+	class DAWN_API Event
 	{
 	public:
 		virtual std::string ToString() const { return std::string(""); }
@@ -19,7 +19,7 @@ namespace Dawn
 
 
 
-	typedef std::function<void(CEvent&)> EventDelegate;
+	typedef std::function<void(Event&)> EventDelegate;
 
 	struct DAWN_API SEventHandle
 	{
@@ -57,9 +57,9 @@ namespace Dawn
 
 			if (it == Subscribers.end()) 
 			{
-				std::vector<SEventDelegateData> List;
-				List.push_back(Data);
-				Subscribers.insert(EventSubscribePair(InKey, List));
+				std::vector<SEventDelegateData> list;
+				list.push_back(Data);
+				Subscribers.insert(EventSubscribePair(InKey, list));
 			}
 			else
 			{
@@ -76,16 +76,16 @@ namespace Dawn
 		//
 		//
 		//
-		static void Trigger(std::string& InKey, CEvent& InEvent)
+		static void Trigger(std::string& InKey, Event& InEvent)
 		{
 			EventSubscriberList::iterator it = Subscribers.find(InKey);
 			if (Subscribers.find(InKey) == Subscribers.end())
 				return;
 
-			std::vector<SEventDelegateData> List = it->second;
-			for (int i = 0; i < List.size(); ++i)
+			std::vector<SEventDelegateData> list = it->second;
+			for (int i = 0; i < list.size(); ++i)
 			{
-				List[i].Delegate(InEvent);
+				list[i].Delegate(InEvent);
 			}
 		}
 	private:

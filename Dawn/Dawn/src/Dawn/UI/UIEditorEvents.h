@@ -4,10 +4,10 @@
 
 namespace Dawn 
 {
-	class CUIFovChangedEvent : public CEvent
+	class UIFovChangedEvent : public Event
 	{
 	public:
-		CUIFovChangedEvent(float fov)
+		UIFovChangedEvent(float fov)
 			: FOV(fov) {}
 
 		inline float GetFov() const { return FOV; }
@@ -15,7 +15,7 @@ namespace Dawn
 		std::string ToString() const override
 		{
 			std::stringstream ss;
-			ss << "CUIFovChangedEvent: " << FOV;
+			ss << "UIFovChangedEvent: " << FOV;
 			return ss.str();
 		}
 
@@ -23,10 +23,10 @@ namespace Dawn
 		float FOV;
 	};
 
-	class CUICamPosChangedEvent : public CEvent
+	class UICamPosChangedEvent : public Event
 	{
 	public:
-		CUICamPosChangedEvent(float* pos)
+		UICamPosChangedEvent(float* pos)
 			: Position(pos) {}
 
 		inline float* GetPos() const { return &Position[0]; }
@@ -34,7 +34,7 @@ namespace Dawn
 		std::string ToString() const override
 		{
 			std::stringstream ss;
-			ss << "CUIFovChangedEvent: " << Position[0] << ", " << Position[1] << ", " << Position[3];
+			ss << "UICamPosChangedEvent: " << Position[0] << ", " << Position[1] << ", " << Position[3];
 			return ss.str();
 		}
 

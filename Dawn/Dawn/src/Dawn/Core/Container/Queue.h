@@ -4,10 +4,10 @@
 
 namespace Dawn
 {
-	enum CQueueType
+	enum QueueType
 	{
-		CQueueType_FiFo = 0,
-		CQueueType_LiFo = 0,
+		QueueType_FiFo = 0,
+		QueueType_LiFo = 0,
 	};
 
 
@@ -16,10 +16,10 @@ namespace Dawn
 
 	// First In First Out Queue!
 	template < class T >
-	class CQueue
+	class Queue
 	{
 		template < class T >
-		struct CQueueNode
+		struct QueueNode
 		{
 			friend class CQueue;
 		protected:
@@ -27,7 +27,7 @@ namespace Dawn
 		};
 
 	protected:
-		CQueueNode<T>* Nodes[MAX_QUEUE_SIZE] = { nullptr };
+		QueueNode<T>* Nodes[MAX_QUEUE_SIZE] = { nullptr };
 		long Top = 0;
 		long Bottom = 0;
 
@@ -37,7 +37,7 @@ namespace Dawn
 		{
 			if (Top < Bottom)
 			{
-				CQueueNode<T>* TempNode = this->Nodes[Top & MASK_QUEUE];
+				QueueNode<T>* TempNode = this->Nodes[Top & MASK_QUEUE];
 				T TempData = TempNode->Data;
 				SafeDelete(TempNode);
 				this->Nodes[Top & MASK_QUEUE] = nullptr;
@@ -51,7 +51,7 @@ namespace Dawn
 
 		void Push(T Data) 
 		{
-			CQueueNode<T>* TempLastQueue = this->Nodes[Bottom & MASK_QUEUE];
+			QueueNode<T>* TempLastQueue = this->Nodes[Bottom & MASK_QUEUE];
 
 			if (TempLastQueue != nullptr) 
 			{
@@ -59,7 +59,7 @@ namespace Dawn
 				return;
 			}
 
-			CQueueNode<T>* QueueNode = new CQueueNode<T>();
+			QueueNode<T>* QueueNode = new QueueNode<T>();
 			QueueNode->Data = Data;
 
 			this->Nodes[Bottom & MASK_QUEUE] = QueueNode;

@@ -8,11 +8,11 @@ namespace Dawn
 #define MAP_TABLE_SIZE 20
 
 	template < class K, class V>
-	class CKeyValuePair
+	class KeyValuePair
 	{
 	public:
 	
-		CKeyValuePair(K Key, V Value)
+		KeyValuePair(K Key, V Value)
 		{
 			this->InternalKey = Key;
 			this->InternalValue = Value;
@@ -41,24 +41,24 @@ namespace Dawn
 	};
 
 	template < class K, class V, class Hash = std::hash<K>>
-	class CMap
+	class Map
 	{
 	private:
 		//CMapNode<K, V>** Nodes;
-		Dawn::CList< CKeyValuePair<K, V>* > Nodes[MAP_TABLE_SIZE];
+		Dawn::List< KeyValuePair<K, V>* > Nodes[MAP_TABLE_SIZE];
 
 	public:
 		void Push(K Key, V Value) 
 		{
 			Hash KeyHashed;
 			i64 Index = KeyHashed(Key) % MAP_TABLE_SIZE;
-			Dawn::CList<CKeyValuePair<K, V>*>* Bucket = &this->Nodes[Index];
+			Dawn::List<KeyValuePair<K, V>*>* Bucket = &this->Nodes[Index];
 			if (Bucket->Count() > 0)
 			{
-				Dawn::CList<CKeyValuePair<K, V>*>::Iterator It = Bucket->Begin();
+				Dawn::List<KeyValuePair<K, V>*>::Iterator It = Bucket->Begin();
 				while (It.HasNext())
 				{
-					CKeyValuePair<K, V>* ValuePair = It.Next();
+					KeyValuePair<K, V>* ValuePair = It.Next();
 					if (ValuePair->Key() == Key)
 					{
 						ValuePair->SetValue(Value);
@@ -67,20 +67,20 @@ namespace Dawn
 				}
 			}
 
-			Bucket->PushBack(new CKeyValuePair<K, V>(Key, Value));
+			Bucket->PushBack(new KeyValuePair<K, V>(Key, Value));
 		}
 
 		V Remove(K Key)
 		{
 			Hash KeyHashed;
 			i64 Index = KeyHashed(Key) % MAP_TABLE_SIZE;
-			Dawn::CList<CKeyValuePair<K, V>*>* Bucket = &this->Nodes[Index];
+			Dawn::List<KeyValuePair<K, V>*>* Bucket = &this->Nodes[Index];
 			if (Bucket->Count() > 0)
 			{
-				Dawn::CList<CKeyValuePair<K, V>*>::Iterator It = Bucket->Begin();
+				Dawn::List<KeyValuePair<K, V>*>::Iterator It = Bucket->Begin();
 				while (It.HasNext())
 				{
-					CKeyValuePair<K, V>* ValuePair = It.Next();
+					KeyValuePair<K, V>* ValuePair = It.Next();
 					if (ValuePair->Key() == Key)
 					{
 						V TempValue = ValuePair->Value();
@@ -98,7 +98,7 @@ namespace Dawn
 		{
 			Hash KeyHashed;
 			i64 Index = KeyHashed(Key) % MAP_TABLE_SIZE;
-			Dawn::CList<CKeyValuePair<K, V>*>* Bucket = &this->Nodes[Index];
+			Dawn::List<KeyValuePair<K, V>*>* Bucket = &this->Nodes[Index];
 			return Bucket->Count() > 0;
 		}
 
@@ -106,7 +106,7 @@ namespace Dawn
 		{
 			for (int i = 0; i < MAP_TABLE_SIZE; i++)
 			{
-				Dawn::CList<CKeyValuePair<K, V>*>* Bucket = &this->Nodes[i];
+				Dawn::List<KeyValuePair<K, V>*>* Bucket = &this->Nodes[i];
 				while (Bucket->Count() > 0)
 				{
 					delete Bucket->PopFront();
@@ -118,7 +118,7 @@ namespace Dawn
 		// 
 		V operator[](K Key) 
 		{
-			CKeyValuePair<K, V>* KeyValuePair = FindKeyValuePair(Key);
+			KeyValuePair<K, V>* KeyValuePair = FindKeyValuePair(Key);
 			if (KeyValuePair)
 				return KeyValuePair->Value();
 
@@ -128,16 +128,16 @@ namespace Dawn
 	protected:
 
 		//
-		CKeyValuePair<K, V>* FindKeyValuePair(K Key)
+		KeyValuePair<K, V>* FindKeyValuePair(K Key)
 		{
 			Hash KeyHashed;
 			i64 Index = KeyHashed(Key) % MAP_TABLE_SIZE;
-			Dawn::CList<CKeyValuePair<K, V>*>* Bucket = &this->Nodes[Index];
-			Dawn::CList<CKeyValuePair<K, V>*>::Iterator It = Bucket->Begin();
+			Dawn::List<KeyValuePair<K, V>*>* Bucket = &this->Nodes[Index];
+			Dawn::List<KeyValuePair<K, V>*>::Iterator It = Bucket->Begin();
 
 			while (It.HasNext())
 			{
-				CKeyValuePair<K, V>* Node = It.Next();
+				KeyValuePair<K, V>* Node = It.Next();
 				if (Node->Key() == Key)
 					return Node;
 			}

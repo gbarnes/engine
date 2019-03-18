@@ -11,6 +11,6 @@ int main(int argc, char** argv)
 	Log::Init();
 	DWN_CORE_INFO("Initialized Log!");
 
-	CReferenceAppPtr app = CReferenceAppPtr(Dawn::CreateApplication());
+	ReferenceAppPtr app = ReferenceAppPtr(Dawn::CreateApplication());
 	app->Run();
 }

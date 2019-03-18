@@ -33,6 +33,7 @@ project "Dawn"
 	includedirs
 	{
 		"Dawn/vendor/spdlog/include/",
+		"Dawn/vendor/tinyobjloader/include/",
 		"%{prj.name}/src/Dawn/",
 		"%{IncludeDir.ImGui}"
 	}
@@ -113,6 +114,7 @@ project "Sandbox"
 	includedirs
 	{
 		"Dawn/vendor/spdlog/include/",
+		"Dawn/vendor/tinyobjloader/include/",
 		"Dawn/src"
 	}
 

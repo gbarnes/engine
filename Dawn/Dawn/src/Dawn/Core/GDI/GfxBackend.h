@@ -19,8 +19,8 @@
 namespace Dawn 
 {
 	
-	class CGfxDevice;
-	class CGfxQueue;
+	class GfxDevice;
+	class GfxQueue;
 
 	namespace GfxBackend 
 	{
@@ -43,8 +43,8 @@ namespace Dawn
 		void UpdateBufferResource(ComPtr<CGfxCmdList> InCommandList, CGfxResource** OutDestinationResource, CGfxResource** OutIntermediateResource,
 			size_t InNumElements, size_t InElementSize, const void* InBufferData, D3D12_RESOURCE_FLAGS Inflags);
 
-		std::shared_ptr<CGfxQueue> GetQueue(D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT);
-		CGfxDevice* GetDevice();
+		std::shared_ptr<GfxQueue> GetQueue(D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT);
+		GfxDevice* GetDevice();
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE GetCurrentBackbufferDescHandle();
 		ComPtr<CGfxResource> GetCurrentBackbuffer();

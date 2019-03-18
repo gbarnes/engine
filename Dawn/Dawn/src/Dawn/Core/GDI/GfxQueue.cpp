@@ -7,7 +7,7 @@ namespace Dawn
 	//
 	// 
 	//
-	CGfxQueue::CGfxQueue(D3D12_COMMAND_LIST_TYPE InType)
+	GfxQueue::GfxQueue(D3D12_COMMAND_LIST_TYPE InType)
 		: FenceValue(0), CommandListType(InType)
 	{
 		D3D12_COMMAND_QUEUE_DESC desc = {};
@@ -16,7 +16,7 @@ namespace Dawn
 		desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 		desc.NodeMask = 0;
 
-		CGfxDevice* Device = GfxBackend::GetDevice();
+		GfxDevice* Device = GfxBackend::GetDevice();
 		assert(Device && "GfxDevice is null!");
 
 		ThrowIfFailed(Device->GetD3D12Device()->CreateCommandQueue(&desc, IID_PPV_ARGS(&CmdQueue)));
@@ -27,13 +27,13 @@ namespace Dawn
 
 	}
 
-	CGfxQueue::~CGfxQueue()
+	GfxQueue::~GfxQueue()
 	{
 		::CloseHandle(FenceEvent);
 	}
 
 	// Get an available command list from the command queue.
-	ComPtr<CGfxCmdList> CGfxQueue::GetCommandList()
+	ComPtr<CGfxCmdList> GfxQueue::GetCommandList()
 	{
 		ComPtr<CGfxCmdAllocator> CmdAllocator;
 		ComPtr<CGfxCmdList> CmdList;
@@ -72,7 +72,7 @@ namespace Dawn
 
 	// Execute a command list.
 	// Returns the fence value to wait for for this command list.
-	u64 CGfxQueue::ExecuteCommandList(ComPtr<CGfxCmdList> InCommandList)
+	u64 GfxQueue::ExecuteCommandList(ComPtr<CGfxCmdList> InCommandList)
 	{
 		InCommandList->Close();
 
@@ -87,14 +87,14 @@ namespace Dawn
 		CmdQueue->ExecuteCommandLists(1, ppCommandLists);
 		u64 FenceValue = Signal();
 
-		CommandAllocatorQueue.emplace(SCommandAllocatorEntry{ FenceValue, CommandAllocator });
+		CommandAllocatorQueue.emplace(CommandAllocatorEntry{ FenceValue, CommandAllocator });
 		CommandListQueue.push(InCommandList);
 		CommandAllocator->Release();
 
 		return FenceValue;
 	}
 
-	u64 CGfxQueue::Signal()
+	u64 GfxQueue::Signal()
 	{
 		u64 FenceValueForSignal = ++FenceValue;
 		ThrowIfFailed(CmdQueue->Signal(Fence.Get(), FenceValueForSignal));
@@ -102,12 +102,12 @@ namespace Dawn
 		return FenceValueForSignal;
 	}
 
-	bool CGfxQueue::IsFenceComplete(u64 InFenceValue)
+	bool GfxQueue::IsFenceComplete(u64 InFenceValue)
 	{
 		return Fence->GetCompletedValue() >= InFenceValue;
 	}
 
-	void CGfxQueue::WaitForFenceValue(u64 InFenceValue)
+	void GfxQueue::WaitForFenceValue(u64 InFenceValue)
 	{
 		if (!IsFenceComplete(InFenceValue))
 		{
@@ -116,33 +116,33 @@ namespace Dawn
 		}
 	}
 
-	void CGfxQueue::Flush()
+	void GfxQueue::Flush()
 	{
 		u64 FenceValueForSignal = Signal();
 		WaitForFenceValue(FenceValueForSignal);
 	}
 
-	void CGfxQueue::Reset()
+	void GfxQueue::Reset()
 	{
 		CmdQueue.Reset();
 		Fence.Reset();
 	}
 
-	ComPtr<CGfxInternalQueue> CGfxQueue::GetD3D12CommandQueue() const
+	ComPtr<GfxInternalQueue> GfxQueue::GetD3D12CommandQueue() const
 	{
 		return this->CmdQueue;
 	}
 
-	ComPtr<CGfxCmdAllocator> CGfxQueue::CreateCommandAllocator()
+	ComPtr<CGfxCmdAllocator> GfxQueue::CreateCommandAllocator()
 	{
-		CGfxDevice* Device = GfxBackend::GetDevice();
+		GfxDevice* Device = GfxBackend::GetDevice();
 		assert(Device && "GfxDevice is null!");
 		return Device->CreateCmdAllocator(CommandListType);
 	}
 
-	ComPtr<CGfxCmdList> CGfxQueue::CreateCommandList(ComPtr<CGfxCmdAllocator> InAllocator)
+	ComPtr<CGfxCmdList> GfxQueue::CreateCommandList(ComPtr<CGfxCmdAllocator> InAllocator)
 	{
-		CGfxDevice* Device = GfxBackend::GetDevice();
+		GfxDevice* Device = GfxBackend::GetDevice();
 		assert(Device && "GfxDevice is null!");
 		return Device->CreateCmdList(InAllocator, CommandListType);
 	}

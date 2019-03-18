@@ -3,15 +3,15 @@
 
 namespace Dawn
 {
-	Dawn::CMap< std::string, Dawn::CEObject* > CLocator::Instances;
+	Dawn::Map< std::string, Dawn::EObject* > Locator::Instances;
 
-	void CLocator::Add(std::string& InId, Dawn::CEObject* InInstance)
+	void Locator::Add(std::string& InId, Dawn::EObject* InInstance)
 	{
 		InInstance->AddRef();
 		Instances.Push(InId, InInstance);
 	}
 
-	void CLocator::Remove(std::string& InId)
+	void Locator::Remove(std::string& InId)
 	{
 		if (!Instances.Exists(InId))
 			return;

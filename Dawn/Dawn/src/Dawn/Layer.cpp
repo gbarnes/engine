@@ -2,12 +2,12 @@
 
 namespace Dawn
 {
-	CLayer::CLayer()
+	Layer::Layer()
 	{
 	}
 
 
-	CLayer::~CLayer()
+	Layer::~Layer()
 	{
 	}
 }

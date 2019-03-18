@@ -10,7 +10,7 @@
 namespace Dawn
 {
 	template < class T >
-	class CList
+	class List
 	{
 		template < class T >
 		struct SListNode
@@ -31,11 +31,11 @@ namespace Dawn
 	public:
 		class Iterator 
 		{
-			friend class CList;
+			friend class List;
 
 		protected:
 			SListNode<T> * CurrentNode = nullptr;
-			CList<T>* List;
+			List<T>* InternalList;
 
 		public:
 			bool HasNext() const
@@ -81,7 +81,7 @@ namespace Dawn
 				if (PreviousTemp != nullptr)
 					PreviousTemp->Next = NextTemp;
 				else
-					List->Head = NextTemp;
+					InternalList->Head = NextTemp;
 
 				// We need to take care of connecting 
 				// the next node with the previous of the 
@@ -91,7 +91,7 @@ namespace Dawn
 				if (NextTemp != nullptr)
 					NextTemp->Previous = PreviousTemp;
 				else
-					List->Tail = PreviousTemp;
+					InternalList->Tail = PreviousTemp;
 
 
 				this->CurrentNode = NextTemp;
@@ -112,7 +112,7 @@ namespace Dawn
 		struct SListNode<T> * Tail = nullptr;
 
 	public:
-		~CList()
+		~List()
 		{
 			Clear();
 		}
@@ -281,7 +281,7 @@ namespace Dawn
 		Iterator Begin() 
 		{
 			Iterator It;
-			It.List = this;
+			It.InternalList = this;
 			It.CurrentNode = this->Head;
 			return It;
 		}
@@ -289,7 +289,7 @@ namespace Dawn
 		Iterator End()
 		{
 			Iterator It;
-			It.List = this;
+			It.InternalList = this;
 			It.CurrentNode = this->Tail;
 			return It;
 		}

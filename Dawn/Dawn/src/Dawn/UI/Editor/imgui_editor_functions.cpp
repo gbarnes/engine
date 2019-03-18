@@ -23,13 +23,13 @@ namespace Dawn
 		static float camPos[3] = { 0, 0, -10 };
 		
 		ImGui::Begin("Camera Properties", &g_ShowCameraEditWindow);
-		if(ImGui::SliderFloat("Field Of View", &fov, 30.0f, 120.0f)) 
+		if(ImGui::SliderFloat("Field Of View", &fov, 12.0f, 120.0f))
 		{
-			CEventDispatcher::Trigger(FOVChangedEvtKey, CUIFovChangedEvent(fov));
+			CEventDispatcher::Trigger(FOVChangedEvtKey, UIFovChangedEvent(fov));
 		}
 		if (ImGui::InputFloat3("Position", camPos)) 
 		{
-			CEventDispatcher::Trigger(CamPosChangedEvtKey, CUICamPosChangedEvent(camPos));
+			CEventDispatcher::Trigger(CamPosChangedEvtKey, UICamPosChangedEvent(camPos));
 		}
 		ImGui::End();
 	}
@@ -39,9 +39,9 @@ namespace Dawn
 	{
 		if (ImGui::BeginMainMenuBar())
 		{
-			if (ImGui::BeginMenu("Engine"))
+			if (ImGui::BeginMenu("Rendering"))
 			{
-				if (ImGui::MenuItem("Show Camera Properties")) {g_ShowCameraEditWindow = !g_ShowCameraEditWindow;}
+				if (ImGui::MenuItem("Camera Properties")) {g_ShowCameraEditWindow = !g_ShowCameraEditWindow;}
 				ImGui::EndMenu();
 			}
 
@@ -56,9 +56,15 @@ namespace Dawn
 				ImGui::EndMenu();
 			}*/
 
-			if (ImGui::BeginMenu("Profiling"))
+			
+			if (ImGui::BeginMenu("Debug"))
 			{
-				if (ImGui::MenuItem("Show FPS")) { g_ShowFpsCounter = !g_ShowFpsCounter; }
+				static bool FpsCheckBoxVariable = false;
+				if (ImGui::Checkbox("FPS", &FpsCheckBoxVariable)) { g_ShowFpsCounter = !g_ShowFpsCounter; }
+				ImGui::Separator();
+				if (ImGui::MenuItem("Profiler")) {}
+				if (ImGui::MenuItem("Console")) {}
+				
 				ImGui::EndMenu();
 			}
 			ImGui::EndMainMenuBar();

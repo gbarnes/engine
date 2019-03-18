@@ -7,7 +7,7 @@ namespace Dawn
 #define ARRAY_INITIAL_SIZE 4
 
 	template < typename T >
-	class CArray 
+	class Array 
 	{
 	private:
 		T* Values;
@@ -15,7 +15,7 @@ namespace Dawn
 		u64 Capacity;
 
 	public:
-		CArray() 
+		Array() 
 		{
 			this->Size = 0;
 			this->Capacity = ARRAY_INITIAL_SIZE;
@@ -24,7 +24,7 @@ namespace Dawn
 			this->Values = TempData;
 		}
 
-		~CArray() 
+		~Array() 
 		{
 			Clear();
 		}

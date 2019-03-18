@@ -15,7 +15,7 @@ namespace Dawn
 	// to supply a pointer to a skyTransferredBytesData struct in order to 
 	// retrieve the read or write bytes at the end of the operation.
 	//-----------------------------------------------------------------------------
-	CAsyncFileOperation::CAsyncFileOperation(TThread<CFile, SFileThreadData>* InThread, STransferredBytesData* InData)
+	AsyncFileOperation::AsyncFileOperation(TThread<File, SFileThreadData>* InThread, STransferredBytesData* InData)
 	{
 		this->Thread = nullptr;
 
@@ -30,7 +30,7 @@ namespace Dawn
 	// Destructs the object. If the thread isn't finished yet it will wait 
 	// until its finished and after that deletes the thread.
 	//-----------------------------------------------------------------------------
-	CAsyncFileOperation::~CAsyncFileOperation(void)
+	AsyncFileOperation::~AsyncFileOperation(void)
 	{
 		if (this->Thread)
 		{
@@ -46,7 +46,7 @@ namespace Dawn
 	// Destructs the object. Call this only if youre sure the thread has finished
 	// otherwise call cancel!
 	//-----------------------------------------------------------------------------
-	void CAsyncFileOperation::Close(void)
+	void AsyncFileOperation::Close(void)
 	{
 		SafeDelete(Data);
 		SafeDelete(Thread);
@@ -55,7 +55,7 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Checks whether or not the thread is still active or not.
 	//-----------------------------------------------------------------------------
-	bool CAsyncFileOperation::IsFinished(void) const
+	bool AsyncFileOperation::IsFinished(void) const
 	{
 		if (!Thread)
 			return true;
@@ -67,7 +67,7 @@ namespace Dawn
 	// Waits till the thread is finished. Returns the processed bytes or -1 if 
 	// anything was wrong. 
 	//-----------------------------------------------------------------------------
-	size_t CAsyncFileOperation::WaitUntilFinished(void) const
+	size_t AsyncFileOperation::WaitUntilFinished(void) const
 	{
 		size_t Size = -1;
 
@@ -88,7 +88,7 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Cancels the thread.
 	//-----------------------------------------------------------------------------
-	void CAsyncFileOperation::Cancel(void)
+	void AsyncFileOperation::Cancel(void)
 	{
 		if (Thread)
 			Thread->Terminate();

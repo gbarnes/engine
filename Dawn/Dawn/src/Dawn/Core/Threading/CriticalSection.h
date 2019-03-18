@@ -4,7 +4,8 @@
 
 #include <Windows.h>
 
-namespace Dawn {
+namespace Dawn 
+{
 	//-----------------------------------------------------------------------------
 	// Main Class Declarations
 	//-----------------------------------------------------------------------------
@@ -12,14 +13,14 @@ namespace Dawn {
 	// Win32 implementation of a critical section. This is used in order to control
 	// concurrent access to globally used resources!
 	//-----------------------------------------------------------------------------
-	class CCriticalSection
+	class CriticalSection
 	{
 	public:
 		//-----------------------------------------------------------------------------
 		// Creates a new instance of the windows 32 critical section implementation
 		// and initializes it.
 		//-----------------------------------------------------------------------------
-		CCriticalSection::CCriticalSection(void)
+		CriticalSection::CriticalSection(void)
 		{
 			InitializeCriticalSection(&mCS);
 			EnterCriticalSection(&mCS);
@@ -28,7 +29,7 @@ namespace Dawn {
 		//-----------------------------------------------------------------------------
 		// Deletes the critical section again.
 		//-----------------------------------------------------------------------------
-		virtual CCriticalSection::~CCriticalSection(void)
+		virtual CriticalSection::~CriticalSection(void)
 		{
 			LeaveCriticalSection(&mCS);
 			DeleteCriticalSection(&mCS);
@@ -37,7 +38,7 @@ namespace Dawn {
 		//-----------------------------------------------------------------------------
 		// Will lock the current section to the thread calling this method!
 		//-----------------------------------------------------------------------------
-		void CCriticalSection::Lock(void)
+		void CriticalSection::Lock(void)
 		{
 			EnterCriticalSection(&mCS);
 		}
@@ -45,7 +46,7 @@ namespace Dawn {
 		//-----------------------------------------------------------------------------
 		// Will unlock the current section to the thread calling this method!
 		//-----------------------------------------------------------------------------
-		void CCriticalSection::Unlock(void)
+		void CriticalSection::Unlock(void)
 		{
 			LeaveCriticalSection(&mCS);
 		}

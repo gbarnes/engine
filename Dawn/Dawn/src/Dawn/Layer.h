@@ -7,11 +7,11 @@
 namespace Dawn
 {
 
-	class DAWN_API CLayer : public CEObject
+	class DAWN_API Layer : public EObject
 	{
 	public:
-		CLayer();
-		~CLayer();
+		Layer();
+		~Layer();
 
 		virtual void Setup() = 0;
 		virtual void Update() = 0;

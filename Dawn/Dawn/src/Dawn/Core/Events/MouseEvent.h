@@ -4,10 +4,10 @@
 
 namespace Dawn 
 {
-	class DAWN_API CMouseMovedEvent : public CEvent
+	class DAWN_API MouseMovedEvent : public Event
 	{
 	public:
-		CMouseMovedEvent(float x, float y)
+		MouseMovedEvent(float x, float y)
 			: MouseX(x), MouseY(y) {}
 
 		inline float GetX() const { return MouseX; }
@@ -25,10 +25,10 @@ namespace Dawn
 	};
 
 
-	class DAWN_API CMousePressedEvent : public CEvent
+	class DAWN_API MousePressedEvent : public Event
 	{
 	public:
-		CMousePressedEvent(u32 InButton)
+		MousePressedEvent(u32 InButton)
 			: Button(InButton) {}
 
 		inline u32 GetButton() const { return Button; }
@@ -44,10 +44,10 @@ namespace Dawn
 		u32 Button;
 	};
 
-	class DAWN_API CMouseReleasedEvent : public CEvent
+	class DAWN_API MouseReleasedEvent : public Event
 	{
 	public:
-		CMouseReleasedEvent(u32 InButton)
+		MouseReleasedEvent(u32 InButton)
 			: Button(InButton) {}
 
 		inline u32 GetButton() const { return Button; }

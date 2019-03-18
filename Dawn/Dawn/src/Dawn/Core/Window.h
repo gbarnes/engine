@@ -20,7 +20,7 @@ namespace Dawn
 	// create windows for linux, windows or mac os which we can render to
 	// at specific point.
 	//-----------------------------------------------------------------------------
-	class DAWN_API CWindow
+	class DAWN_API Window
 	{
 
 	public:
@@ -30,8 +30,8 @@ namespace Dawn
 		//-------------------------------------------------------------------------
 		// Constructors & Destructors
 		//-------------------------------------------------------------------------
-		CWindow();
-		~CWindow(void);
+		Window();
+		~Window(void);
 
 		//-------------------------------------------------------------------------
 		// Public Virtual Methods

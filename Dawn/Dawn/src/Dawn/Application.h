@@ -25,20 +25,20 @@ namespace Dawn
 		bool UseVsync;
 	};
 
-	class CEvent;
+	class Event;
 	class CGfxRootSignature;
 	
 
-	class DAWN_API Application : public CEObject
+	class DAWN_API Application : public EObject
 	{
 	public:
 		Application(SAppSettings& InSettings);
 		virtual ~Application();
 		void Run();
 
-		inline static CRefPtr<Application> Get()
+		inline static RefPtr<Application> Get()
 		{
-			return CRefPtr<Application>(CLocator::Get<Application>(AppLocatorId));
+			return RefPtr<Application>(Locator::Get<Application>(AppLocatorId));
 		}
 
 		inline static SAppSettings* GetSettings()
@@ -46,31 +46,32 @@ namespace Dawn
 			return &Get()->Settings;
 		}
 
-		void OnMouseMovedEvent(CEvent& InEvent);
-		void OnMousePressedEvent(CEvent& InEvent);
-		void OnMouseReleasedEvent(CEvent& InEvent);
+		void OnMouseMovedEvent(Event& InEvent);
+		void OnMousePressedEvent(Event& InEvent);
+		void OnMouseReleasedEvent(Event& InEvent);
 
 	protected:
-		CWindow Window;
+		Window Window;
 		SAppSettings Settings;
+		Timer Clock;
 
 		virtual void SetupLayers();
 		virtual void Tick();
 		virtual void Load();
 
-		void PushLayer(CLayer* InLayer);
-		void PopLayer(CLayer* InLayer);
+		void PushLayer(Layer* InLayer);
+		void PopLayer(Layer* InLayer);
 		void ClearLayers();
 
-		std::vector<CLayer*>::iterator begin() { return Layers.begin(); }
-		std::vector<CLayer*>::iterator end() { return Layers.end(); }
+		std::vector<Layer*>::iterator begin() { return Layers.begin(); }
+		std::vector<Layer*>::iterator end() { return Layers.end(); }
 
 	private:
-		std::vector<CLayer*> Layers;
-		std::vector<CLayer*>::iterator LayerInsertCount;
+		std::vector<Layer*> Layers;
+		std::vector<Layer*>::iterator LayerInsertCount;
 	};
 
-	typedef CRefPtr<Application> CReferenceAppPtr;
+	typedef RefPtr<Application> ReferenceAppPtr;
 
 	Application* CreateApplication();
 }

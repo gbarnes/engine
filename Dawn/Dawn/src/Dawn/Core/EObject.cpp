@@ -12,7 +12,7 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Creates a new object of type EObject. Sets the ref count to 0. 
 	//-----------------------------------------------------------------------------
-	CEObject::CEObject()
+	EObject::EObject()
 		: RefCount(0)
 	{
 
@@ -21,21 +21,21 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Destructs the object and warns if the ref count isn't null!
 	//-----------------------------------------------------------------------------
-	CEObject::~CEObject()
+	EObject::~EObject()
 	{
 		//if(RefCount > 0)
 			//SKY_PRINT_CONSOLE("Ref Count", "ref count of class to high!", 0x0f);
 	}
 
 	///////////////////////////////////////////////////////////////////////////////
-	// CFile Member Definitions
+	// File Member Definitions
 	///////////////////////////////////////////////////////////////////////////////
 
 	//-----------------------------------------------------------------------------
 	// Increses the reference count by one. Call this whenever you reference the 
 	// object!
 	//-----------------------------------------------------------------------------
-	void CEObject::AddRef() const
+	void EObject::AddRef() const
 	{
 		++RefCount;
 	}
@@ -44,14 +44,14 @@ namespace Dawn
 	// Decreases the reference count by one. Call this whenever you dereference the 
 	// object! If the count falls to zero it will delete the object!
 	//-----------------------------------------------------------------------------
-	void CEObject::Release() const
+	void EObject::Release() const
 	{
 		//	assert(RefCount > 0);
 
 		--RefCount;
 		if (RefCount == 0)
 		{
-			delete ((CEObject *)this);
+			delete ((EObject *)this);
 		}
 	}
 }

@@ -22,7 +22,7 @@ namespace Dawn
 		io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 		io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
 
-		CGfxDevice* Device = GfxBackend::GetDevice();
+		GfxDevice* Device = GfxBackend::GetDevice();
 		if (Device == nullptr)
 		{
 			DWN_CORE_ERROR("There is no available graphics device!");

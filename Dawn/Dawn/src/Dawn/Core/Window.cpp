@@ -13,12 +13,12 @@ namespace Dawn
 {
 
 	///////////////////////////////////////////////////////////////////////////////
-	// CWindow Member Definitions
+	// Window Member Definitions
 	///////////////////////////////////////////////////////////////////////////////
 	//-----------------------------------------------------------------------------
 	// Creates a new instance of the win32 view. 
 	//-----------------------------------------------------------------------------
-	CWindow::CWindow()
+	Window::Window()
 	{
 		this->Instance = nullptr;
 		this->PrevInstance = nullptr;
@@ -41,7 +41,7 @@ namespace Dawn
 	// Method will return SKY_ERROR in case of any  error or SKY_OK in case 
 	// everything was ok. 
 	//-----------------------------------------------------------------------------
-	EResult CWindow::Initialize(std::wstring InTitle, int InWidth, int InHeight, bool InIsFullscreen,
+	EResult Window::Initialize(std::wstring InTitle, int InWidth, int InHeight, bool InIsFullscreen,
 		int InColorBits, int InDepthBits, int InAlphaBits)
 	{
 		this->Title = InTitle;
@@ -62,7 +62,7 @@ namespace Dawn
 		WNDCLASSEXW wndclass = {
 								sizeof(WNDCLASSEXW),
 								CS_DBLCLKS,
-								CWindow::WndProc,
+								Window::WndProc,
 								0,
 								0,
 								GetModuleHandle(0),
@@ -93,7 +93,7 @@ namespace Dawn
 	// Finally creates the window and the opengl context. This method returns
 	// SKY_ERROR if something goes wrong. 
 	//-----------------------------------------------------------------------------
-	EResult CWindow::Create(void)
+	EResult Window::Create(void)
 	{
 		if (!IsInitialized)
 			return EResult_ERROR;
@@ -128,7 +128,7 @@ namespace Dawn
 			return EResult_ERROR;
 		}
 
-		SetProp(HWnd, L"CWindow", (HANDLE)this);
+		SetProp(HWnd, L"Window", (HANDLE)this);
 		ShowWindow(this->HWnd, this->CmdShow);
 		UpdateWindow(this->HWnd);
 		IsCreated = true;
@@ -140,7 +140,7 @@ namespace Dawn
 	//
 	//
 	//
-	void CWindow::ToggleFullscreen()
+	void Window::ToggleFullscreen()
 	{
 		IsFullscreen = !IsFullscreen;
 		if (IsFullscreen) // Switching to fullscreen.
@@ -192,7 +192,7 @@ namespace Dawn
 	// Peeks all the messages and takes care of dispatching them between the 
 	// system. 
 	//-----------------------------------------------------------------------------
-	bool CWindow::PeekMessages(void)
+	bool Window::PeekMessages(void)
 	{
 		if (PeekMessage(&this->MSG, NULL, NULL, NULL, PM_REMOVE))
 		{
@@ -214,7 +214,7 @@ namespace Dawn
 	// Handles the message pumping and takes care of successfully delivering 
 	// the message to the window. 
 	//-----------------------------------------------------------------------------
-	LRESULT CALLBACK CWindow::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+	LRESULT CALLBACK Window::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		if (ImGuiWrapper::InputHandling(hwnd, message, wParam, lParam))
 			return true;
@@ -224,11 +224,11 @@ namespace Dawn
 		{
 		case WM_PAINT:
 		{
-			CWindow* Window = (CWindow*)GetProp(hwnd, L"CWindow");
-			if (NULL != Window)
+			Window* window = (Window*)GetProp(hwnd, L"Window");
+			if (NULL != window)
 			{
-				if(Window->OnWindowPaint != nullptr)
-					Window->OnWindowPaint();
+				if(window->OnWindowPaint != nullptr)
+					window->OnWindowPaint();
 			}
 			break;
 		}
@@ -252,7 +252,7 @@ namespace Dawn
 		{
 			//int xPos = GET_X_LPARAM(lParam);
 			//int yPos = GET_Y_LPARAM(lParam);
-			//CEventDispatcher::Trigger(EVENT_KEY("MouseMoved"), CMouseMovedEvent(xPos, yPos));
+			//CEventDispatcher::Trigger(EVENT_KEY("MouseMoved"), MouseMovedEvent(xPos, yPos));
 			break;
 		}
 		case WM_LBUTTONUP:
@@ -266,7 +266,7 @@ namespace Dawn
 			if (message == WM_MBUTTONUP) { button = 2; }
 			if (message == WM_XBUTTONUP) { button = (GET_XBUTTON_WPARAM(wParam) == XBUTTON1) ? 3 : 4; }
 
-			CEventDispatcher::Trigger(EVENT_KEY("MouseReleased"), CMouseReleasedEvent(button));
+			CEventDispatcher::Trigger(EVENT_KEY("MouseReleased"), MouseReleasedEvent(button));
 			break;
 		}
 		case WM_LBUTTONDOWN: case WM_LBUTTONDBLCLK:
@@ -280,7 +280,7 @@ namespace Dawn
 			if (message == WM_MBUTTONDOWN || message == WM_MBUTTONDBLCLK) { button = 2; }
 			if (message == WM_XBUTTONDOWN || message == WM_XBUTTONDBLCLK) { button = (GET_XBUTTON_WPARAM(wParam) == XBUTTON1) ? 3 : 4; }
 
-			CEventDispatcher::Trigger(EVENT_KEY("MousePressed"), CMousePressedEvent(button));
+			CEventDispatcher::Trigger(EVENT_KEY("MousePressed"), MousePressedEvent(button));
 			break;
 		}
 		/*case WM_CHAR:
@@ -308,10 +308,10 @@ namespace Dawn
 				if (alt)
 				{
 				case VK_F11:
-					CWindow* Window = (CWindow*)GetProp(hwnd, L"CWindow");
-					if (NULL != Window)
+					Window* window = (Window*)GetProp(hwnd, L"Window");
+					if (NULL != window)
 					{
-						Window->ToggleFullscreen();
+						window->ToggleFullscreen();
 					}
 				}
 				break;
@@ -332,7 +332,7 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Takes care of successfully freeing all resources!
 	//-----------------------------------------------------------------------------
-	CWindow::~CWindow(void)
+	Window::~Window(void)
 	{
 		//SKY_PRINT_CONSOLE("skyDXWin32View:", "destructing object..", 0x0D);
 		//SKY_INFO(skyLogChannel::TXT_FILE, "skyDXWin32View: destructing object..");

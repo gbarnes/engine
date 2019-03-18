@@ -14,32 +14,32 @@ namespace Dawn
 	// Main Interface Declarations
 	//-----------------------------------------------------------------------------
 	//-----------------------------------------------------------------------------
-	// An asynchron file operation will be returned from the CFile 
+	// An asynchron file operation will be returned from the File 
 	// whenever one calls AsyncRead or AsyncWrite. This class takes care of 
 	// cleaning up the thread class and so on.
 	//-----------------------------------------------------------------------------
-	class CAsyncFileOperation
+	class AsyncFileOperation
 	{
 	public:
 		//-----------------------------------------------------------------------------
 		// Constructor & Destructor
 		//-----------------------------------------------------------------------------
-		CAsyncFileOperation(TThread<CFile, SFileThreadData>* InThread, STransferredBytesData* InData);
-		~CAsyncFileOperation(void);
+		AsyncFileOperation(TThread<File, SFileThreadData>* InThread, STransferredBytesData* InData);
+		~AsyncFileOperation(void);
 
 		//-----------------------------------------------------------------------------
 		// Public Methods
 		//-----------------------------------------------------------------------------
-		bool CAsyncFileOperation::IsFinished(void) const;
-		size_t CAsyncFileOperation::WaitUntilFinished(void) const;
-		void CAsyncFileOperation::Cancel(void);
-		void CAsyncFileOperation::Close(void);
+		bool AsyncFileOperation::IsFinished(void) const;
+		size_t AsyncFileOperation::WaitUntilFinished(void) const;
+		void AsyncFileOperation::Cancel(void);
+		void AsyncFileOperation::Close(void);
 
 	private:
 		//-------------------------------------------------------------------------
 		// Private Members
 		//-------------------------------------------------------------------------
-		TThread<CFile, SFileThreadData>* Thread;
+		TThread<File, SFileThreadData>* Thread;
 		STransferredBytesData* Data;
 	};
 }

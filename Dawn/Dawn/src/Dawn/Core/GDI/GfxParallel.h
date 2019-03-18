@@ -9,7 +9,7 @@
 
 namespace Dawn 
 {
-	class CGfxDevice;
+	class GfxDevice;
 
 	//-----------------------------------------------------------------------------
 	// Container for parallel graphics processing
@@ -24,10 +24,10 @@ namespace Dawn
 		//-------------------------------------------------------------------------
 		// Public Methods
 		//-------------------------------------------------------------------------
-		EResult AllocateResources(CGfxDevice* GfxDevice);
+		EResult AllocateResources(GfxDevice* GfxDevice);
 		void FreeResources();
-		CGfxInternalQueue* ObtainQueue();
+		GfxInternalQueue* ObtainQueue();
 
-		static void AsyncCompute(CGfxDevice* InDevice, int InThreadIndex);
+		static void AsyncCompute(GfxDevice* InDevice, int InThreadIndex);
 	};
 }

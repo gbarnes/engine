@@ -6,9 +6,9 @@
 
 namespace Dawn 
 {
-	class CEObject;
+	class EObject;
 
-	class DAWN_API CLocator 
+	class DAWN_API Locator 
 	{
 
 	public:
@@ -16,20 +16,20 @@ namespace Dawn
 		template <typename T>
 		static T* Get(std::string& InId)
 		{
-			static_assert(std::is_base_of<CEObject, T>::value, "T must derive from CEObject");
+			static_assert(std::is_base_of<EObject, T>::value, "T must derive from CEObject");
 			
-			CEObject* object = Instances[InId];
+			EObject* object = Instances[InId];
 			if (object == nullptr)
 				return nullptr;
 
 			return dynamic_cast<T*>(object);
 		}
-		static void Add(std::string& InId, Dawn::CEObject* InInstance);
+		static void Add(std::string& InId, Dawn::EObject* InInstance);
 		static void Remove(std::string& InId);
 
 	private:
 
-		static Dawn::CMap< std::string, Dawn::CEObject* > Instances;
+		static Dawn::Map< std::string, Dawn::EObject* > Instances;
 	};
 
 

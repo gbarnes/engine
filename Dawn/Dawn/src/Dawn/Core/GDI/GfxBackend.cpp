@@ -16,7 +16,7 @@
 
 namespace Dawn
 {
-	CGfxDevice g_Device;
+	GfxDevice g_Device;
 
 	ComPtr<CGfxCmdList> g_CommandList;
 	u64 g_FrameFenceValues[g_NumFrames] = {};
@@ -251,12 +251,12 @@ namespace Dawn
 		CommandQueue->WaitForFenceValue(g_FrameFenceValues[BackBufferIndex]);
 	}
 
-	CGfxDevice* GfxBackend::GetDevice()
+	GfxDevice* GfxBackend::GetDevice()
 	{
 		return &g_Device;
 	}
 
-	std::shared_ptr<CGfxQueue> GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE type)
+	std::shared_ptr<GfxQueue> GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE type)
 	{
 		return g_Device.GetQueue(type);
 	}

@@ -7,25 +7,25 @@
 namespace Dawn
 {
 	
-	class DAWN_API CEObject
+	class DAWN_API EObject
 	{
 	public:
 		//-------------------------------------------------------------------------
 		// Constructor & Destructor
 		//-------------------------------------------------------------------------
-		CEObject::CEObject();
-		virtual CEObject::~CEObject();
+		EObject::EObject();
+		virtual EObject::~EObject();
 
 	public:
 		//-------------------------------------------------------------------------
 		// Public Methods
 		//-------------------------------------------------------------------------
-		void CEObject::AddRef() const;
-		virtual void CEObject::Release() const;
+		void EObject::AddRef() const;
+		virtual void EObject::Release() const;
 
 	private:
 		mutable unsigned int RefCount;
 	};
 
-	typedef CRefPtr<CEObject> CEObjectPtr;
+	typedef RefPtr<EObject> EObjectPtr;
 }

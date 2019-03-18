@@ -18,13 +18,13 @@
 
 namespace Dawn
 {
-	CGfxDevice::CGfxDevice()
+	GfxDevice::GfxDevice()
 	{
 		this->Device = nullptr;
 		this->SwapChain = nullptr;
 	}
 
-	CGfxDevice::~CGfxDevice(void)
+	GfxDevice::~GfxDevice(void)
 	{
 
 	}
@@ -32,14 +32,14 @@ namespace Dawn
 	//
 	// Takes care of initializing the directx12 api, swap chain and backbuffers
 	//
-	EResult CGfxDevice::Initialize(u32 InWidth, u32 InHeight, HWND InHWnd, bool InUseVSync, bool InIsFullscreen)
+	EResult GfxDevice::Initialize(u32 InWidth, u32 InHeight, HWND InHWnd, bool InUseVSync, bool InIsFullscreen)
 	{
 		ComPtr<IDXGIAdapter3> Adapter = GetAdapter(false);
 		this->Device = CreateDevice(Adapter).Get();
 
-		this->DirectCommandQueue = std::make_shared<CGfxQueue>(D3D12_COMMAND_LIST_TYPE_DIRECT);
-		this->CopyCommandQueue = std::make_shared<CGfxQueue>(D3D12_COMMAND_LIST_TYPE_COPY);
-		this->ComputeCommandQueue = std::make_shared<CGfxQueue>(D3D12_COMMAND_LIST_TYPE_COMPUTE);
+		this->DirectCommandQueue = std::make_shared<GfxQueue>(D3D12_COMMAND_LIST_TYPE_DIRECT);
+		this->CopyCommandQueue = std::make_shared<GfxQueue>(D3D12_COMMAND_LIST_TYPE_COPY);
+		this->ComputeCommandQueue = std::make_shared<GfxQueue>(D3D12_COMMAND_LIST_TYPE_COMPUTE);
 
 		this->SwapChain = CreateSwapChain(InHWnd, this->DirectCommandQueue->GetD3D12CommandQueue().Get(), InWidth, InHeight, g_NumFrames);
 		this->BackBufferIndex = this->SwapChain->GetCurrentBackBufferIndex();
@@ -59,7 +59,7 @@ namespace Dawn
 	//
 	// Clean-Up your mess
 	//
-	void CGfxDevice::Shutdown()
+	void GfxDevice::Shutdown()
 	{
 		DirectCommandQueue->Flush();
 		DirectCommandQueue->Reset();
@@ -87,7 +87,7 @@ namespace Dawn
 		return;
 	}
 
-	void CGfxDevice::CreateDepthBuffer(u32 InWidth, u32 InHeight)
+	void GfxDevice::CreateDepthBuffer(u32 InWidth, u32 InHeight)
 	{
 		//InWidth = std::max(1, InWidth);
 		//InHeight = std::max(1, InHeight);
@@ -128,7 +128,7 @@ namespace Dawn
 		);
 	}
 
-	void CGfxDevice::Resize(u32 InWidth, u32 InHeight)
+	void GfxDevice::Resize(u32 InWidth, u32 InHeight)
 	{
 		DirectCommandQueue->Flush();
 		CopyCommandQueue->Flush();
@@ -164,7 +164,7 @@ namespace Dawn
 	// Creates the basic D3D12 Device from a given adapter. In case the debug mode 
 	// is enable it will log specific statements.
 	//
-	ComPtr<ID3D12Device2> CGfxDevice::CreateDevice(ComPtr<IDXGIAdapter3> InAdapter)
+	ComPtr<ID3D12Device2> GfxDevice::CreateDevice(ComPtr<IDXGIAdapter3> InAdapter)
 	{
 		EnableDebugLayer();
 
@@ -213,7 +213,7 @@ namespace Dawn
 	// so all possible errors generated while creating DX12 objects
 	// are caught by the debug layer.
 	//
-	void CGfxDevice::EnableDebugLayer()
+	void GfxDevice::EnableDebugLayer()
 	{
 #if defined(_DEBUG)
 
@@ -226,7 +226,7 @@ namespace Dawn
 	//
 	// Checks whether or not tearing is supported on the target hardware.
 	//
-	bool CGfxDevice::CheckForTearingSupport()
+	bool GfxDevice::CheckForTearingSupport()
 	{
 		//
 		// Check why we have an older version of the Windows SDK?!
@@ -237,7 +237,7 @@ namespace Dawn
 	//
 	// Creates / updated the render target views depending on the created descriptor handle.
 	//
-	void CGfxDevice::UpdateRenderTargetViews()
+	void GfxDevice::UpdateRenderTargetViews()
 	{
 		auto RtvDescriptorSize = this->Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
@@ -260,7 +260,7 @@ namespace Dawn
 	//
 	// Returns a valid adapter that can be passed when creating the d3d12device
 	//
-	ComPtr<IDXGIAdapter3> CGfxDevice::GetAdapter(bool useWrap)
+	ComPtr<IDXGIAdapter3> GfxDevice::GetAdapter(bool useWrap)
 	{
 		ComPtr<IDXGIFactory4> Factory;
 		u32 createFactoryFlags = 0;
@@ -306,7 +306,7 @@ namespace Dawn
 	// Create a new descriptor heap needed in order to allocate resource views such as 
 	// RenderTargetView, ShaderResourceView, UnorderedAccessView or ConstantBufferView.
 	//
-	ComPtr<CGfxHeapDesciptor> CGfxDevice::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)
+	ComPtr<CGfxHeapDesciptor> GfxDevice::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)
 	{
 		ComPtr<ID3D12DescriptorHeap> DescriptorHeap;
 
@@ -327,7 +327,7 @@ namespace Dawn
 	// and can only be accessed indirectly through a command list.  A command allocator can only be used by a single command list at a time 
 	// but can be reused after the commands that were recorded into the command list have finished executing on the GPU.
 	//
-	ComPtr<CGfxCmdAllocator> CGfxDevice::CreateCmdAllocator(D3D12_COMMAND_LIST_TYPE InType)
+	ComPtr<CGfxCmdAllocator> GfxDevice::CreateCmdAllocator(D3D12_COMMAND_LIST_TYPE InType)
 	{
 		ComPtr<CGfxCmdAllocator> CommandAllocator;
 		ThrowIfFailed(this->Device->CreateCommandAllocator(InType, IID_PPV_ARGS(&CommandAllocator)));
@@ -340,7 +340,7 @@ namespace Dawn
 	// always deferred.That is, invoking draw or dispatch commands on a command list are 
 	// not executed until the command list is sent to the command queue.
 	//
-	ComPtr<CGfxCmdList> CGfxDevice::CreateCmdList(ComPtr<CGfxCmdAllocator> InAllocator, D3D12_COMMAND_LIST_TYPE InType)
+	ComPtr<CGfxCmdList> GfxDevice::CreateCmdList(ComPtr<CGfxCmdAllocator> InAllocator, D3D12_COMMAND_LIST_TYPE InType)
 	{
 		ComPtr<CGfxCmdList> List;
 
@@ -356,7 +356,7 @@ namespace Dawn
 	// The ID3D12Fence is an interface for a GPU / CPU synchronization object. 
 	// Fences can be used to perform synchronization on either the CPU or the GPU.
 	//
-	ComPtr<CGfxFence> CGfxDevice::CreateFence()
+	ComPtr<CGfxFence> GfxDevice::CreateFence()
 	{
 		ComPtr<ID3D12Fence> Fence;
 
@@ -368,7 +368,7 @@ namespace Dawn
 	//
 	// Creates a new swapchain from a given queue and hwnd.
 	//
-	ComPtr<IDXGISwapChain3> CGfxDevice::CreateSwapChain(HWND InHwnd, ComPtr<CGfxInternalQueue> InQueue, u32 InWidth, u32 InHeight, u32 InBufferCount)
+	ComPtr<IDXGISwapChain3> GfxDevice::CreateSwapChain(HWND InHwnd, ComPtr<GfxInternalQueue> InQueue, u32 InWidth, u32 InHeight, u32 InBufferCount)
 	{
 		ComPtr<IDXGISwapChain3> SwapChain3;
 		ComPtr<IDXGIFactory4> Factory;
@@ -407,7 +407,7 @@ namespace Dawn
 	//
 	//
 	//
-	u64 CGfxDevice::Present()
+	u64 GfxDevice::Present()
 	{
 		if (!SwapChain)
 			return 0;

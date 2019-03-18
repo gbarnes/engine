@@ -21,7 +21,7 @@
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
-typedef ID3D12CommandQueue CGfxInternalQueue;
+typedef ID3D12CommandQueue GfxInternalQueue;
 typedef D3D12_COMMAND_QUEUE_DESC CGfxQueueDesc;
 typedef ID3D12CommandAllocator CGfxCmdAllocator;
 typedef ID3D12GraphicsCommandList2 CGfxCmdList;
@@ -39,11 +39,12 @@ typedef D3D12_VERTEX_BUFFER_VIEW CGfxVertexView;
 	{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 };*/
 
-typedef SGenericHandle<12, 20> SGfxResourceHandle;
-typedef SGenericHandle<12, 20> SVertexBufferHandle;
-typedef SGenericHandle<12, 20> SIndexBufferHandle;
-typedef SGenericHandle<12, 20> SConstantBufferHandle;
-typedef SGenericHandle<12, 20> SPipelineStateHandle;
-typedef SGenericHandle<12, 20> SCmdListHandle;
-typedef SGenericHandle<12, 20> SFenceHandle;
-
+/*
+typedef SGenericHandle<12, 20> GfxResourceHandle;
+typedef SGenericHandle<12, 20> VertexBufferHandle;
+typedef SGenericHandle<12, 20> IndexBufferHandle;
+typedef SGenericHandle<12, 20> ConstantBufferHandle;
+typedef SGenericHandle<12, 20> PipelineStateHandle;
+typedef SGenericHandle<12, 20> CmdListHandle;
+typedef SGenericHandle<12, 20> FenceHandle;
+*/

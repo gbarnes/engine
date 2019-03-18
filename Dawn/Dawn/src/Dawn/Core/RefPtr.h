@@ -4,24 +4,24 @@ namespace Dawn
 {
 	// Template taken from http://www.codeproject.com/Articles/64111/Building-a-Quick-and-Handy-Reference-Counting-Clas
 	template < class Type >
-	class CRefPtr
+	class RefPtr
 	{
 	public:
-		CRefPtr(Type* InObject = NULL)
+		RefPtr(Type* InObject = NULL)
 			: Object(InObject)
 		{
 			if (Object != NULL)
 				Object->AddRef();
 		};
 
-		CRefPtr(const CRefPtr &InObject)
+		RefPtr(const RefPtr &InObject)
 			: Object(InObject.m_pObject)
 		{
 			if (Object != NULL)
 				Object->AddRef();
 		};
 
-		~CRefPtr()
+		~RefPtr()
 		{
 			if (Object != NULL)
 				Object->Release();
@@ -30,7 +30,7 @@ namespace Dawn
 	public:
 		//Assign a pointer
 		//e.g. x = new T();
-		CRefPtr &operator=(Type* InObject)
+		RefPtr &operator=(Type* InObject)
 		{
 			//The following grab and release operations have to be performed
 			//in that order to handle the case where ptr == mPtr
@@ -47,7 +47,7 @@ namespace Dawn
 		}
 
 		//Assign another RCPtr
-		CRefPtr &operator= (const CRefPtr &InObject)
+		RefPtr &operator= (const RefPtr &InObject)
 		{
 			return (*this) = InObject.Object;
 		}
@@ -68,7 +68,7 @@ namespace Dawn
 		Type &operator*() const { return *Object; }
 		operator Type*() const { return Object; }
 		operator bool() const { return Object != NULL; }
-		bool operator==(const CRefPtr &InObject) { return Object == InObject.Object; }
+		bool operator==(const RefPtr &InObject) { return Object == InObject.Object; }
 		bool operator==(const Type* InObject) { return Object == InObject; }
 
 	private:
