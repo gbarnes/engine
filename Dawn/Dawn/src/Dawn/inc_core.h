@@ -6,3 +6,4 @@
 #include "Core/Event.h"
 #include "Core/Events/MouseEvent.h"
 #include "Core/Timer.h"
+#include "Core/Math.h"

@@ -14,8 +14,6 @@
 #include "Vendor/ImGui/imgui_impl_win32.h"
 #include <d3d12.h>
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include "tinyobjloader.h"
 //#include "Core/JobSystem/JobSystem.h"
 
 /*
@@ -138,19 +136,7 @@ namespace Dawn
 
 		SetupLayers();
 
-		{
-			tinyobj::attrib_t attrib;
-			std::vector<tinyobj::shape_t> shapes;
-			std::vector<tinyobj::material_t> materials;
-
-			std::string warn;
-			std::string err;
-			bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, "Test.obj",
-				nullptr, true);
-			//shapes[0].mesh.indices[0].vertex_index
-			DWN_CORE_ERROR(err);
-
-		}
+		
 
 		DWN_CORE_INFO("Core Context initialized.");
 
