@@ -16,23 +16,29 @@
 #include <dxgi1_4.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
+#include <DirectXTex.h>
 #include "d3dx12.h"
 
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
-typedef ID3D12CommandQueue GfxInternalQueue;
 typedef D3D12_COMMAND_QUEUE_DESC CGfxQueueDesc;
-typedef ID3D12CommandAllocator CGfxCmdAllocator;
-typedef ID3D12GraphicsCommandList2 CGfxCmdList;
-typedef ID3D12Fence CGfxFence;
+
 typedef D3D12_RESOURCE_BARRIER SGfxResBarrier;
-typedef ID3D12Resource CGfxResource;
 typedef ID3D12PipelineState CGfxState;
-typedef ID3D12DescriptorHeap CGfxHeapDesciptor;
 typedef ID3D12RootSignature CGfxRootSignature;
 typedef D3D12_INDEX_BUFFER_VIEW CGfxIndexView;
 typedef D3D12_VERTEX_BUFFER_VIEW CGfxVertexView;
+
+enum class TextureUsage
+{
+	Albedo,
+	Diffuse = Albedo,       // Treat Diffuse and Albedo textures the same.
+	Heightmap,
+	Depth = Heightmap,      // Treat height and depth textures the same.
+	Normalmap,
+	RenderTarget,           // Texture is used as a render target.
+};
 
 /*D3D12_INPUT_ELEMENT_DESC SimpleInputLayout[] = {
 	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },

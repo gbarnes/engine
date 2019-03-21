@@ -10,7 +10,7 @@ namespace Dawn
 		void Create(void* InHwnd);
 		void Shutdown();
 		void BeginNewFrame();
-		void Render(CGfxCmdList* InCmdList);
+		void Render(ID3D12GraphicsCommandList2* InCmdList);
 		LRESULT InputHandling(HWND InHwnd, UINT InMsg, WPARAM InWParam, LPARAM InLParam);
 		void Resize();
 	}

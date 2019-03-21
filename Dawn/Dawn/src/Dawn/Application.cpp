@@ -3,6 +3,7 @@
 #include "Core/GDI/GfxBackend.h"
 #include "Core/GDI/GfxQueue.h"
 #include "Core/GDI/GfxDevice.h"
+#include "Core/GDI/GfxCmdList.h"
 #include "Core/GDI/inc_gfx_types.h"
 #include "Core/Event.h"
 #include "Core/Events/MouseEvent.h"
@@ -65,6 +66,7 @@ namespace Dawn
 {
 	DirectX::XMFLOAT4 g_ClearColor = { 0.4f, 0.6f, 0.9f, 1.0f };
 	SEventHandle g_MouseMovedEvtHandle, g_MousePressedHandle, g_MouseReleasedHandle;
+	uint64_t Application::FrameCount = 0;
 
 	Application::Application(SAppSettings& InSettings)
 	{
@@ -161,6 +163,8 @@ namespace Dawn
 		if (!GfxBackend::IsInitialized())
 			return;
 
+		++Application::FrameCount;
+
 		Clock.Tick();
 
 		auto rtv = GfxBackend::GetCurrentBackbufferDescHandle();
@@ -168,16 +172,16 @@ namespace Dawn
 		auto CmdList = GfxBackend::GetQueue()->GetCommandList();
 
 		{
-			GfxBackend::TransitionResource(CmdList, GfxBackend::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-			GfxBackend::ClearRenderTarget(CmdList, GfxBackend::GetCurrentBackbuffer(), g_ClearColor);
-			GfxBackend::ClearDepthBuffer(CmdList, 1);
-			CmdList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
+			GfxBackend::TransitionResource(CmdList->GetGraphicsCommandList(), GfxBackend::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			GfxBackend::ClearRenderTarget(CmdList->GetGraphicsCommandList(), GfxBackend::GetCurrentBackbuffer(), g_ClearColor);
+			GfxBackend::ClearDepthBuffer(CmdList->GetGraphicsCommandList(), 1);
+			CmdList->GetGraphicsCommandList()->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
 		}
 
 		for (Layer* layer : Layers)
 		{
 			layer->Update();
-			layer->Render(CmdList);
+			layer->Render(CmdList->GetGraphicsCommandList());
 		}
 		
 		GfxBackend::Present(CmdList);

@@ -11,7 +11,7 @@ namespace Dawn
 	public:
 		void Setup();
 		void Update();
-		void Render(ComPtr<CGfxCmdList> InCmdList);
+		void Render(ComPtr<ID3D12GraphicsCommandList2> InCmdList);
 		void Free();
 
 		void OnFOVChanged(Event& InEvent);
@@ -19,15 +19,15 @@ namespace Dawn
 
 	private:
 		// Vertex buffer for the cube.
-		ComPtr<CGfxResource> VertexBuffer;
+		ComPtr<ID3D12Resource> VertexBuffer;
 		CGfxVertexView VertexBufferView;
 
 		// Index buffer for the cube.
-		ComPtr<CGfxResource> IndexBuffer;
+		ComPtr<ID3D12Resource> GfxIndexBuffer;
 		CGfxIndexView IndexBufferView;
 
 		ComPtr<ID3D12RootSignature> RootSignature;
-		ComPtr<CGfxState> PipelineState;
+		ComPtr<ID3D12PipelineState> PipelineState;
 
 		DirectX::XMMATRIX ModelMatrix;
 		DirectX::XMMATRIX ViewMatrix;

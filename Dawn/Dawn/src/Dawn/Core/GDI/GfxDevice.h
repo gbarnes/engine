@@ -63,19 +63,19 @@ namespace Dawn
 			return CommandQueue;
 		}
 
-		ComPtr<CGfxResource> GfxDevice::GetBackbuffer() const {
+		ComPtr<ID3D12Resource> GfxDevice::GetBackbuffer() const {
 			return this->BackBufferRenderTarget[BackBufferIndex];
 		}
 
-		ComPtr<CGfxHeapDesciptor> GfxDevice::GetRTVHeap() const {
+		ComPtr<ID3D12DescriptorHeap> GfxDevice::GetRTVHeap() const {
 			return this->RenderTargetViewHeap;
 		}
 
-		ComPtr<CGfxResource> GfxDevice::GetDepthBuffer() const {
+		ComPtr<ID3D12Resource> GfxDevice::GetDepthBuffer() const {
 			return this->DepthBuffer;
 		}
 
-		ComPtr<CGfxHeapDesciptor> GfxDevice::GetDSVHeap() const {
+		ComPtr<ID3D12DescriptorHeap> GfxDevice::GetDSVHeap() const {
 			return this->DepthBufferHeap;
 		}
 
@@ -95,10 +95,10 @@ namespace Dawn
 			return this->RTVDescriptorSize;
 		}
 
-		ComPtr<CGfxHeapDesciptor> GfxDevice::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-		ComPtr<CGfxCmdAllocator> GfxDevice::CreateCmdAllocator(D3D12_COMMAND_LIST_TYPE InType);
-		ComPtr<CGfxCmdList> GfxDevice::CreateCmdList(ComPtr<CGfxCmdAllocator> InAllocator, D3D12_COMMAND_LIST_TYPE InType);
-		ComPtr<CGfxFence> GfxDevice::CreateFence();
+		ComPtr<ID3D12DescriptorHeap> GfxDevice::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+		ComPtr<ID3D12CommandAllocator> GfxDevice::CreateCmdAllocator(D3D12_COMMAND_LIST_TYPE InType);
+		ComPtr<ID3D12GraphicsCommandList2> GfxDevice::CreateCmdList(ComPtr<ID3D12CommandAllocator> InAllocator, D3D12_COMMAND_LIST_TYPE InType);
+		ComPtr<ID3D12Fence> GfxDevice::CreateFence();
 		void GfxDevice::CreateDepthBuffer(u32 InWidth, u32 InHeight);
 
 		void GfxDevice::Resize(u32 InWidth, u32 InHeight);
@@ -108,11 +108,11 @@ namespace Dawn
 		ComPtr<IDXGISwapChain3> SwapChain;
 
 		// Depth buffer.
-		ComPtr<CGfxResource> DepthBuffer;
-		ComPtr<CGfxHeapDesciptor> DepthBufferHeap;
+		ComPtr<ID3D12Resource> DepthBuffer;
+		ComPtr<ID3D12DescriptorHeap> DepthBufferHeap;
 
-		ComPtr<CGfxHeapDesciptor> RenderTargetViewHeap;
-		ComPtr<CGfxResource> BackBufferRenderTarget[g_NumFrames];
+		ComPtr<ID3D12DescriptorHeap> RenderTargetViewHeap;
+		ComPtr<ID3D12Resource> BackBufferRenderTarget[g_NumFrames];
 
 		std::shared_ptr<GfxQueue> DirectCommandQueue;
 		std::shared_ptr<GfxQueue> CopyCommandQueue;
@@ -136,6 +136,6 @@ namespace Dawn
 
 		ComPtr<ID3D12Device2> GfxDevice::CreateDevice(ComPtr<IDXGIAdapter3> InAdapter);
 		ComPtr<IDXGIAdapter3> GfxDevice::GetAdapter(bool InUseWrap);
-		ComPtr<IDXGISwapChain3> GfxDevice::CreateSwapChain(HWND InHwnd, ComPtr<GfxInternalQueue> InQueue, u32 InWidth, u32 InHeight, u32 InBufferCount);
+		ComPtr<IDXGISwapChain3> GfxDevice::CreateSwapChain(HWND InHwnd, ComPtr<ID3D12CommandQueue> InQueue, u32 InWidth, u32 InHeight, u32 InBufferCount);
 	};
 }

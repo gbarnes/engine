@@ -8,7 +8,7 @@
 
 namespace Dawn
 {
-	ComPtr<CGfxHeapDesciptor> g_D3DSrvDescHeap;
+	ComPtr<ID3D12DescriptorHeap> g_D3DSrvDescHeap;
 
 	void ImGuiWrapper::Create(void* InHwnd)
 	{
@@ -128,7 +128,7 @@ namespace Dawn
 		ImGui_ImplDX12_CreateDeviceObjects();
 	}
 
-	void ImGuiWrapper::Render(CGfxCmdList* InCmdList)
+	void ImGuiWrapper::Render(ID3D12GraphicsCommandList2* InCmdList)
 	{
 		InCmdList->SetDescriptorHeaps(1, g_D3DSrvDescHeap.GetAddressOf());
 

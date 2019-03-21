@@ -25,7 +25,7 @@ namespace Dawn
 		RenderEditorUI();
 	}
 
-	void ImGuiLayer::Render(ComPtr<CGfxCmdList> InCmdList)
+	void ImGuiLayer::Render(ComPtr<ID3D12GraphicsCommandList2> InCmdList)
 	{
 		// TODO: passing a cmd list has to change since 
 		//		 we might want to use multiple cmd list for different

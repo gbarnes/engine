@@ -13,7 +13,7 @@ namespace Dawn
 		
 		void Setup();
 		void Update();
-		void Render(ComPtr<CGfxCmdList> InCmdList);
+		void Render(ComPtr<ID3D12GraphicsCommandList2> InCmdList);
 		void Free();
 
 	private:

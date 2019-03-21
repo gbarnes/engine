@@ -26,7 +26,7 @@ namespace Dawn
 		//-------------------------------------------------------------------------
 		EResult AllocateResources(GfxDevice* GfxDevice);
 		void FreeResources();
-		GfxInternalQueue* ObtainQueue();
+		ID3D12CommandQueue* ObtainQueue();
 
 		static void AsyncCompute(GfxDevice* InDevice, int InThreadIndex);
 	};

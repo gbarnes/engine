@@ -1,4 +1,4 @@
-#include "UploadBuffer.h"
+#include "GfxUploadBuffer.h"
 #include "GfxDevice.h"
 #include "GfxBackend.h"
 #include "inc_core.h"
@@ -6,13 +6,13 @@
 
 namespace Dawn
 {
-	UploadBuffer::UploadBuffer(u64 InPageSize)
+	GfxUploadBuffer::GfxUploadBuffer(u128 InPageSize)
 		: PageSize(InPageSize)
 	{
 
 	}
 
-	UploadBuffer::Allocation UploadBuffer::Allocate(u64 InSizeInBytes, u64 InAlignment)
+	GfxUploadBuffer::Allocation GfxUploadBuffer::Allocate(u128 InSizeInBytes, u128 InAlignment)
 	{
 		// Note (gb): mhm exceptions arent the best
 		if (InSizeInBytes > PageSize)
@@ -28,9 +28,9 @@ namespace Dawn
 		return CurrentPage->Allocate(InSizeInBytes, InAlignment);
 	}
 
-	std::shared_ptr<UploadBuffer::Page> UploadBuffer::RequestPage()
+	std::shared_ptr<GfxUploadBuffer::GfxPage> GfxUploadBuffer::RequestPage()
 	{
-		std::shared_ptr<UploadBuffer::Page> page;
+		std::shared_ptr<GfxUploadBuffer::GfxPage> page;
 
 		if (!AvailablePages.empty())
 		{
@@ -39,14 +39,14 @@ namespace Dawn
 		}
 		else
 		{
-			page = std::make_shared<UploadBuffer::Page>(PageSize);
+			page = std::make_shared<GfxUploadBuffer::GfxPage>(PageSize);
 			PagePool.push_back(page);
 		}
 
 		return page;
 	}
 
-	void UploadBuffer::Reset()
+	void GfxUploadBuffer::Reset()
 	{
 		CurrentPage = nullptr;
 		AvailablePages = PagePool;
@@ -56,7 +56,7 @@ namespace Dawn
 		}
 	}
 
-	UploadBuffer::Page::Page(u64 InSizeInBytes)
+	GfxUploadBuffer::GfxPage::GfxPage(u128 InSizeInBytes)
 		: PageSize(InSizeInBytes), 
 		Offset(0), 
 		CpuPtr(nullptr), 
@@ -77,14 +77,14 @@ namespace Dawn
 		ResourceInstance->Map(0, nullptr, &CpuPtr);
 	}
 
-	UploadBuffer::Page::~Page()
+	GfxUploadBuffer::GfxPage::~GfxPage()
 	{
 		ResourceInstance->Unmap(0, nullptr);
 		CpuPtr = nullptr;
 		GpuPtr = D3D12_GPU_VIRTUAL_ADDRESS(0);
 	}
 
-	bool UploadBuffer::Page::HasSpace(u64 InSizeInBytes, u64 InAlignment)
+	bool GfxUploadBuffer::GfxPage::HasSpace(u128 InSizeInBytes, u128 InAlignment)
 	{
 		// Note (gb): research how AlignUp really works I don't relly get it atm.
 		u64 alignedSize = Math::AlignUp(InSizeInBytes, InAlignment);
@@ -93,7 +93,7 @@ namespace Dawn
 		return alignedOffset + alignedSize <= PageSize;
 	}
 
-	UploadBuffer::Allocation UploadBuffer::Page::Allocate(u64 InSizeInBytes, u64 InAlignment)
+	GfxUploadBuffer::Allocation GfxUploadBuffer::GfxPage::Allocate(u128 InSizeInBytes, u128 InAlignment)
 	{
 		// Note (gb): Again this ulgy exceptions!
 		if (!HasSpace(InSizeInBytes, InAlignment))
@@ -112,7 +112,7 @@ namespace Dawn
 		return allocation;
 	}
 
-	void UploadBuffer::Page::Reset()
+	void GfxUploadBuffer::GfxPage::Reset()
 	{
 		Offset = 0;
 	}

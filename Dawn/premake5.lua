@@ -12,8 +12,10 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
 IncludeDir["ImGui"] = "Dawn/vendor/imgui"
+IncludeDir["DirectXTex"] = "Dawn/vendor/DirectXTex"
 
 include "Dawn/vendor/imgui"
+include "Dawn/vendor/DirectXTex"
 
 project "Dawn"
 	location "Dawn"
@@ -34,13 +36,16 @@ project "Dawn"
 	{
 		"Dawn/vendor/spdlog/include/",
 		"Dawn/vendor/tinyobjloader/include/",
+		"Dawn/vendor/stb/include/",
 		"%{prj.name}/src/Dawn/",
-		"%{IncludeDir.ImGui}"
+		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.DirectXTex}"
 	}
 
 	links 
 	{
-		"ImGui"
+		"ImGui",
+		"DirectXTex"
 	}
 
 	filter "system:windows"
@@ -115,7 +120,9 @@ project "Sandbox"
 	{
 		"Dawn/vendor/spdlog/include/",
 		"Dawn/vendor/tinyobjloader/include/",
-		"Dawn/src"
+		"Dawn/vendor/stb/include/",
+		"Dawn/src",
+		"%{IncludeDir.DirectXTex}",
 	}
 
 	links 

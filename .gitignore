@@ -22,3 +22,5 @@ Dawn/Dawn.sln
 Dawn/Sandbox/Sandbox.vcxproj.user
 Dawn/Sandbox/Sandbox.vcxproj.filters
 Dawn/Sandbox/Sandbox.vcxproj
+Dawn/Dawn/vendor/DirectXTex/bin/
+Dawn/Dawn/vendor/DirectXTex/bin-int/

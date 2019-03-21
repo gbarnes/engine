@@ -22,6 +22,10 @@ using namespace Microsoft::WRL;
 #include <memory>
 #include <assert.h>
 
+#include <map> // for std::map
+#include <mutex> // for std::mutex
+#include <vector> // for std::vector
+
 // The min/max macros conflict with like-named member functions.
 // Only use std::min and std::max defined in <algorithm>.
 #if defined(min)
@@ -54,6 +58,7 @@ typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
 typedef unsigned long u64;
+typedef unsigned long long u128;
 
 typedef char c8;
 typedef short s16;

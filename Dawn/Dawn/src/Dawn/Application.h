@@ -50,6 +50,11 @@ namespace Dawn
 		void OnMousePressedEvent(Event& InEvent);
 		void OnMouseReleasedEvent(Event& InEvent);
 
+		static uint64_t GetFrameCount()
+		{
+			return FrameCount;
+		}
+
 	protected:
 		Window Window;
 		SAppSettings Settings;
@@ -69,6 +74,8 @@ namespace Dawn
 	private:
 		std::vector<Layer*> Layers;
 		std::vector<Layer*>::iterator LayerInsertCount;
+
+		static uint64_t FrameCount;
 	};
 
 	typedef RefPtr<Application> ReferenceAppPtr;

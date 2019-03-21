@@ -27,7 +27,7 @@ namespace Dawn
 				return EResult_ERROR;
 			}
 
-			CGfxCmdList* List = nullptr;
+			GfxInternalCmdList* List = nullptr;
 			SCmdListHandle Handle = GfxBackend::CreateCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT, Allocator, *GfxDevice, &List);
 			CmdListHandles[i] = Handle;
 
@@ -59,7 +59,7 @@ namespace Dawn
 			}*/
 	}
 
-	GfxInternalQueue* GfxParallel::ObtainQueue()
+	ID3D12CommandQueue* GfxParallel::ObtainQueue()
 	{
 		return nullptr;//CmdQueue.Get();
 	}

@@ -11,6 +11,8 @@
 #include "GfxBackend.h"
 #include "imgui.h"
 #include "GfxQueue.h"
+#include "GfxDescriptorAllocator.h"
+#include "GfxCmdList.h"
 #include "Vendor/ImGui/imgui_impl_win32.h"
 #include "Vendor/ImGui/imgui_impl_dx12.h"
 
@@ -18,11 +20,12 @@ namespace Dawn
 {
 	GfxDevice g_Device;
 
-	ComPtr<CGfxCmdList> g_CommandList;
-	u64 g_FrameFenceValues[g_NumFrames] = {};
-	u64 g_FenceValue = 0;
+	ComPtr<ID3D12CommandList> g_CommandList;
+	uint64_t g_FrameFenceValues[g_NumFrames] = {};
+	uint64_t g_FenceValue = 0;
 	bool g_Initialized = false;
 
+	std::unique_ptr<GfxDescriptorAllocator> g_DescriptorAllocators[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
 	D3D12_RESOURCE_STATES g_LastResourceTransitionState = D3D12_RESOURCE_STATE_PRESENT;
 
 	inline HANDLE CreateEventHandle()
@@ -82,7 +85,7 @@ namespace Dawn
 		//}
 	}
 
-	void GfxBackend::ClearRenderTarget(ComPtr<CGfxCmdList> InCmdList, ComPtr<CGfxResource> InRenderTarget, DirectX::XMFLOAT4 InColor)
+	void GfxBackend::ClearRenderTarget(ComPtr<ID3D12GraphicsCommandList2> InCmdList, ComPtr<ID3D12Resource> InRenderTarget, DirectX::XMFLOAT4 InColor)
 	{
 		FLOAT clearColor[] = { InColor.x, InColor.y, InColor.z, InColor.w };
 
@@ -90,7 +93,7 @@ namespace Dawn
 		InCmdList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 	}
 
-	void GfxBackend::ClearDepthBuffer(ComPtr<CGfxCmdList> InCmdList, float InDepth)
+	void GfxBackend::ClearDepthBuffer(ComPtr<ID3D12GraphicsCommandList2> InCmdList, float InDepth)
 	{
 		auto Handle = GfxBackend::GetDepthBufferDescHandle();
 		InCmdList->ClearDepthStencilView(Handle, D3D12_CLEAR_FLAG_DEPTH, InDepth, 0, 0, nullptr);
@@ -101,7 +104,7 @@ namespace Dawn
 	// that is large enough to store the buffer data passed to the function 
 	// and to create an intermediate buffer that is used to copy the CPU buffer data to the GPU.
 	//
-	void GfxBackend::UpdateBufferResource(ComPtr<CGfxCmdList> InCommandList, CGfxResource** OutDestinationResource, CGfxResource** OutIntermediateResource,
+	void GfxBackend::UpdateBufferResource(ComPtr<ID3D12GraphicsCommandList2> InCommandList, ID3D12Resource** OutDestinationResource, ID3D12Resource** OutIntermediateResource,
 		size_t InNumElements, size_t InElementSize, const void* InBufferData, D3D12_RESOURCE_FLAGS InFlags)
 	{
 		size_t BufferSize = InNumElements * InElementSize;
@@ -142,7 +145,7 @@ namespace Dawn
 	//
 	// Issues a switch state command for a speicfic resource to a passed command list 
 	//
-	void GfxBackend::TransitionResource(ComPtr<CGfxCmdList> InCmdList, ComPtr<CGfxResource> InResource, D3D12_RESOURCE_STATES InPreviousState, D3D12_RESOURCE_STATES InState)
+	void GfxBackend::TransitionResource(ComPtr<ID3D12GraphicsCommandList2> InCmdList, ComPtr<ID3D12Resource> InResource, D3D12_RESOURCE_STATES InPreviousState, D3D12_RESOURCE_STATES InState)
 	{
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition
 		(
@@ -231,7 +234,7 @@ namespace Dawn
 	//
 	//
 	//
-	void GfxBackend::Reset(ComPtr<CGfxCmdList> InCmdList)
+	void GfxBackend::Reset(ComPtr<ID3D12GraphicsCommandList2> InCmdList)
 	{
 		TransitionResource(InCmdList, GfxBackend::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 		ClearRenderTarget(InCmdList, GfxBackend::GetCurrentBackbuffer(), DirectX::XMFLOAT4({ 0.4f, 0.6f, 0.9f, 1.0f }));
@@ -240,11 +243,12 @@ namespace Dawn
 	//
 	//
 	//
-	void GfxBackend::Present(ComPtr<CGfxCmdList> InCmdList)
+	void GfxBackend::Present(std::shared_ptr<GfxCmdList> InCmdList)
 	{
 		auto CommandQueue = g_Device.GetQueue();
+		ComPtr<ID3D12GraphicsCommandList2> CmdList(InCmdList->GetGraphicsCommandList());
 
-		TransitionResource(InCmdList, GfxBackend::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		TransitionResource(CmdList, GfxBackend::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 		u32 BackBufferIndex = g_Device.GetCurrentBufferIndex();
 		g_FrameFenceValues[BackBufferIndex] = CommandQueue->ExecuteCommandList(InCmdList);
 		BackBufferIndex = g_Device.Present();
@@ -261,7 +265,7 @@ namespace Dawn
 		return g_Device.GetQueue(type);
 	}
 
-	ComPtr<CGfxResource> GfxBackend::GetCurrentBackbuffer()
+	ComPtr<ID3D12Resource> GfxBackend::GetCurrentBackbuffer()
 	{
 		return g_Device.GetBackbuffer();
 	}
@@ -283,9 +287,27 @@ namespace Dawn
 		return g_Device.GetDSVHeap()->GetCPUDescriptorHandleForHeapStart();
 	}
 
-	ComPtr<CGfxResource> GfxBackend::GetDepthBuffer()
+	ComPtr<ID3D12Resource> GfxBackend::GetDepthBuffer()
 	{
 		return g_Device.GetDepthBuffer();
+	}
+
+	GfxDescriptorAllocation GfxBackend::AllocateDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InDescriptors)
+	{
+		return g_DescriptorAllocators[InType]->Allocate(InDescriptors);
+	}
+
+	void GfxBackend::ReleaseStaleDescriptors(uint64_t finishedFrame)
+	{
+		for (int i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
+		{
+			g_DescriptorAllocators[i]->ReleaseStaleDescriptors(finishedFrame);
+		}
+	}
+
+	u32 GfxBackend::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type)
+	{
+		return g_Device.GetD3D12Device()->GetDescriptorHandleIncrementSize(type);
 	}
 
 }

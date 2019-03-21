@@ -245,7 +245,7 @@ namespace Dawn
 
 		for (int i = 0; i < g_NumFrames; ++i)
 		{
-			ComPtr<CGfxResource> BackBuffer;
+			ComPtr<ID3D12Resource> BackBuffer;
 			ThrowIfFailed(this->SwapChain->GetBuffer(i, IID_PPV_ARGS(&BackBuffer)));
 
 			Device->CreateRenderTargetView(BackBuffer.Get(), nullptr, RtvHandle);
@@ -306,7 +306,7 @@ namespace Dawn
 	// Create a new descriptor heap needed in order to allocate resource views such as 
 	// RenderTargetView, ShaderResourceView, UnorderedAccessView or ConstantBufferView.
 	//
-	ComPtr<CGfxHeapDesciptor> GfxDevice::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)
+	ComPtr<ID3D12DescriptorHeap> GfxDevice::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)
 	{
 		ComPtr<ID3D12DescriptorHeap> DescriptorHeap;
 
@@ -327,9 +327,9 @@ namespace Dawn
 	// and can only be accessed indirectly through a command list.  A command allocator can only be used by a single command list at a time 
 	// but can be reused after the commands that were recorded into the command list have finished executing on the GPU.
 	//
-	ComPtr<CGfxCmdAllocator> GfxDevice::CreateCmdAllocator(D3D12_COMMAND_LIST_TYPE InType)
+	ComPtr<ID3D12CommandAllocator> GfxDevice::CreateCmdAllocator(D3D12_COMMAND_LIST_TYPE InType)
 	{
-		ComPtr<CGfxCmdAllocator> CommandAllocator;
+		ComPtr<ID3D12CommandAllocator> CommandAllocator;
 		ThrowIfFailed(this->Device->CreateCommandAllocator(InType, IID_PPV_ARGS(&CommandAllocator)));
 		return CommandAllocator;
 	}
@@ -340,9 +340,9 @@ namespace Dawn
 	// always deferred.That is, invoking draw or dispatch commands on a command list are 
 	// not executed until the command list is sent to the command queue.
 	//
-	ComPtr<CGfxCmdList> GfxDevice::CreateCmdList(ComPtr<CGfxCmdAllocator> InAllocator, D3D12_COMMAND_LIST_TYPE InType)
+	ComPtr<ID3D12GraphicsCommandList2> GfxDevice::CreateCmdList(ComPtr<ID3D12CommandAllocator> InAllocator, D3D12_COMMAND_LIST_TYPE InType)
 	{
-		ComPtr<CGfxCmdList> List;
+		ComPtr<ID3D12GraphicsCommandList2> List;
 
 		ThrowIfFailed(this->Device->CreateCommandList(0, InType, InAllocator.Get(), nullptr, IID_PPV_ARGS(&List)));
 
@@ -356,7 +356,7 @@ namespace Dawn
 	// The ID3D12Fence is an interface for a GPU / CPU synchronization object. 
 	// Fences can be used to perform synchronization on either the CPU or the GPU.
 	//
-	ComPtr<CGfxFence> GfxDevice::CreateFence()
+	ComPtr<ID3D12Fence> GfxDevice::CreateFence()
 	{
 		ComPtr<ID3D12Fence> Fence;
 
@@ -368,7 +368,7 @@ namespace Dawn
 	//
 	// Creates a new swapchain from a given queue and hwnd.
 	//
-	ComPtr<IDXGISwapChain3> GfxDevice::CreateSwapChain(HWND InHwnd, ComPtr<GfxInternalQueue> InQueue, u32 InWidth, u32 InHeight, u32 InBufferCount)
+	ComPtr<IDXGISwapChain3> GfxDevice::CreateSwapChain(HWND InHwnd, ComPtr<ID3D12CommandQueue> InQueue, u32 InWidth, u32 InHeight, u32 InBufferCount)
 	{
 		ComPtr<IDXGISwapChain3> SwapChain3;
 		ComPtr<IDXGIFactory4> Factory;

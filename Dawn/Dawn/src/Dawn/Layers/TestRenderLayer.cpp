@@ -7,6 +7,7 @@
 #include "Core/GDI/d3dx12.h"
 #include "Application.h"
 #include "inc_core.h"
+#include "Core/GDI/GfxCmdList.h"
 #include "UI/UIEditorEvents.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -146,13 +147,13 @@ namespace Dawn
 
 		ComPtr<ID3D12Device2> Device = GfxBackend::GetDevice()->GetD3D12Device();
 		auto CommandQueue = GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-		auto CommandList = CommandQueue->GetCommandList();
+		auto GfxCmdList = CommandQueue->GetCommandList();
 		CommandQueue->Flush();
 
-		ComPtr<CGfxResource> intermediateVertexBuffer;
+		ComPtr<ID3D12Resource> intermediateVertexBuffer;
 		GfxBackend::UpdateBufferResource
 		(
-			CommandList.Get(),
+			GfxCmdList->GetGraphicsCommandList(),
 			&VertexBuffer,
 			&intermediateVertexBuffer,
 			numOfVertices,
@@ -165,11 +166,11 @@ namespace Dawn
 		VertexBufferView.SizeInBytes = sizeof(VertexPosColor) * numOfVertices;
 		VertexBufferView.StrideInBytes = sizeof(VertexPosColor);
 
-		ComPtr<CGfxResource> intermediateIndexBuffer;
+		ComPtr<ID3D12Resource> intermediateIndexBuffer;
 		GfxBackend::UpdateBufferResource
 		(
-			CommandList.Get(),
-			&IndexBuffer,
+			GfxCmdList->GetGraphicsCommandList(),
+			&GfxIndexBuffer,
 			&intermediateIndexBuffer,
 			numOfIndices,
 			sizeof(u16),
@@ -177,7 +178,7 @@ namespace Dawn
 			D3D12_RESOURCE_FLAG_NONE
 		);
 
-		IndexBufferView.BufferLocation = IndexBuffer->GetGPUVirtualAddress();
+		IndexBufferView.BufferLocation = GfxIndexBuffer->GetGPUVirtualAddress();
 		IndexBufferView.Format = DXGI_FORMAT_R16_UINT;
 		IndexBufferView.SizeInBytes = sizeof(u16) * numOfIndices;
 
@@ -216,34 +217,6 @@ namespace Dawn
 		ThrowIfFailed(Device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(),
 			rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&RootSignature)));
 
-		struct PipelineStateStream
-		{
-			CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE pRootSignature;
-			CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT InputLayout;
-			CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
-			CD3DX12_PIPELINE_STATE_STREAM_VS VS;
-			CD3DX12_PIPELINE_STATE_STREAM_PS PS;
-			CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DSVFormat;
-			CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;
-		} pipelineStateStream;
-
-		D3D12_RT_FORMAT_ARRAY rtvFormats = {};
-		rtvFormats.NumRenderTargets = 1;
-		rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-		pipelineStateStream = {};
-		pipelineStateStream.pRootSignature = RootSignature.Get();
-		pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
-		pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vsBlob.Get());
-		pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(psBlob.Get());
-		pipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-		pipelineStateStream.RTVFormats = rtvFormats;
-		
-
-		D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = {
-			sizeof(pipelineStateStream), &pipelineStateStream
-		};
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
 		desc.pRootSignature = RootSignature.Get();
@@ -266,11 +239,9 @@ namespace Dawn
 		desc.SampleDesc.Count = 1;
 		desc.SampleMask = UINT_MAX;
 
-		//ThrowIfFailed(Device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&PipelineState)));
-
 		ThrowIfFailed(Device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&PipelineState)));
 
-		auto fenceValue = CommandQueue->ExecuteCommandList(CommandList);
+		auto fenceValue = CommandQueue->ExecuteCommandList(GfxCmdList);
 		CommandQueue->WaitForFenceValue(fenceValue);
 		CommandQueue->Flush();
 
@@ -297,7 +268,7 @@ namespace Dawn
 		ProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(this->FoV), aspectRatio, 0.1f, 100.0f);
 	}
 
-	void TestRenderLayer::Render(ComPtr<CGfxCmdList> InCmdList)
+	void TestRenderLayer::Render(ComPtr<ID3D12GraphicsCommandList2> InCmdList)
 	{
 		CGfxState* state = PipelineState.Get();
 
@@ -324,7 +295,7 @@ namespace Dawn
 		delete g_Indices;
 		delete g_Vertices;
 		this->PipelineState.Reset();
-		this->IndexBuffer.Reset();
+		this->GfxIndexBuffer.Reset();
 		this->VertexBuffer.Reset();
 		this->RootSignature.Reset();
 	}
