@@ -12,6 +12,7 @@
 #include "Layers/TestRenderLayer.h"
 #include "ResourceSystem/ResourceSystem.h"
 #include "ResourceSystem/ResourceLoaders.h"
+#include "brofiler.h"
 
 //#include "Core/JobSystem/JobSystem.h"
 
@@ -108,7 +109,7 @@ namespace Dawn
 		// END Subscriptions
 
 		// Resource System initialization
-		if (!ResourceSystem.Initialize("../Assets/", { ".obj", ".jpg", ".cso" }))
+		if (!ResourceSystem.Initialize("../Assets/", { ".obj", ".jpg", ".cso", ".png" }))
 		{
 			DWN_CORE_ERROR("Couldn't initialize resource system");
 			system("pause");
@@ -162,6 +163,7 @@ namespace Dawn
 
 		while (true)
 		{
+			
 			if (Window.PeekMessages())
 				break;
 		}
@@ -181,6 +183,8 @@ namespace Dawn
 	{
 		if (!GfxBackend::IsInitialized())
 			return;
+
+		BROFILER_FRAME("MainThread")
 
 		++Application::FrameCount;
 

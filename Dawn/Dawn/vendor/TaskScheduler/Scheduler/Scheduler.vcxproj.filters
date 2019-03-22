@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Include">
+      <UniqueIdentifier>{6917EFFE-D5F6-6D9A-DE0E-F9704A6DD4FB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Platform">
+      <UniqueIdentifier>{DDB9DC72-C9B2-FBC4-F2E4-E049DE3CDBD0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Platform\Common">
+      <UniqueIdentifier>{756C5871-E1A3-A008-EAAD-042C5664C701}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Platform\Posix">
+      <UniqueIdentifier>{BFDE52E5-ABD8-7B37-9445-124880DEE1A3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Platform\Windows">
+      <UniqueIdentifier>{17F10092-0316-5012-2C61-35A218E54E30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Scopes">
+      <UniqueIdentifier>{C51CFBB7-B1EA-EEBD-9A7E-5FE486EBCA22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{56EB95D1-428D-C0A7-2B48-D4FB178947F8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Include\MTAppInterop.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTArrayView.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTAtomic.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTColorTable.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTConcurrentRingBuffer.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTConfig.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTDebug.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTFiberContext.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTGroupedTask.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTPlatform.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTProfilerEventListener.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTQueueMPMC.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTScheduler.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTStackRequirements.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTStaticVector.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTTaskBucket.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTTaskDesc.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTTaskGroup.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTTaskPool.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTTaskQueue.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTThreadContext.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTTools.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MTTypes.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Common\MTAtomic.h">
+      <Filter>Include\Platform\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Common\MTSpinWait.h">
+      <Filter>Include\Platform\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Common\MTThread.h">
+      <Filter>Include\Platform\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Posix\MTAtomic.h">
+      <Filter>Include\Platform\Posix</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Posix\MTCommon.h">
+      <Filter>Include\Platform\Posix</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Posix\MTEvent.h">
+      <Filter>Include\Platform\Posix</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Posix\MTFiber.h">
+      <Filter>Include\Platform\Posix</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Posix\MTMemory.h">
+      <Filter>Include\Platform\Posix</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Posix\MTMutex.h">
+      <Filter>Include\Platform\Posix</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Posix\MTThread.h">
+      <Filter>Include\Platform\Posix</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Posix\MTUtils.h">
+      <Filter>Include\Platform\Posix</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Windows\MTAtomic.h">
+      <Filter>Include\Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Windows\MTCommon.h">
+      <Filter>Include\Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Windows\MTEvent.h">
+      <Filter>Include\Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Windows\MTFiber.h">
+      <Filter>Include\Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Windows\MTFiberDefault.h">
+      <Filter>Include\Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Windows\MTFiberOptimized.h">
+      <Filter>Include\Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Windows\MTMemory.h">
+      <Filter>Include\Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Windows\MTMutex.h">
+      <Filter>Include\Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Windows\MTThread.h">
+      <Filter>Include\Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Windows\MTUtils.h">
+      <Filter>Include\Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Platform\Windows\MicroWindows.h">
+      <Filter>Include\Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Scopes\MTScopes.h">
+      <Filter>Include\Scopes</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\MTDefaultAppInterop.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MTFiberContext.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MTScheduler.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MTThreadContext.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

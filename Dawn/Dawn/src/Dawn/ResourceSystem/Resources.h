@@ -3,6 +3,7 @@
 #include "Core/GDI/GfxVerticeFormats.h"
 #include "Core/GDI/GfxIndexBuffer.h"
 #include "Core/GDI/GfxVertexBuffer.h"
+#include "Core/GDI/GfxTexture.h"
 #include <d3d12.h>
 #include "inc_core.h"
 
@@ -35,8 +36,8 @@ namespace Dawn
 
 	struct DAWN_API Shader
 	{
-		FileHandle HandleToFile;
 		ShaderHandle Id;
+		FileHandle FileId;
 		ComPtr<ID3DBlob> D3DData;
 	};
 
@@ -68,11 +69,12 @@ namespace Dawn
 
 	struct DAWN_API Image
 	{
-		FileHandle HandleToFile;
-
+		ImageHandle Id;
+		FileHandle FileId;
 		u8* Pixels;
 		u32 Width;
 		u32 Height;
 		u16 ChannelsPerPixel;
+		GfxTexture TextureView;
 	};
 }

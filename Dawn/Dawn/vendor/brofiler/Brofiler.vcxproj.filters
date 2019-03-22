@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Platform">
+      <UniqueIdentifier>{2AC788B4-1694-E3BF-3FAD-D1672BD9184E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform\Windows">
+      <UniqueIdentifier>{64FBD71A-50F4-F66C-7926-DCF1657ED678}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Brofiler.h" />
+    <ClInclude Include="src\CallstackCollector.h" />
+    <ClInclude Include="src\Common.h" />
+    <ClInclude Include="src\Core.h" />
+    <ClInclude Include="src\Event.h" />
+    <ClInclude Include="src\EventDescriptionBoard.h" />
+    <ClInclude Include="src\MemoryPool.h" />
+    <ClInclude Include="src\Message.h" />
+    <ClInclude Include="src\Platform\SamplingProfiler.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\SchedulerTrace.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\SymbolEngine.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\ThreadsEnumerator.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\Windows\ETW.h">
+      <Filter>Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\Windows\EtwTracer.h">
+      <Filter>Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\Windows\Sampler.h">
+      <Filter>Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\Windows\SymEngine.h">
+      <Filter>Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ProfilerServer.h" />
+    <ClInclude Include="src\Serialization.h" />
+    <ClInclude Include="src\Socket.h" />
+    <ClInclude Include="src\SwitchContextCollector.h" />
+    <ClInclude Include="src\SysCallCollector.h" />
+    <ClInclude Include="src\Thread.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\CallstackCollector.cpp" />
+    <ClCompile Include="src\Core.cpp" />
+    <ClCompile Include="src\Event.cpp" />
+    <ClCompile Include="src\EventDescriptionBoard.cpp" />
+    <ClCompile Include="src\Interop.cpp" />
+    <ClCompile Include="src\Message.cpp" />
+    <ClCompile Include="src\Platform\SamplingProfiler.cpp">
+      <Filter>Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\SchedulerTrace.cpp">
+      <Filter>Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\SymbolEngine.cpp">
+      <Filter>Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\Windows\EtwTracer.cpp">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\Windows\Sampler.cpp">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\Windows\SymEngine.cpp">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\Windows\WinThreadsEnumerator.cpp">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ProfilerServer.cpp" />
+    <ClCompile Include="src\Serialization.cpp" />
+    <ClCompile Include="src\SwitchContextCollector.cpp" />
+    <ClCompile Include="src\SysCallCollector.cpp" />
+  </ItemGroup>
+</Project>

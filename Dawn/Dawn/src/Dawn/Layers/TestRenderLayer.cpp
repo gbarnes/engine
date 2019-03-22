@@ -61,32 +61,36 @@ namespace Dawn
 
 		// mesh loading
 		{
-			auto handle = rs->LoadFile(CREATE_FILE_HANDLE("Model/cornell_box.obj"));
+			auto handle = rs->LoadFile("Model/cube.obj");
 			if (handle.IsValid)
 			{
 				
-				usedMesh = ResourceSystem::GetMesh(handle);
+				usedMesh = ResourceTable::GetMesh(handle);
 				auto meshPtr = usedMesh.get();
 				CopyMeshesToGPU(*GfxCmdList, { &meshPtr }, 1);
 			}
 		}
 
 		// vertex shader loading
-		auto handle = rs->LoadFile(CREATE_FILE_HANDLE("Shader/test_vs.cso"));
-		if (handle.IsValid)
+		auto shaderId = rs->LoadFile("Shader/test_vs.cso");
+		if (shaderId.IsValid)
 		{
-			vertexShader = ResourceSystem::GetShader(handle);
+			vertexShader = ResourceTable::GetShader(shaderId);
 		}
 
 		// pixel shader loading
-		auto psHandle = rs->LoadFile(CREATE_FILE_HANDLE("Shader/test_ps.cso"));
-		if (handle.IsValid)
+		shaderId = rs->LoadFile("Shader/test_ps.cso");
+		if (shaderId.IsValid)
 		{
-			pixelShader = ResourceSystem::GetShader(psHandle);
+			pixelShader = ResourceTable::GetShader(shaderId);
 		}
 
-
-		//GfxCmdList->
+		
+		auto imageId = rs->LoadFile("Textures/crate0_diffuse.png");
+		if (imageId.IsValid)
+		{
+			auto image = ResourceTable::GetImage(imageId);
+		}
 
 		D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
@@ -172,6 +176,7 @@ namespace Dawn
 
 	void TestRenderLayer::Render(ComPtr<ID3D12GraphicsCommandList2> InCmdList)
 	{
+		BROFILER_CATEGORY("RenderLayer_Render", Brofiler::Color::AliceBlue)
 		CGfxState* state = PipelineState.Get();
 
 		

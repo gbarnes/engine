@@ -5,23 +5,21 @@
 #include <filesystem>
 #include "Core/Loading/File.h"
 #include "inc_core.h"
-#include "Resources.h"
 
 namespace fs = std::filesystem;
 
 namespace Dawn
 {
-	ResourceDatabase ResourceSystem::Resources;
-
 	static ResourceType GetResourceTypeFromExtension(std::string InExtension)
 	{
+		
 		if (InExtension == ".obj")
 			return ResourceType_StaticMesh;
 
 		if (InExtension == ".fbx")
 			return ResourceType_AnimatedMesh;
 
-		if (InExtension == ".jpg")
+		if (InExtension == ".jpg" || InExtension == ".png" || InExtension == ".bmp")
 			return ResourceType_Image;
 
 		if (InExtension == ".cso")
@@ -43,8 +41,7 @@ namespace Dawn
 
 	void ResourceSystem::Shutdown()
 	{
-
-		Resources.Meshes.clear();
+		ResourceTable::Shutdown();
 	}
 
 	bool ResourceSystem::Initialize(std::string InPath, std::vector<std::string> InFilter)
@@ -116,6 +113,11 @@ namespace Dawn
 		return &MetaDatabase[InHandle];
 	}
 
+	GenericHandle ResourceSystem::LoadFile(std::string InFilename)
+	{
+		return LoadFile(CREATE_FILE_HANDLE(InFilename));
+	}
+
 	GenericHandle ResourceSystem::LoadFile(FileHandle InHandle)
 	{
 		FileMetaData* meta = GetMetaDataFromHandle(InHandle);
@@ -127,7 +129,7 @@ namespace Dawn
 
 		if (meta->Type == ResourceType_None)
 		{
-			DWN_CORE_ERROR("File with handle ResourceType None cannot be loaded!", InHandle);
+			DWN_CORE_ERROR("File-Type extension {0} not supported!", meta->Ext);
 			return GenericHandle();
 		}
 
@@ -137,7 +139,7 @@ namespace Dawn
 			DWN_CORE_ERROR("There is no resource loader for type {0}!", meta->Type);
 			return GenericHandle();
 		}
-		
+
 		GenericHandle file = it->second(this, WorkingSpace, meta);
 		return file;
 	}
@@ -147,32 +149,5 @@ namespace Dawn
 		return std::find(Filters.begin(), Filters.end(), InExtension) != Filters.end();
 	}
 
-	bool ResourceSystem::RegisterResource(ResourceType InType, void* InResource)
-	{
-		if (InType == ResourceType_StaticMesh) {
-			auto meshPtr = std::shared_ptr<Mesh>(static_cast<Mesh*>(InResource));
-			Resources.Meshes.emplace_back(meshPtr);
-		}
-
-		if (InType == ResourceType_Shader) {
-			auto shaderPtr = std::shared_ptr<Shader>(static_cast<Shader*>(InResource));
-			Resources.Shaders.emplace_back(shaderPtr);
-		}
-
-		return false;
-	}
-
-	u128 ResourceSystem::ResourceCount(const ResourceType InType)
-	{
-		if (InType == ResourceType_StaticMesh)
-			return Resources.Meshes.size();
-		if (InType == ResourceType_Image)
-			return Resources.Images.size();
-		if (InType == ResourceType_Material)
-			return Resources.Materials.size();
-		if (InType == ResourceType_Shader)
-			return Resources.Shaders.size();
-
-		return 0;
-	}
+	
 }

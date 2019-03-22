@@ -1,5 +1,6 @@
 #include "ResourceLoaders.h"
 #include "ResourceSystem.h"
+#include "ResourceUtils.h"
 #include "Core/GDI/GfxBackend.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -17,7 +18,10 @@ namespace Dawn
 	{
 		// We might need to have another version that is used when loading binary
 		// meshes when being in dist mode - Gavin Barnes, 03/22/19
-		MeshHandle Id = {};
+
+		MeshHandle Id = ResourceTable::LookUpResource(InMetaData->Type, InMetaData->Id);
+		if (Id.IsValid)
+			return Id;
 
 		tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
@@ -33,7 +37,7 @@ namespace Dawn
 			DWN_CORE_WARN(warn);
 
 			// Create new handle or update existing one
-			u32 meshIndex = (u32)ResourceSystem::ResourceCount(ResourceType_StaticMesh);
+			u32 meshIndex = (u32)ResourceTable::ResourceCount(ResourceType_StaticMesh);
 			Id.Index = meshIndex;
 			Id.IsValid = true;
 			
@@ -93,7 +97,11 @@ namespace Dawn
 				}
 			}
 
-			ResourceSystem::RegisterResource(ResourceType_StaticMesh, mesh);
+			if (!ResourceTable::TrackResource(ResourceType_StaticMesh, mesh))
+			{
+				delete mesh;
+				return MeshHandle();
+			}
 
 			return Id;
 		}
@@ -106,8 +114,12 @@ namespace Dawn
 
 	ShaderHandle RS_LoadShader(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InMetaData)
 	{
+		ShaderHandle existingHandle = ResourceTable::LookUpResource(InMetaData->Type, InMetaData->Id);
+		if (existingHandle.IsValid)
+			return existingHandle;
+
 		Shader* shader = new Shader();
-		shader->HandleToFile = InMetaData->Id;
+		shader->FileId = InMetaData->Id;
 		
 		std::string combinedPath = (InWorkspacePath + InMetaData->Path + InMetaData->Name);
 		HRESULT hr = GfxBackend::ReadShader(std::wstring(combinedPath.begin(), combinedPath.end()).c_str(), &shader->D3DData);
@@ -120,20 +132,48 @@ namespace Dawn
 		}
 
 		shader->Id = {};
-		shader->Id.Index = (u32)ResourceSystem::ResourceCount(ResourceType_Shader);
+		shader->Id.Index = (u32)ResourceTable::ResourceCount(ResourceType_Shader);
 		shader->Id.IsValid = true;
 		shader->Id.Generation = 0;
 
-		ResourceSystem::RegisterResource(ResourceType_Shader, shader);
+		if (!ResourceTable::TrackResource(ResourceType_Shader, shader))
+		{
+			delete shader;
+			return ShaderHandle();
+		}
+
 		return shader->Id;
 	}
 
-	ImageHandle RS_LoadImage(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InMetaData)
+	ImageHandle RS_LoadImage(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InFile)
 	{
-		ImageHandle Id = {};
+		ImageHandle Id = ResourceTable::LookUpResource(InFile->Type, InFile->Id);
+		if (Id.IsValid)
+			return Id;
 
-		
+		std::string path = ToFullFilePath(InWorkspacePath, InFile);
+		int x, y, n;
+		unsigned char *data = stbi_load(path.c_str(), &x, &y, &n, 0);
+		if (data != nullptr)
+		{
+			Image* image = new Image;
+			image->FileId = InFile->Id;
+			image->Width = x;
+			image->Height = y;
+			image->ChannelsPerPixel = n;
+			image->Pixels = data;
 
+			image->Id.Index = (u32)ResourceTable::ResourceCount(ResourceType_Image);
+			image->Id.IsValid = true;
+
+			if (!ResourceTable::TrackResource(ResourceType_Image, image))
+			{
+				stbi_image_free(data);
+				delete image;
+				return ImageHandle();
+			}
+			return image->Id;
+		}
 
 		return Id;
 	}

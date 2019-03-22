@@ -24,3 +24,7 @@ Dawn/Sandbox/Sandbox.vcxproj.filters
 Dawn/Sandbox/Sandbox.vcxproj
 Dawn/Dawn/vendor/DirectXTex/bin/
 Dawn/Dawn/vendor/DirectXTex/bin-int/
+Dawn/Dawn/vendor/brofiler/bin/
+Dawn/Dawn/vendor/brofiler/bin-int/
+Dawn/Dawn/vendor/TaskScheduler/Scheduler/bin/
+Dawn/Dawn/vendor/TaskScheduler/Scheduler/bin-int/

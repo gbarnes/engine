@@ -27,6 +27,7 @@ namespace Dawn
 
 	void ImGuiLayer::Render(ComPtr<ID3D12GraphicsCommandList2> InCmdList)
 	{
+		BROFILER_CATEGORY("ImGuiLayer_Render", Brofiler::Color::Azure)
 		// TODO: passing a cmd list has to change since 
 		//		 we might want to use multiple cmd list for different
 		//	     layers or something.

@@ -1,0 +1,171 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Dist|x64">
+      <Configuration>Dist</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{84CA7F4C-F034-34C3-3973-E568A51C1218}</ProjectGuid>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>Scheduler</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>bin\Debug-windows-x86_64\Scheduler\</OutDir>
+    <IntDir>bin-int\Debug-windows-x86_64\Scheduler\</IntDir>
+    <TargetName>Scheduler</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>bin\Release-windows-x86_64\Scheduler\</OutDir>
+    <IntDir>bin-int\Release-windows-x86_64\Scheduler\</IntDir>
+    <TargetName>Scheduler</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
+    <OutDir>bin\Dist-windows-x86_64\Scheduler\</OutDir>
+    <IntDir>bin-int\Dist-windows-x86_64\Scheduler\</IntDir>
+    <TargetName>Scheduler</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <AdditionalIncludeDirectories>Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <AdditionalIncludeDirectories>Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalOptions>/MT %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <AdditionalIncludeDirectories>Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="Include\MTAppInterop.h" />
+    <ClInclude Include="Include\MTArrayView.h" />
+    <ClInclude Include="Include\MTAtomic.h" />
+    <ClInclude Include="Include\MTColorTable.h" />
+    <ClInclude Include="Include\MTConcurrentRingBuffer.h" />
+    <ClInclude Include="Include\MTConfig.h" />
+    <ClInclude Include="Include\MTDebug.h" />
+    <ClInclude Include="Include\MTFiberContext.h" />
+    <ClInclude Include="Include\MTGroupedTask.h" />
+    <ClInclude Include="Include\MTPlatform.h" />
+    <ClInclude Include="Include\MTProfilerEventListener.h" />
+    <ClInclude Include="Include\MTQueueMPMC.h" />
+    <ClInclude Include="Include\MTScheduler.h" />
+    <ClInclude Include="Include\MTStackRequirements.h" />
+    <ClInclude Include="Include\MTStaticVector.h" />
+    <ClInclude Include="Include\MTTaskBucket.h" />
+    <ClInclude Include="Include\MTTaskDesc.h" />
+    <ClInclude Include="Include\MTTaskGroup.h" />
+    <ClInclude Include="Include\MTTaskPool.h" />
+    <ClInclude Include="Include\MTTaskQueue.h" />
+    <ClInclude Include="Include\MTThreadContext.h" />
+    <ClInclude Include="Include\MTTools.h" />
+    <ClInclude Include="Include\MTTypes.h" />
+    <ClInclude Include="Include\Platform\Common\MTAtomic.h" />
+    <ClInclude Include="Include\Platform\Common\MTSpinWait.h" />
+    <ClInclude Include="Include\Platform\Common\MTThread.h" />
+    <ClInclude Include="Include\Platform\Posix\MTAtomic.h" />
+    <ClInclude Include="Include\Platform\Posix\MTCommon.h" />
+    <ClInclude Include="Include\Platform\Posix\MTEvent.h" />
+    <ClInclude Include="Include\Platform\Posix\MTFiber.h" />
+    <ClInclude Include="Include\Platform\Posix\MTMemory.h" />
+    <ClInclude Include="Include\Platform\Posix\MTMutex.h" />
+    <ClInclude Include="Include\Platform\Posix\MTThread.h" />
+    <ClInclude Include="Include\Platform\Posix\MTUtils.h" />
+    <ClInclude Include="Include\Platform\Windows\MTAtomic.h" />
+    <ClInclude Include="Include\Platform\Windows\MTCommon.h" />
+    <ClInclude Include="Include\Platform\Windows\MTEvent.h" />
+    <ClInclude Include="Include\Platform\Windows\MTFiber.h" />
+    <ClInclude Include="Include\Platform\Windows\MTFiberDefault.h" />
+    <ClInclude Include="Include\Platform\Windows\MTFiberOptimized.h" />
+    <ClInclude Include="Include\Platform\Windows\MTMemory.h" />
+    <ClInclude Include="Include\Platform\Windows\MTMutex.h" />
+    <ClInclude Include="Include\Platform\Windows\MTThread.h" />
+    <ClInclude Include="Include\Platform\Windows\MTUtils.h" />
+    <ClInclude Include="Include\Platform\Windows\MicroWindows.h" />
+    <ClInclude Include="Include\Scopes\MTScopes.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\MTDefaultAppInterop.cpp" />
+    <ClCompile Include="Source\MTFiberContext.cpp" />
+    <ClCompile Include="Source\MTScheduler.cpp" />
+    <ClCompile Include="Source\MTThreadContext.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -2,19 +2,12 @@
 #include "inc_core.h"
 #include "inc_common.h"
 #include "Resources.h"
+#include "ResourceTable.h"
 
 namespace Dawn
 {
 	class File;
 	class ResourceSystem;
-
-	struct DAWN_API ResourceDatabase
-	{
-		std::vector<std::shared_ptr<Mesh>> Meshes;
-		std::vector<std::shared_ptr<Material>> Materials;
-		std::vector<std::shared_ptr<Shader>> Shaders;
-		std::vector<std::shared_ptr<Image>> Images;
-	};
 
 	struct DAWN_API FileMetaData
 	{
@@ -25,7 +18,6 @@ namespace Dawn
 		ResourceType Type;
 		u128 Size;
 	};
-
 
 	#define ResourceSystemId std::string("FS")
 	
@@ -57,33 +49,14 @@ namespace Dawn
 		void RegisterLoader(ResourceType InType, FileLoadDelegate InDelegate);
 		FileMetaData* GetMetaDataFromHandle(FileHandle InHandle);
 
+		GenericHandle LoadFile(std::string InFilename);
 		GenericHandle LoadFile(FileHandle InHandle);
 
-		static std::shared_ptr<Mesh> GetMesh(MeshHandle InHandle)
-		{
-			u32 index = InHandle.Index;
-			if (Resources.Meshes.size() < index)
-				return nullptr;
 
-			return Resources.Meshes[index];
-		}
-
-		static std::shared_ptr<Shader> GetShader(ShaderHandle InHandle)
-		{
-			u32 index = InHandle.Index;
-			if (Resources.Shaders.size() < index)
-				return nullptr;
-
-			return Resources.Shaders[index];
-		}
-
-		static u128 ResourceCount(const ResourceType InType);
-		static bool RegisterResource(ResourceType InType, void* InResource);
 	private:
 		std::vector<std::string> Filters;
 		std::map<ResourceType, FileLoadDelegate> FileLoaders;
 		std::string WorkingSpace;
-		static ResourceDatabase Resources;
 		FileMetaDatabase MetaDatabase;
 	
 		bool IsValidFilter(std::string& InExtension);
