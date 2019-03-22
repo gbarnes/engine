@@ -1,14 +1,11 @@
 #include "ResourceLoaders.h"
-#include <tinyobjloader.h>
 #include "ResourceSystem.h"
-#include "Core/GDI/GfxBackend.h"
-#include "Core/GDI/GfxCmdList.h"
-#include "Core/GDI/GfxQueue.h"
+
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tinyobjloader.h>
 
 namespace Dawn
 {
-	std::vector<Mesh> g_Meshes;
-
 	MeshHandle LoadStaticMesh(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InMetaData)
 	{
 		GenericHandle invalidHandle;
@@ -28,17 +25,20 @@ namespace Dawn
 			DWN_CORE_WARN(warn);
 
 			// Create new handle or update existing one
-			u32 meshIndex = (u32)std::max((i32)(ResourceSystem::ResourceAmount(ResourceType_StaticMesh) - 1), 0);
+			u32 meshIndex = ResourceSystem::FreeResourceIndex(ResourceType_StaticMesh);
 		
 			MeshHandle Id = {};
 			Id.Index = meshIndex;
+			
+			// The generation can always be 0 in this case since we don't allow 
+			// to remove meshes while runtime at this time! - Gavin Barnes 03/22/19
 			Id.Generation = 0;
+
 			Id.IsValid = true;
 
 			Mesh mesh = {};
 			mesh.Id = Id;
 			mesh.FileId = InMetaData->Id;
-			
 			
 			// load vertices and save to the mesh!
 			{			
@@ -48,16 +48,19 @@ namespace Dawn
 
 				for (u32 i = 0; i < numOfVertices; ++i)
 				{
-					VertexPosNormalUV vertex = {};
-
+					//VertexPosNormalUV vertex = {};
+					
+					VertexPosColor vertex = {};
 					vertex.Position = DirectX::XMFLOAT3(attrib.vertices[3 * i], attrib.vertices[3 * i + 1], attrib.vertices[3 * i + 2]);
 
-					if(attrib.normals.size() > 0)
-						vertex.Normal = DirectX::XMFLOAT3(attrib.normals[3 * i], attrib.normals[3 * i + 1], attrib.normals[3 * i + 2]);
+					//if(attrib.normals.size() > 0)
+					//	vertex.Normal = DirectX::XMFLOAT3(attrib.normals[3 * i], attrib.normals[3 * i + 1], attrib.normals[3 * i + 2]);
+
+					float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+					vertex.Color = DirectX::XMFLOAT3(r, r, r);
 
 					mesh.Vertices.emplace_back(vertex);
 				}
-
 			}
 
 			// load indices and submesh groups!
@@ -75,10 +78,12 @@ namespace Dawn
 						mesh.IndicesNormals.emplace_back(index.normal_index);
 						mesh.IndicesUV.emplace_back(index.texcoord_index);
 
-						mesh.Vertices[index.vertex_index].UV = DirectX::XMFLOAT2(attrib.texcoords[2 * index.texcoord_index + 0],
-							attrib.texcoords[2 * index.texcoord_index + 1]);
+						//mesh.Vertices[index.vertex_index].UV = DirectX::XMFLOAT2(attrib.texcoords[2 * index.texcoord_index + 0],
+						//	attrib.texcoords[2 * index.texcoord_index + 1]);
 					}
 
+					mesh.NumIndices = mesh.Indices.size();
+					mesh.NumVertices = mesh.Vertices.size();
 					mesh.Submeshes.emplace_back(submesh);
 				}
 			}

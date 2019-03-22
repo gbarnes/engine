@@ -1,14 +1,33 @@
 #pragma once
 #include "inc_core.h"
 #include "inc_common.h"
-
 #include "Resources.h"
 
 namespace Dawn
 {
 	class File;
 	class ResourceSystem;
-	#define FileSystemId std::string("FS")
+
+	struct DAWN_API ResourceDatabase
+	{
+		std::vector<Mesh> Meshes;
+		std::vector<Material> Materials;
+		std::vector<Shader> Shaders;
+		std::vector<Image> Images;
+	};
+
+	struct DAWN_API FileMetaData
+	{
+		FileHandle Id;
+		std::string Name;
+		std::string Path;
+		std::string Ext;
+		ResourceType Type;
+		u128 Size;
+	};
+
+
+	#define ResourceSystemId std::string("FS")
 	
 	typedef std::map<FileHandle, FileMetaData> FileMetaDatabase;
 	typedef std::function<GenericHandle(ResourceSystem* InFS, std::string&, FileMetaData*) > FileLoadDelegate;
@@ -24,14 +43,16 @@ namespace Dawn
 	class DAWN_API ResourceSystem : public EObject
 	{
 	public:
-		ResourceSystem(std::string InPath, std::vector<std::string> InFilter);
+		ResourceSystem();
 		~ResourceSystem();
 
 		inline static RefPtr<ResourceSystem> Get()
 		{
-			return RefPtr<ResourceSystem>(Locator::Get<ResourceSystem>(FileSystemId));
+			return RefPtr<ResourceSystem>(Locator::Get<ResourceSystem>(ResourceSystemId));
 		}
 
+		bool Initialize(std::string InPath, std::vector<std::string> InFilter);
+		void Shutdown();
 		bool BuildDatabase();
 		void RegisterLoader(ResourceType InType, FileLoadDelegate InDelegate);
 		FileMetaData* GetMetaDataFromHandle(FileHandle InHandle);
@@ -59,7 +80,13 @@ namespace Dawn
 			return &Resources.Meshes[index];
 		}
 
-		static u128 ResourceAmount(ResourceType InType);
+		static u128 ResourceAmount(const ResourceType InType);
+
+
+		static u32 FreeResourceIndex(const ResourceType InType) 
+		{
+			return (u32)std::max((i32)(ResourceSystem::ResourceAmount(InType) - 1), 0);
+		}
 
 	private:
 		std::vector<std::string> Filters;

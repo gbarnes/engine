@@ -1,11 +1,13 @@
 #pragma once
 #include "inc_common.h"
 #include "Core/GDI/GfxVerticeFormats.h"
+#include "Core/GDI/GfxIndexBuffer.h"
+#include "Core/GDI/GfxVertexBuffer.h"
 #include <d3d12.h>
+#include "inc_core.h"
 
 namespace Dawn
 {
-	typedef u128 FileHandle;
 	typedef GenericHandle MeshHandle;
 	typedef GenericHandle MaterialHandle;
 	typedef GenericHandle ShaderHandle;
@@ -21,16 +23,6 @@ namespace Dawn
 		ResourceType_EntityDefinition,
 		ResourceType_Image,
 		ResourceType_Count
-	};
-
-	struct DAWN_API FileMetaData
-	{
-		FileHandle Id;
-		std::string Name;
-		std::string Path;
-		std::string Ext;
-		ResourceType Type;
-		u128 Size;
 	};
 
 	struct DAWN_API Submesh
@@ -57,14 +49,16 @@ namespace Dawn
 	{
 		MeshHandle Id;
 		FileHandle FileId;
-		std::vector<VertexPosNormalUV> Vertices;
+		std::vector<VertexPosColor> Vertices;
 		std::vector<u16> Indices;
 		std::vector<u16> IndicesNormals;
 		std::vector<u16> IndicesUV;
 		std::vector<Submesh> Submeshes;
 		std::vector<MaterialHandle> Materials;
-		GfxResourceViewHandle IndexBufferView;
-		GfxResourceViewHandle VertexBufferView;
+		u32 NumIndices;
+		u32 NumVertices;
+		GfxIndexBuffer IndexBufferView;
+		GfxVertexBuffer VertexBufferView;
 	};
 
 	struct DAWN_API AnimatedMesh : public Mesh
@@ -79,13 +73,5 @@ namespace Dawn
 		u32 Width;
 		u32 Height;
 		u16 ChannelsPerPixel;
-	};
-
-	struct DAWN_API ResourceDatabase
-	{
-		std::vector<Mesh> Meshes;
-		std::vector<Material> Materials;
-		std::vector<Shader> Shaders;
-		std::vector<Image> Images;
 	};
 }

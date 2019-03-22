@@ -64,7 +64,7 @@ typedef char c8;
 typedef short s16;
 typedef int i32;
 typedef long i64;
-
+typedef u128 FileHandle;
 
 #define _KB(x) (x * 1024)
 #define _MB(x) (x * 1024 * 1024)

@@ -8,9 +8,9 @@
 #include "Core/Event.h"
 #include "Core/Events/MouseEvent.h"
 #include "inc_common.h"
-#include "ResourceSystem/ResourceSystem.h"
 #include "Layers/ImGuiLayer.h"
 #include "Layers/TestRenderLayer.h"
+#include "ResourceSystem/ResourceSystem.h"
 #include "ResourceSystem/ResourceLoaders.h"
 
 //#include "Core/JobSystem/JobSystem.h"
@@ -101,6 +101,30 @@ namespace Dawn
 
 	void Application::Run()
 	{
+		// BEGIN Subscriptions
+		g_MouseMovedEvtHandle = CEventDispatcher::Subscribe(EVENT_KEY("MouseMoved"), BIND_EVENT_MEMBER(Application::OnMouseMovedEvent));
+		g_MousePressedHandle = CEventDispatcher::Subscribe(EVENT_KEY("MousePressed"), BIND_EVENT_MEMBER(Application::OnMousePressedEvent));
+		g_MouseReleasedHandle = CEventDispatcher::Subscribe(EVENT_KEY("MouseReleased"), BIND_EVENT_MEMBER(Application::OnMouseReleasedEvent));
+		// END Subscriptions
+
+		// Resource System initialization
+		if (!ResourceSystem.Initialize("../Assets/", { ".obj", ".jpg" }))
+		{
+			DWN_CORE_ERROR("Couldn't initialize resource system");
+			system("pause");
+			return;
+		}
+
+		ResourceSystem.AddRef();
+		ResourceSystem.RegisterLoader(ResourceType_StaticMesh, BIND_FS_LOADER(Dawn::LoadStaticMesh));
+		if (!ResourceSystem.BuildDatabase())
+		{
+			DWN_CORE_ERROR("Couldn't build database for resource system");
+			system("pause");
+			return;
+		}
+
+		// Window Creation Setup
 		EResult Result = this->Window.Initialize(Settings.Title, Settings.WindowWidth,
 								Settings.WindowHeight, Settings.IsFullscreen, 32, 32, 8);
 
@@ -113,24 +137,7 @@ namespace Dawn
 
 		Clock.Reset();
 		this->Window.OnWindowPaint = std::bind(&Application::Tick, this);
-		
-		// BEGIN Subscriptions
-		g_MouseMovedEvtHandle = CEventDispatcher::Subscribe(EVENT_KEY("MouseMoved"), BIND_EVENT_MEMBER(Application::OnMouseMovedEvent));
-		g_MousePressedHandle = CEventDispatcher::Subscribe(EVENT_KEY("MousePressed"), BIND_EVENT_MEMBER(Application::OnMousePressedEvent));
-		g_MouseReleasedHandle = CEventDispatcher::Subscribe(EVENT_KEY("MouseReleased"), BIND_EVENT_MEMBER(Application::OnMouseReleasedEvent));
-		// END Subscriptions
-
-		{
-			ResourceSystem fs("../Assets/", {".obj", ".jpg"});
-			fs.AddRef();
-			fs.RegisterLoader(ResourceType_StaticMesh, BIND_FS_LOADER(Dawn::LoadStaticMesh));
-			fs.BuildDatabase();
-			MeshHandle handle = fs.LoadFile(CREATE_FILE_HANDLE("Model/sponza.obj"));
-			Mesh* mesh = ResourceSystem::GetMesh(handle);
-			//FileMetaData* metaData = fs.GetMetaDataFromHandle();
- 		}
-
-
+	
 		if (Window.Create() != EResult_OK)
 		{
 			DWN_CORE_ERROR("Couldn't create window system");
@@ -138,6 +145,7 @@ namespace Dawn
 			return;
 		}
 
+		// Graphics System Setups.
 		if (GfxBackend::Initialize(Settings.WindowWidth, Settings.WindowHeight, Window.GetHwnd(), false, false) != EResult_OK)
 		{
 			DWN_CORE_ERROR("Couldn't initialize graphics device!\n");
@@ -147,8 +155,6 @@ namespace Dawn
 
 		SetupLayers();
 
-		
-
 		DWN_CORE_INFO("Core Context initialized.");
 
 		while (true)
@@ -157,6 +163,7 @@ namespace Dawn
 				break;
 		}
 
+		ResourceSystem.Shutdown();
 		ClearLayers();
 		GfxBackend::Shutdown();
 

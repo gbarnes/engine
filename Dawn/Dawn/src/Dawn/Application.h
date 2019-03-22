@@ -1,16 +1,10 @@
 #pragma once
 
-/*#include "Core/Logging/Log.h"
-#include "Core/System/Window.h"
-#include "Core/System/EObject.h"
-#include "Core/System/Locator.h"*/
+#include "inc_core.h"
+#include "Layer.h"
 
 #include "Core/Window.h"
-#include "inc_core.h"
-#include "Core/GDI/inc_gfx_types.h"
-#include "Layer.h"
-#include <vector>
-
+#include "ResourceSystem/ResourceSystem.h"
 
 #define AppLocatorId std::string("App")
 
@@ -27,7 +21,7 @@ namespace Dawn
 
 	class Event;
 	class CGfxRootSignature;
-	
+	class ResourceSystem;
 
 	class DAWN_API Application : public EObject
 	{
@@ -57,6 +51,7 @@ namespace Dawn
 
 	protected:
 		Window Window;
+		ResourceSystem ResourceSystem;
 		SAppSettings Settings;
 		Timer Clock;
 

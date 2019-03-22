@@ -39,11 +39,15 @@ namespace Dawn
 	}
 
 	GfxResource::GfxResource(const GfxResource& copy)
-		: m_d3d12Resource(copy.m_d3d12Resource)
-		, m_ResourceName(copy.m_ResourceName)
-		, m_d3d12ClearValue(std::make_unique<D3D12_CLEAR_VALUE>(*copy.m_d3d12ClearValue))
+		: m_ResourceName(copy.m_ResourceName)
 	{
 		int i = 3;
+
+		if (copy.m_d3d12Resource != nullptr)
+			m_d3d12Resource = copy.m_d3d12Resource;
+
+		if (copy.m_d3d12ClearValue.get() != nullptr)
+			m_d3d12ClearValue = std::make_unique<D3D12_CLEAR_VALUE>(*copy.m_d3d12ClearValue);
 	}
 
 	GfxResource::GfxResource(GfxResource&& copy)

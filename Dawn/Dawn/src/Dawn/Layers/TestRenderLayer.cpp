@@ -9,18 +9,11 @@
 #include "inc_core.h"
 #include "Core/GDI/GfxCmdList.h"
 #include "UI/UIEditorEvents.h"
+#include "ResourceSystem/ResourceUtils.h"
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include "tinyobjloader.h"
 
 namespace Dawn
 {
-	struct VertexPosColor
-	{
-		DirectX::XMFLOAT3 Position;
-		DirectX::XMFLOAT3 Color;
-	};
-
 
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, (size_t)(&((VertexPosColor*)0)->Position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -30,6 +23,7 @@ namespace Dawn
 	ComPtr<ID3DBlob> vsBlob;
 	ComPtr<ID3DBlob> psBlob;
 
+	Mesh* usedMesh;
 
 	void TestRenderLayer::OnFOVChanged(Event& InEvent)
 	{
@@ -50,137 +44,24 @@ namespace Dawn
 		this->CamPosition[2] = positionArray[2];
 	}
 
-	u32 numOfIndices = 36;
-
-	static WORD g_Indicis2[36] =
-	{
-		0, 1, 2, 0, 2, 3,
-		4, 6, 5, 4, 7, 6,
-		4, 5, 1, 4, 1, 0,
-		3, 2, 6, 3, 6, 7,
-		1, 5, 6, 1, 6, 2,
-		4, 0, 3, 4, 3, 7
-	};
-
-	static VertexPosColor g_Vertices2[8] = {
-		{ DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f) }, // 0
-		{ DirectX::XMFLOAT3(-1.0f,  1.0f, -1.0f), DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f) }, // 1
-		{ DirectX::XMFLOAT3(1.0f,  1.0f, -1.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 0.0f) }, // 2
-		{ DirectX::XMFLOAT3(1.0f, -1.0f, -1.0f), DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f) }, // 3
-		{ DirectX::XMFLOAT3(-1.0f, -1.0f,  1.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f) }, // 4
-		{ DirectX::XMFLOAT3(-1.0f,  1.0f,  1.0f), DirectX::XMFLOAT3(0.0f, 1.0f, 1.0f) }, // 5
-		{ DirectX::XMFLOAT3(1.0f,  1.0f,  1.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f) }, // 6
-		{ DirectX::XMFLOAT3(1.0f, -1.0f,  1.0f), DirectX::XMFLOAT3(1.0f, 0.0f, 1.0f) }  // 7
-	};
-
-	static VertexPosColor* g_Vertices = nullptr;
-	static u16* g_Indices = nullptr;
 
 	void TestRenderLayer::Setup()
 	{
 		CEventDispatcher::Subscribe(FOVChangedEvtKey, BIND_EVENT_MEMBER(TestRenderLayer::OnFOVChanged));
 		CEventDispatcher::Subscribe(CamPosChangedEvtKey, BIND_EVENT_MEMBER(TestRenderLayer::OnCamPosChanged));
 
-		
-		u32 numOfVertices = 0;
-
-		{
-			tinyobj::attrib_t attrib;
-			std::vector<tinyobj::shape_t> shapes;
-			std::vector<tinyobj::material_t> materials;
-
-			std::string warn;
-			std::string err;
-			bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, "../Assets/Model/cube.obj", "../Assets/Model/", true );
-			if (ret)
-			{
-				
-				numOfVertices = attrib.vertices.size() / 3;
-				g_Vertices = new VertexPosColor[numOfVertices];
-
-				
-				for (u32 i = 0; i < numOfVertices; ++i)
-				{
-					g_Vertices[i].Position = DirectX::XMFLOAT3(attrib.vertices[3 * i], attrib.vertices[3 * i + 1], attrib.vertices[3 * i + 2]);
-
-					float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-					g_Vertices[i].Color = DirectX::XMFLOAT3(r, r, r);
-				}
-
-				numOfIndices = 0;
-				for (auto shape : shapes)
-				{
-					numOfIndices += shape.mesh.indices.size();
-				}
-				g_Indices = new u16[numOfIndices];
-
-				
-				u32 shapeCounter = 0;
-				for (auto shape : shapes)
-				{
-					u8 count = 0;
-					for (u32 i = 0; i < shape.mesh.indices.size(); ++i)
-					{
-						g_Indices[i] = shape.mesh.indices[i].vertex_index;
-						i++;
-						g_Indices[i] = shape.mesh.indices[i].vertex_index;
-						i++;
-						g_Indices[i] = shape.mesh.indices[i].vertex_index;
-						i++;
-						g_Indices[i] = shape.mesh.indices[i].vertex_index;
-						i++;
-						g_Indices[i] = shape.mesh.indices[i].vertex_index;
-						i++;
-						g_Indices[i] = shape.mesh.indices[i].vertex_index;
-					}
-				}
-
-				DWN_INFO("Shape counter");
-			}
-			else
-			{
-				DWN_ERROR(err);
-				return;
-			}
-
-		}
-
 		ComPtr<ID3D12Device2> Device = GfxBackend::GetDevice()->GetD3D12Device();
 		auto CommandQueue = GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 		auto GfxCmdList = CommandQueue->GetCommandList();
 		CommandQueue->Flush();
 
-		ComPtr<ID3D12Resource> intermediateVertexBuffer;
-		GfxBackend::UpdateBufferResource
-		(
-			GfxCmdList->GetGraphicsCommandList(),
-			&VertexBuffer,
-			&intermediateVertexBuffer,
-			numOfVertices,
-			sizeof(VertexPosColor),
-			g_Vertices,
-			D3D12_RESOURCE_FLAG_NONE
-		);
-
-		VertexBufferView.BufferLocation = VertexBuffer->GetGPUVirtualAddress();
-		VertexBufferView.SizeInBytes = sizeof(VertexPosColor) * numOfVertices;
-		VertexBufferView.StrideInBytes = sizeof(VertexPosColor);
-
-		ComPtr<ID3D12Resource> intermediateIndexBuffer;
-		GfxBackend::UpdateBufferResource
-		(
-			GfxCmdList->GetGraphicsCommandList(),
-			&GfxIndexBuffer,
-			&intermediateIndexBuffer,
-			numOfIndices,
-			sizeof(u16),
-			g_Indices,
-			D3D12_RESOURCE_FLAG_NONE
-		);
-
-		IndexBufferView.BufferLocation = GfxIndexBuffer->GetGPUVirtualAddress();
-		IndexBufferView.Format = DXGI_FORMAT_R16_UINT;
-		IndexBufferView.SizeInBytes = sizeof(u16) * numOfIndices;
+		RefPtr<ResourceSystem> rs(ResourceSystem::Get());
+		auto handle = rs->LoadFile(CREATE_FILE_HANDLE("Model/cornell_box.obj"));
+		if (handle.IsValid)
+		{
+			usedMesh = ResourceSystem::GetMesh(handle);
+			CopyMeshesToGPU(*GfxCmdList, { &usedMesh }, 1);
+		}
 
 		ThrowIfFailed(GfxBackend::ReadShader(L"../bin/Debug-windows-x86_64/Sandbox/test_vs.cso", &vsBlob));
 		ThrowIfFailed(GfxBackend::ReadShader(L"../bin/Debug-windows-x86_64/Sandbox/test_ps.cso", &psBlob));
@@ -232,7 +113,9 @@ namespace Dawn
 		desc.RasterizerState.FillMode = D3D12_FILL_MODE::D3D12_FILL_MODE_SOLID;
 		desc.RasterizerState.CullMode = D3D12_CULL_MODE::D3D12_CULL_MODE_BACK;
 		desc.RasterizerState.FrontCounterClockwise = false;
-		desc.DepthStencilState.DepthEnable = false;
+		desc.DepthStencilState.DepthEnable = true;
+		desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_LESS;
+		desc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ALL;
 		desc.DepthStencilState.StencilEnable = false;
 		desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 		//desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
@@ -244,9 +127,6 @@ namespace Dawn
 		auto fenceValue = CommandQueue->ExecuteCommandList(GfxCmdList);
 		CommandQueue->WaitForFenceValue(fenceValue);
 		CommandQueue->Flush();
-
-		//delete g_Indices;
-		//delete g_Vertices;
 	}
 
 	void TestRenderLayer::Update()
@@ -272,11 +152,16 @@ namespace Dawn
 	{
 		CGfxState* state = PipelineState.Get();
 
+		
 		auto rtv = GfxBackend::GetCurrentBackbufferDescHandle();
 		auto dsv = GfxBackend::GetDepthBufferDescHandle();
-		InCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		InCmdList->IASetVertexBuffers(0, 1, &VertexBufferView);
-		InCmdList->IASetIndexBuffer(&IndexBufferView);
+
+		if (usedMesh != nullptr)
+		{
+			InCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			InCmdList->IASetVertexBuffers(0, 1, &usedMesh->VertexBufferView.GetVertexBufferView());
+			InCmdList->IASetIndexBuffer(&usedMesh->IndexBufferView.GetIndexBufferView());
+		}
 
 		InCmdList->RSSetViewports(1, &GfxBackend::GetDevice()->GetViewport());
 		InCmdList->RSSetScissorRects(1, &GfxBackend::GetDevice()->GetScissorRect());
@@ -284,16 +169,18 @@ namespace Dawn
 		InCmdList->SetPipelineState(state);
 		InCmdList->SetGraphicsRootSignature(RootSignature.Get());
 
-		DirectX::XMMATRIX mvpMatrix = DirectX::XMMatrixMultiply(ModelMatrix, ViewMatrix);
-		mvpMatrix = DirectX::XMMatrixMultiply(mvpMatrix, ProjectionMatrix);
-		InCmdList->SetGraphicsRoot32BitConstants(0, sizeof(DirectX::XMMATRIX) / 4, &mvpMatrix, 0);
-		InCmdList->DrawIndexedInstanced(numOfIndices, 1, 0, 0, 0);
+
+		if (usedMesh != nullptr)
+		{
+			DirectX::XMMATRIX mvpMatrix = DirectX::XMMatrixMultiply(ModelMatrix, ViewMatrix);
+			mvpMatrix = DirectX::XMMatrixMultiply(mvpMatrix, ProjectionMatrix);
+			InCmdList->SetGraphicsRoot32BitConstants(0, sizeof(DirectX::XMMATRIX) / 4, &mvpMatrix, 0);
+			InCmdList->DrawIndexedInstanced(usedMesh->NumIndices, 1, 0, 0, 0);
+		}
 	}
 
 	void TestRenderLayer::Free()
 	{
-		delete g_Indices;
-		delete g_Vertices;
 		this->PipelineState.Reset();
 		this->GfxIndexBuffer.Reset();
 		this->VertexBuffer.Reset();
