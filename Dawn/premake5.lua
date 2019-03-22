@@ -65,14 +65,17 @@ project "Dawn"
 		}
 
 	filter "configurations:Debug" 
+		cppdialect "C++17"
 		defines "DAWN_DEBUG"
 		symbols "On"
 
 	filter "configurations:Release" 
+		cppdialect "C++17"
 		defines "DAWN_RELEASE"
 		symbols "On"
 
 	filter "configurations:Dist" 
+		cppdialect "C++17"
 		defines "DAWN_DIST"
 		symbols "On"
 
@@ -81,7 +84,7 @@ project "Dawn"
 
     shaderassembler("AssemblyCode")
 
-    local shader_dir = "../bin/" .. outputdir .. "/Sandbox/"
+    local shader_dir = "../Assets/Shader/"
 
    -- HLSL files that don't end with 'Extensions' will be ignored as they will be
    -- used as includes

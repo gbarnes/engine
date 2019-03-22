@@ -108,7 +108,7 @@ namespace Dawn
 		// END Subscriptions
 
 		// Resource System initialization
-		if (!ResourceSystem.Initialize("../Assets/", { ".obj", ".jpg" }))
+		if (!ResourceSystem.Initialize("../Assets/", { ".obj", ".jpg", ".cso" }))
 		{
 			DWN_CORE_ERROR("Couldn't initialize resource system");
 			system("pause");
@@ -116,7 +116,10 @@ namespace Dawn
 		}
 
 		ResourceSystem.AddRef();
-		ResourceSystem.RegisterLoader(ResourceType_StaticMesh, BIND_FS_LOADER(Dawn::LoadStaticMesh));
+		ResourceSystem.RegisterLoader(ResourceType_StaticMesh, BIND_FS_LOADER(Dawn::RS_LoadStaticMesh));
+		ResourceSystem.RegisterLoader(ResourceType_Shader, BIND_FS_LOADER(Dawn::RS_LoadShader));
+		ResourceSystem.RegisterLoader(ResourceType_Image, BIND_FS_LOADER(Dawn::RS_LoadImage));
+
 		if (!ResourceSystem.BuildDatabase())
 		{
 			DWN_CORE_ERROR("Couldn't build database for resource system");

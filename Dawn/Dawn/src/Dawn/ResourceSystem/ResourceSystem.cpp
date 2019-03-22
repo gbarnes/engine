@@ -24,7 +24,7 @@ namespace Dawn
 		if (InExtension == ".jpg")
 			return ResourceType_Image;
 
-		if (InExtension == ".vso" || InExtension == ".pso")
+		if (InExtension == ".cso")
 			return ResourceType_Shader;
 
 		return ResourceType_None;
@@ -134,7 +134,7 @@ namespace Dawn
 		auto it = FileLoaders.find(meta->Type);
 		if (it == FileLoaders.end())
 		{
-			DWN_CORE_ERROR("File with handle ResourceType None cannot be loaded!", InHandle);
+			DWN_CORE_ERROR("There is no resource loader for type {0}!", meta->Type);
 			return GenericHandle();
 		}
 		
@@ -147,7 +147,22 @@ namespace Dawn
 		return std::find(Filters.begin(), Filters.end(), InExtension) != Filters.end();
 	}
 
-	u128 ResourceSystem::ResourceAmount(const ResourceType InType)
+	bool ResourceSystem::RegisterResource(ResourceType InType, void* InResource)
+	{
+		if (InType == ResourceType_StaticMesh) {
+			auto meshPtr = std::shared_ptr<Mesh>(static_cast<Mesh*>(InResource));
+			Resources.Meshes.emplace_back(meshPtr);
+		}
+
+		if (InType == ResourceType_Shader) {
+			auto shaderPtr = std::shared_ptr<Shader>(static_cast<Shader*>(InResource));
+			Resources.Shaders.emplace_back(shaderPtr);
+		}
+
+		return false;
+	}
+
+	u128 ResourceSystem::ResourceCount(const ResourceType InType)
 	{
 		if (InType == ResourceType_StaticMesh)
 			return Resources.Meshes.size();
@@ -157,6 +172,7 @@ namespace Dawn
 			return Resources.Materials.size();
 		if (InType == ResourceType_Shader)
 			return Resources.Shaders.size();
+
 		return 0;
 	}
 }

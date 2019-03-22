@@ -1,15 +1,23 @@
 #include "ResourceLoaders.h"
 #include "ResourceSystem.h"
+#include "Core/GDI/GfxBackend.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 namespace Dawn
 {
-	MeshHandle LoadStaticMesh(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InMetaData)
+	//
+	// Loads a simple static mesh into the resource system by using 
+	// the tiny obj loader!
+	// 
+	MeshHandle RS_LoadStaticMesh(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InMetaData)
 	{
-		GenericHandle invalidHandle;
-		invalidHandle.IsValid = false;
+		// We might need to have another version that is used when loading binary
+		// meshes when being in dist mode - Gavin Barnes, 03/22/19
+		MeshHandle Id = {};
 
 		tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
@@ -25,20 +33,17 @@ namespace Dawn
 			DWN_CORE_WARN(warn);
 
 			// Create new handle or update existing one
-			u32 meshIndex = ResourceSystem::FreeResourceIndex(ResourceType_StaticMesh);
-		
-			MeshHandle Id = {};
+			u32 meshIndex = (u32)ResourceSystem::ResourceCount(ResourceType_StaticMesh);
 			Id.Index = meshIndex;
+			Id.IsValid = true;
 			
 			// The generation can always be 0 in this case since we don't allow 
 			// to remove meshes while runtime at this time! - Gavin Barnes 03/22/19
 			Id.Generation = 0;
 
-			Id.IsValid = true;
-
-			Mesh mesh = {};
-			mesh.Id = Id;
-			mesh.FileId = InMetaData->Id;
+			Mesh* mesh = new Mesh();
+			mesh->Id = Id;
+			mesh->FileId = InMetaData->Id;
 			
 			// load vertices and save to the mesh!
 			{			
@@ -59,7 +64,7 @@ namespace Dawn
 					float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 					vertex.Color = DirectX::XMFLOAT3(r, r, r);
 
-					mesh.Vertices.emplace_back(vertex);
+					mesh->Vertices.emplace_back(vertex);
 				}
 			}
 
@@ -70,25 +75,25 @@ namespace Dawn
 					Submesh submesh = {};
 					submesh.Name = shape.name;
 					submesh.NumOfIndices = shape.mesh.indices.size();
-					submesh.StartIndex = (u32)std::max((i32)mesh.Indices.size() - 1, 0);
+					submesh.StartIndex = (u32)std::max((i32)mesh->Indices.size() - 1, 0);
 
 					for (auto index : shape.mesh.indices)
 					{
-						mesh.Indices.emplace_back(index.vertex_index);
-						mesh.IndicesNormals.emplace_back(index.normal_index);
-						mesh.IndicesUV.emplace_back(index.texcoord_index);
+						mesh->Indices.emplace_back(index.vertex_index);
+						mesh->IndicesNormals.emplace_back(index.normal_index);
+						mesh->IndicesUV.emplace_back(index.texcoord_index);
 
 						//mesh.Vertices[index.vertex_index].UV = DirectX::XMFLOAT2(attrib.texcoords[2 * index.texcoord_index + 0],
 						//	attrib.texcoords[2 * index.texcoord_index + 1]);
 					}
-
-					mesh.NumIndices = mesh.Indices.size();
-					mesh.NumVertices = mesh.Vertices.size();
-					mesh.Submeshes.emplace_back(submesh);
+					
+					mesh->NumIndices = (u32)mesh->Indices.size();
+					mesh->NumVertices = (u32)mesh->Vertices.size();
+					mesh->Submeshes.emplace_back(submesh);
 				}
 			}
 
-			ResourceSystem::RegisterResource(ResourceType_StaticMesh, &mesh);
+			ResourceSystem::RegisterResource(ResourceType_StaticMesh, mesh);
 
 			return Id;
 		}
@@ -96,6 +101,40 @@ namespace Dawn
 		DWN_CORE_WARN(warn);
 		DWN_CORE_ERROR(err);
 
-		return invalidHandle;
+		return Id;
+	}
+
+	ShaderHandle RS_LoadShader(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InMetaData)
+	{
+		Shader* shader = new Shader();
+		shader->HandleToFile = InMetaData->Id;
+		
+		std::string combinedPath = (InWorkspacePath + InMetaData->Path + InMetaData->Name);
+		HRESULT hr = GfxBackend::ReadShader(std::wstring(combinedPath.begin(), combinedPath.end()).c_str(), &shader->D3DData);
+
+		if (FAILED(hr))
+		{
+			DWN_CORE_ERROR("Couldn't load compiled shader {0}", InMetaData->Name);
+			delete shader;
+			return ShaderHandle();
+		}
+
+		shader->Id = {};
+		shader->Id.Index = (u32)ResourceSystem::ResourceCount(ResourceType_Shader);
+		shader->Id.IsValid = true;
+		shader->Id.Generation = 0;
+
+		ResourceSystem::RegisterResource(ResourceType_Shader, shader);
+		return shader->Id;
+	}
+
+	ImageHandle RS_LoadImage(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InMetaData)
+	{
+		ImageHandle Id = {};
+
+		
+
+
+		return Id;
 	}
 }

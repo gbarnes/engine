@@ -12,6 +12,7 @@ namespace Dawn
 	typedef GenericHandle MaterialHandle;
 	typedef GenericHandle ShaderHandle;
 	typedef GenericHandle GfxResourceViewHandle;
+	typedef GenericHandle ImageHandle;
 
 	enum ResourceType
 	{
@@ -35,7 +36,7 @@ namespace Dawn
 	struct DAWN_API Shader
 	{
 		FileHandle HandleToFile;
-		u32 Id;
+		ShaderHandle Id;
 		ComPtr<ID3DBlob> D3DData;
 	};
 

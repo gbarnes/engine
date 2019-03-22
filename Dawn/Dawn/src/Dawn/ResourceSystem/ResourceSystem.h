@@ -10,10 +10,10 @@ namespace Dawn
 
 	struct DAWN_API ResourceDatabase
 	{
-		std::vector<Mesh> Meshes;
-		std::vector<Material> Materials;
-		std::vector<Shader> Shaders;
-		std::vector<Image> Images;
+		std::vector<std::shared_ptr<Mesh>> Meshes;
+		std::vector<std::shared_ptr<Material>> Materials;
+		std::vector<std::shared_ptr<Shader>> Shaders;
+		std::vector<std::shared_ptr<Image>> Images;
 	};
 
 	struct DAWN_API FileMetaData
@@ -59,35 +59,26 @@ namespace Dawn
 
 		GenericHandle LoadFile(FileHandle InHandle);
 
-		template<typename T>
-		static bool RegisterResource(ResourceType InType, T* InResource)
-		{
-			if (InType == ResourceType_StaticMesh) {
-
-				Mesh* mesh = static_cast<Mesh*>(InResource);
-				Resources.Meshes.emplace_back(*mesh);
-			}
-
-			return false;
-		}
-
-		static Mesh* GetMesh(MeshHandle InHandle)
+		static std::shared_ptr<Mesh> GetMesh(MeshHandle InHandle)
 		{
 			u32 index = InHandle.Index;
 			if (Resources.Meshes.size() < index)
 				return nullptr;
 
-			return &Resources.Meshes[index];
+			return Resources.Meshes[index];
 		}
 
-		static u128 ResourceAmount(const ResourceType InType);
-
-
-		static u32 FreeResourceIndex(const ResourceType InType) 
+		static std::shared_ptr<Shader> GetShader(ShaderHandle InHandle)
 		{
-			return (u32)std::max((i32)(ResourceSystem::ResourceAmount(InType) - 1), 0);
+			u32 index = InHandle.Index;
+			if (Resources.Shaders.size() < index)
+				return nullptr;
+
+			return Resources.Shaders[index];
 		}
 
+		static u128 ResourceCount(const ResourceType InType);
+		static bool RegisterResource(ResourceType InType, void* InResource);
 	private:
 		std::vector<std::string> Filters;
 		std::map<ResourceType, FileLoadDelegate> FileLoaders;

@@ -23,7 +23,9 @@ namespace Dawn
 	ComPtr<ID3DBlob> vsBlob;
 	ComPtr<ID3DBlob> psBlob;
 
-	Mesh* usedMesh;
+	std::shared_ptr<Shader> pixelShader;
+	std::shared_ptr<Shader> vertexShader;
+	std::shared_ptr<Mesh> usedMesh;
 
 	void TestRenderLayer::OnFOVChanged(Event& InEvent)
 	{
@@ -56,15 +58,35 @@ namespace Dawn
 		CommandQueue->Flush();
 
 		RefPtr<ResourceSystem> rs(ResourceSystem::Get());
-		auto handle = rs->LoadFile(CREATE_FILE_HANDLE("Model/cornell_box.obj"));
-		if (handle.IsValid)
+
+		// mesh loading
 		{
-			usedMesh = ResourceSystem::GetMesh(handle);
-			CopyMeshesToGPU(*GfxCmdList, { &usedMesh }, 1);
+			auto handle = rs->LoadFile(CREATE_FILE_HANDLE("Model/cornell_box.obj"));
+			if (handle.IsValid)
+			{
+				
+				usedMesh = ResourceSystem::GetMesh(handle);
+				auto meshPtr = usedMesh.get();
+				CopyMeshesToGPU(*GfxCmdList, { &meshPtr }, 1);
+			}
 		}
 
-		ThrowIfFailed(GfxBackend::ReadShader(L"../bin/Debug-windows-x86_64/Sandbox/test_vs.cso", &vsBlob));
-		ThrowIfFailed(GfxBackend::ReadShader(L"../bin/Debug-windows-x86_64/Sandbox/test_ps.cso", &psBlob));
+		// vertex shader loading
+		auto handle = rs->LoadFile(CREATE_FILE_HANDLE("Shader/test_vs.cso"));
+		if (handle.IsValid)
+		{
+			vertexShader = ResourceSystem::GetShader(handle);
+		}
+
+		// pixel shader loading
+		auto psHandle = rs->LoadFile(CREATE_FILE_HANDLE("Shader/test_ps.cso"));
+		if (handle.IsValid)
+		{
+			pixelShader = ResourceSystem::GetShader(psHandle);
+		}
+
+
+		//GfxCmdList->
 
 		D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
@@ -103,8 +125,8 @@ namespace Dawn
 		desc.pRootSignature = RootSignature.Get();
 		desc.InputLayout = { inputLayout, _countof(inputLayout) };
 		desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		desc.VS = CD3DX12_SHADER_BYTECODE(vsBlob.Get());
-		desc.PS = CD3DX12_SHADER_BYTECODE(psBlob.Get());
+		desc.VS = CD3DX12_SHADER_BYTECODE(vertexShader->D3DData.Get());
+		desc.PS = CD3DX12_SHADER_BYTECODE(pixelShader->D3DData.Get());
 		desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 		desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 		desc.NumRenderTargets = 1;
@@ -181,6 +203,10 @@ namespace Dawn
 
 	void TestRenderLayer::Free()
 	{
+		pixelShader.reset();
+		vertexShader.reset();
+		usedMesh.reset();
+
 		this->PipelineState.Reset();
 		this->GfxIndexBuffer.Reset();
 		this->VertexBuffer.Reset();
