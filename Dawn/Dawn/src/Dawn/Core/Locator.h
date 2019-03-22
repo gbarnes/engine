@@ -29,7 +29,7 @@ namespace Dawn
 
 	private:
 
-		static Dawn::Map< std::string, Dawn::EObject* > Instances;
+		static std::map< std::string, Dawn::EObject* > Instances;
 	};
 
 

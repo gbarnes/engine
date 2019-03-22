@@ -8,12 +8,10 @@
 #include "Core/Event.h"
 #include "Core/Events/MouseEvent.h"
 #include "inc_common.h"
+#include "ResourceSystem/ResourceSystem.h"
 #include "Layers/ImGuiLayer.h"
-#include "Vendor/ImGui/ImGuiWrapper.h"
 #include "Layers/TestRenderLayer.h"
-#include "Vendor/ImGui/imgui_impl_dx12.h"
-#include "Vendor/ImGui/imgui_impl_win32.h"
-#include <d3d12.h>
+#include "ResourceSystem/ResourceLoaders.h"
 
 //#include "Core/JobSystem/JobSystem.h"
 
@@ -121,6 +119,17 @@ namespace Dawn
 		g_MousePressedHandle = CEventDispatcher::Subscribe(EVENT_KEY("MousePressed"), BIND_EVENT_MEMBER(Application::OnMousePressedEvent));
 		g_MouseReleasedHandle = CEventDispatcher::Subscribe(EVENT_KEY("MouseReleased"), BIND_EVENT_MEMBER(Application::OnMouseReleasedEvent));
 		// END Subscriptions
+
+		{
+			ResourceSystem fs("../Assets/", {".obj", ".jpg"});
+			fs.AddRef();
+			fs.RegisterLoader(ResourceType_StaticMesh, BIND_FS_LOADER(Dawn::LoadStaticMesh));
+			fs.BuildDatabase();
+			MeshHandle handle = fs.LoadFile(CREATE_FILE_HANDLE("Model/sponza.obj"));
+			Mesh* mesh = ResourceSystem::GetMesh(handle);
+			//FileMetaData* metaData = fs.GetMetaDataFromHandle();
+ 		}
+
 
 		if (Window.Create() != EResult_OK)
 		{

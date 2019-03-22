@@ -3,20 +3,22 @@
 
 namespace Dawn
 {
-	Dawn::Map< std::string, Dawn::EObject* > Locator::Instances;
+	std::map< std::string, Dawn::EObject* > Locator::Instances;
 
 	void Locator::Add(std::string& InId, Dawn::EObject* InInstance)
 	{
 		InInstance->AddRef();
-		Instances.Push(InId, InInstance);
+		Instances.emplace(InId, InInstance);
 	}
 
 	void Locator::Remove(std::string& InId)
 	{
-		if (!Instances.Exists(InId))
+		auto it = Instances.find(InId);
+		if (it == Instances.end())
 			return;
 
-		auto instance = Instances.Remove(InId);
+		auto instance = it->second;
+		Instances.erase(InId);
 		instance->Release();
 	}
 }

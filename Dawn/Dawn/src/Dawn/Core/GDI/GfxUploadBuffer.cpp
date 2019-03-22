@@ -87,8 +87,8 @@ namespace Dawn
 	bool GfxUploadBuffer::GfxPage::HasSpace(u128 InSizeInBytes, u128 InAlignment)
 	{
 		// Note (gb): research how AlignUp really works I don't relly get it atm.
-		u64 alignedSize = Math::AlignUp(InSizeInBytes, InAlignment);
-		u64 alignedOffset = Math::AlignUp(Offset, InAlignment);
+		u128 alignedSize = Math::AlignUp(InSizeInBytes, InAlignment);
+		u128 alignedOffset = Math::AlignUp(Offset, InAlignment);
 
 		return alignedOffset + alignedSize <= PageSize;
 	}
@@ -101,7 +101,7 @@ namespace Dawn
 			throw std::bad_alloc();
 		}
 
-		u64 alignedSize = Math::AlignUp(InSizeInBytes, InAlignment);
+		u128 alignedSize = Math::AlignUp(InSizeInBytes, InAlignment);
 		Offset = Math::AlignUp(Offset, InAlignment);
 
 		Allocation allocation;
