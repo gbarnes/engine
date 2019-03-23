@@ -58,7 +58,7 @@ namespace Dawn
 				for (u32 i = 0; i < numOfVertices; ++i)
 				{
 					//VertexPosNormalUV vertex = {};
-					
+					//VertexPosUV vertex = {};
 					VertexPosColor vertex = {};
 					vertex.Position = DirectX::XMFLOAT3(attrib.vertices[3 * i], attrib.vertices[3 * i + 1], attrib.vertices[3 * i + 2]);
 
@@ -87,7 +87,7 @@ namespace Dawn
 						mesh->IndicesNormals.emplace_back(index.normal_index);
 						mesh->IndicesUV.emplace_back(index.texcoord_index);
 
-						//mesh.Vertices[index.vertex_index].UV = DirectX::XMFLOAT2(attrib.texcoords[2 * index.texcoord_index + 0],
+						//mesh->Vertices[index.vertex_index].UV = DirectX::XMFLOAT2(attrib.texcoords[2 * index.texcoord_index + 0],
 						//	attrib.texcoords[2 * index.texcoord_index + 1]);
 					}
 					
@@ -153,7 +153,7 @@ namespace Dawn
 
 		std::string path = ToFullFilePath(InWorkspacePath, InFile);
 		int x, y, n;
-		unsigned char *data = stbi_load(path.c_str(), &x, &y, &n, 0);
+		unsigned char *data = stbi_load(path.c_str(), &x, &y, &n, 4);
 		if (data != nullptr)
 		{
 			Image* image = new Image;

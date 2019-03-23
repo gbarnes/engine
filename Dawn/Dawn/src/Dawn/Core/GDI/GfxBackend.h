@@ -23,6 +23,7 @@ namespace Dawn
 	class GfxQueue;
 	class GfxDescriptorAllocation;
 	class GfxCmdList;
+	class GfxTexture;
 
 	namespace GfxBackend 
 	{
@@ -34,7 +35,7 @@ namespace Dawn
 		void Reset(ComPtr<ID3D12GraphicsCommandList2> InCmdList);
 		void ClearRenderTarget(ComPtr<ID3D12GraphicsCommandList2> InCmdList, ComPtr<ID3D12Resource> InRenderTarget, DirectX::XMFLOAT4 InColor);
 		void ClearDepthBuffer(ComPtr<ID3D12GraphicsCommandList2> InCmdList, float InDepth);
-		void Present(std::shared_ptr<GfxCmdList> InCmdList);
+		void Present(GfxTexture& InCmdList);
 		void Resize(u32 InWidth, u32 InHeight);
 
 		void TransitionResource(ComPtr<ID3D12GraphicsCommandList2> InCmdList, ComPtr<ID3D12Resource> InResource, D3D12_RESOURCE_STATES InPreviousState, D3D12_RESOURCE_STATES InState);

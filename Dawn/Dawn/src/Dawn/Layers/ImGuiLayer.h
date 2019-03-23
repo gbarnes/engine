@@ -5,6 +5,8 @@
 
 namespace Dawn
 {
+	class GfxCmdList;
+
 	class ImGuiLayer : public Layer
 	{
 	public:
@@ -13,7 +15,7 @@ namespace Dawn
 		
 		void Setup();
 		void Update();
-		void Render(ComPtr<ID3D12GraphicsCommandList2> InCmdList);
+		void Render(GfxCmdList* InCmdList);
 		void Free();
 
 	private:

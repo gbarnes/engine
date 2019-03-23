@@ -2,16 +2,18 @@
 
 #include "Layer.h"
 #include "Core/GDI/inc_gfx_types.h"
+#include "Core/GDI/GfxRootSignature.h"
 
 namespace Dawn
 {
+	class GfxCmdList;
 
 	class TestRenderLayer : public Layer
 	{
 	public:
 		void Setup();
 		void Update();
-		void Render(ComPtr<ID3D12GraphicsCommandList2> InCmdList);
+		void Render(GfxCmdList* InCmdList);
 		void Free();
 
 		void OnFOVChanged(Event& InEvent);
@@ -25,8 +27,9 @@ namespace Dawn
 		// Index buffer for the cube.
 		ComPtr<ID3D12Resource> GfxIndexBuffer;
 		CGfxIndexView IndexBufferView;
+		GfxRootSignature RootSignature;
 
-		ComPtr<ID3D12RootSignature> RootSignature;
+		//ComPtr<ID3D12RootSignature> RootSignature;
 		ComPtr<ID3D12PipelineState> PipelineState;
 
 		DirectX::XMMATRIX ModelMatrix;

@@ -50,6 +50,7 @@ namespace Dawn
 	class GfxRootSignature;
 	class GfxTexture;
 	class GfxUploadBuffer;
+	struct Image;
 	
 	class GfxVertexBuffer;
 
@@ -173,7 +174,7 @@ namespace Dawn
 		/**
 		 * Load a texture by a filename.
 		 */
-		void LoadTextureFromFile(GfxTexture& texture, const std::wstring& fileName, TextureUsage textureUsage = TextureUsage::Albedo);
+		void LoadTextureView(GfxTexture& texture, Image* fileName, TextureUsage textureUsage = TextureUsage::Albedo);
 
 		/**
 		 * Clear a texture.

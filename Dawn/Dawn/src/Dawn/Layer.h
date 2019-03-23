@@ -6,6 +6,7 @@
 
 namespace Dawn
 {
+	class GfxCmdList;
 
 	class DAWN_API Layer : public EObject
 	{
@@ -15,7 +16,7 @@ namespace Dawn
 
 		virtual void Setup() = 0;
 		virtual void Update() = 0;
-		virtual void Render(ComPtr<ID3D12GraphicsCommandList2> InCmdList) = 0;
+		virtual void Render(GfxCmdList* InCmdList) = 0;
 		virtual void Free() = 0;
 	};
 }

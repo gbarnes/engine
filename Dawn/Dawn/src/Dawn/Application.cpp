@@ -4,6 +4,8 @@
 #include "Core/GDI/GfxQueue.h"
 #include "Core/GDI/GfxDevice.h"
 #include "Core/GDI/GfxCmdList.h"
+#include "Core/GDI/GfxRenderTarget.h"
+#include "Core/GDI/GfxTexture.h"
 #include "Core/GDI/inc_gfx_types.h"
 #include "Core/Event.h"
 #include "Core/Events/MouseEvent.h"
@@ -66,6 +68,8 @@ namespace Dawn
 	DirectX::XMFLOAT4 g_ClearColor = { 0.4f, 0.6f, 0.9f, 1.0f };
 	SEventHandle g_MouseMovedEvtHandle, g_MousePressedHandle, g_MouseReleasedHandle;
 	uint64_t Application::FrameCount = 0;
+
+	GfxRenderTarget g_RenderTarget;
 
 	Application::Application(SAppSettings& InSettings)
 	{
@@ -157,6 +161,7 @@ namespace Dawn
 			return;
 		}
 
+		Load();
 		SetupLayers();
 
 		DWN_CORE_INFO("Core Context initialized.");
@@ -177,6 +182,50 @@ namespace Dawn
 
 	void Application::Load()
 	{
+		auto commandQueue = GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+		auto commandList = commandQueue->GetCommandList();
+
+		DXGI_FORMAT backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+		DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT;
+
+		// Create an off-screen render target with a single color buffer and a depth buffer.
+		auto colorDesc = CD3DX12_RESOURCE_DESC::Tex2D(backBufferFormat,
+			Settings.WindowWidth, Settings.WindowHeight,
+			1, 1,
+			1, 1,
+			D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+
+		D3D12_CLEAR_VALUE colorClearValue;
+		colorClearValue.Format = colorDesc.Format;
+		colorClearValue.Color[0] = 0.4f;
+		colorClearValue.Color[1] = 0.6f;
+		colorClearValue.Color[2] = 0.9f;
+		colorClearValue.Color[3] = 1.0f;
+
+		GfxTexture colorTexture = GfxTexture(colorDesc, &colorClearValue,
+			TextureUsage::RenderTarget,
+			L"Color Render Target");
+
+		// Create a depth buffer.
+		auto depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(depthBufferFormat,
+			Settings.WindowWidth, Settings.WindowHeight,
+			1, 1,
+			1, 1,
+			D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+		D3D12_CLEAR_VALUE depthClearValue;
+		depthClearValue.Format = depthDesc.Format;
+		depthClearValue.DepthStencil = { 1.0f, 0 };
+
+		GfxTexture depthTexture = GfxTexture(depthDesc, &depthClearValue,
+			TextureUsage::Depth,
+			L"Depth Render Target");
+
+		// Attach the textures to the render target.
+		g_RenderTarget.AttachTexture(AttachmentPoint::Color0, colorTexture);
+		g_RenderTarget.AttachTexture(AttachmentPoint::DepthStencil, depthTexture);
+
+		auto fenceValue = commandQueue->ExecuteCommandList(commandList);
+		commandQueue->WaitForFenceValue(fenceValue);
 	}
 
 	void Application::Tick()
@@ -195,19 +244,25 @@ namespace Dawn
 		auto CmdList = GfxBackend::GetQueue()->GetCommandList();
 
 		{
-			GfxBackend::TransitionResource(CmdList->GetGraphicsCommandList(), GfxBackend::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			/*GfxBackend::TransitionResource(CmdList->GetGraphicsCommandList(), GfxBackend::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 			GfxBackend::ClearRenderTarget(CmdList->GetGraphicsCommandList(), GfxBackend::GetCurrentBackbuffer(), g_ClearColor);
 			GfxBackend::ClearDepthBuffer(CmdList->GetGraphicsCommandList(), 1);
-			CmdList->GetGraphicsCommandList()->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
+			CmdList->GetGraphicsCommandList()->OMSetRenderTargets(1, &rtv, FALSE, &dsv);*/
+
+			FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
+
+			CmdList->ClearTexture(g_RenderTarget.GetTexture(AttachmentPoint::Color0), clearColor);
+			CmdList->ClearDepthStencilTexture(g_RenderTarget.GetTexture(AttachmentPoint::DepthStencil), D3D12_CLEAR_FLAG_DEPTH);
+			CmdList->SetRenderTarget(g_RenderTarget);
 		}
 
 		for (Layer* layer : Layers)
 		{
 			layer->Update();
-			layer->Render(CmdList->GetGraphicsCommandList());
+			layer->Render(CmdList.get());
 		}
 		
-		GfxBackend::Present(CmdList);
+		GfxBackend::Present(g_RenderTarget.GetTexture(AttachmentPoint::Color0));
 	}
 
 	void Application::SetupLayers()

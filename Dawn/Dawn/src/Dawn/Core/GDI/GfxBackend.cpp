@@ -13,6 +13,8 @@
 #include "GfxQueue.h"
 #include "GfxDescriptorAllocator.h"
 #include "GfxCmdList.h"
+#include "GfxTexture.h"
+#include "GfxRenderTarget.h"
 #include "Vendor/ImGui/imgui_impl_win32.h"
 #include "Vendor/ImGui/imgui_impl_dx12.h"
 
@@ -59,6 +61,12 @@ namespace Dawn
 		g_Device.GetQueue(D3D12_COMMAND_LIST_TYPE_COPY)->Flush();
 		g_Device.GetQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE)->Flush();
 		g_Device.CreateDepthBuffer(InWidth, InHeight);
+
+
+		for (int i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
+		{
+			g_DescriptorAllocators[i] = std::make_unique<GfxDescriptorAllocator>(static_cast<D3D12_DESCRIPTOR_HEAP_TYPE>(i), 1);
+		}
 
 		g_Initialized = true;
 
@@ -243,16 +251,55 @@ namespace Dawn
 	//
 	//
 	//
-	void GfxBackend::Present(std::shared_ptr<GfxCmdList> InCmdList)
+	void GfxBackend::Present(GfxTexture& InTexture)
 	{
-		auto CommandQueue = g_Device.GetQueue();
+		/*auto CommandQueue = g_Device.GetQueue();
 		ComPtr<ID3D12GraphicsCommandList2> CmdList(InCmdList->GetGraphicsCommandList());
 
 		TransitionResource(CmdList, GfxBackend::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 		u32 BackBufferIndex = g_Device.GetCurrentBufferIndex();
 		g_FrameFenceValues[BackBufferIndex] = CommandQueue->ExecuteCommandList(InCmdList);
 		BackBufferIndex = g_Device.Present();
-		CommandQueue->WaitForFenceValue(g_FrameFenceValues[BackBufferIndex]);
+		CommandQueue->WaitForFenceValue(g_FrameFenceValues[BackBufferIndex]);*/
+
+
+		auto commandQueue = GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+		auto commandList = commandQueue->GetCommandList();
+
+		auto& backBuffer = m_BackBufferTextures[m_CurrentBackBufferIndex];
+
+		if (InTexture.IsValid())
+		{
+			if (InTexture.GetD3D12ResourceDesc().SampleDesc.Count > 1)
+			{
+				commandList->ResolveSubresource(backBuffer, InTexture);
+			}
+			else
+			{
+				commandList->CopyResource(backBuffer, InTexture);
+			}
+		}
+
+		GfxRenderTarget renderTarget;
+		renderTarget.AttachTexture(AttachmentPoint::Color0, backBuffer);
+
+		commandList->TransitionBarrier(backBuffer, D3D12_RESOURCE_STATE_PRESENT);
+		commandQueue->ExecuteCommandList(commandList);
+
+		//UINT syncInterval = m_VSync ? 1 : 0;
+		//UINT presentFlags = m_IsTearingSupported && !m_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
+		g_Device.Present();
+
+		g_FrameFenceValues[BackBufferIndex] = commandQueue->Signal();
+		g_FrameFenceValues[BackBufferIndex] = Application::FrameCount();
+
+		m_CurrentBackBufferIndex = m_dxgiSwapChain->GetCurrentBackBufferIndex();
+
+		commandQueue->WaitForFenceValue(g_FrameFenceValues[m_CurrentBackBufferIndex]);
+
+		GfxBackend::ReleaseStaleDescriptors(g_FrameFenceValues[m_CurrentBackBufferIndex]);
+
+		return m_CurrentBackBufferIndex;
 	}
 
 	GfxDevice* GfxBackend::GetDevice()

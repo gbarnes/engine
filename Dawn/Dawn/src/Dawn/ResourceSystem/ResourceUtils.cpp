@@ -2,6 +2,8 @@
 #include "ResourceSystem.h"
 #include "Resources.h"
 
+
+
 namespace Dawn
 {
 	void CopyMeshesToGPU(GfxCmdList& InCmdList, Mesh** InMesh, u32 InNum )
@@ -21,7 +23,7 @@ namespace Dawn
 			Image* image = InImage[i];
 			// This needs to be addressed later on once we want to 
 			// load textures to the gpu! Gavin Barnes, 03/22/19
-			//InCmdList.LoadTextureFromFile(image->TextureView, image);
+			InCmdList.LoadTextureView(image->TextureView, image);
 		}
 	}
 

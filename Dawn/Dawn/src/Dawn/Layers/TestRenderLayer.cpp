@@ -20,12 +20,19 @@ namespace Dawn
 			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  (size_t)(&((VertexPosColor*)0)->Color), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
+	D3D12_INPUT_ELEMENT_DESC inputLayout2[] = {
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, (size_t)(&((VertexPosUV*)0)->Position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0,  (size_t)(&((VertexPosUV*)0)->UV), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+
+
 	ComPtr<ID3DBlob> vsBlob;
 	ComPtr<ID3DBlob> psBlob;
 
 	std::shared_ptr<Shader> pixelShader;
 	std::shared_ptr<Shader> vertexShader;
 	std::shared_ptr<Mesh> usedMesh;
+	std::shared_ptr<Image> diffuseTexture;
 
 	void TestRenderLayer::OnFOVChanged(Event& InEvent)
 	{
@@ -85,11 +92,12 @@ namespace Dawn
 			pixelShader = ResourceTable::GetShader(shaderId);
 		}
 
-		
 		auto imageId = rs->LoadFile("Textures/crate0_diffuse.png");
 		if (imageId.IsValid)
 		{
-			auto image = ResourceTable::GetImage(imageId);
+			diffuseTexture = ResourceTable::GetImage(imageId);
+			auto imagePtr = diffuseTexture.get();
+			CopyImagesToGPU(*GfxCmdList, { &imagePtr }, 1);
 		}
 
 		D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
@@ -111,22 +119,33 @@ namespace Dawn
 		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
 		rootParameters[0].InitAsConstants(sizeof(DirectX::XMMATRIX) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
+		//CD3DX12_DESCRIPTOR_RANGE1 textureSRV(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+		//CD3DX12_DESCRIPTOR_RANGE1 textureSampler(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
+
+		//rootParameters[1].InitAsDescriptorTable(1, &textureSRV, D3D12_SHADER_VISIBILITY_PIXEL);
+		//rootParameters[2].InitAsDescriptorTable(1, &textureSampler, D3D12_SHADER_VISIBILITY_PIXEL);
+		
+		CD3DX12_STATIC_SAMPLER_DESC linearClampSampler(0, D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 
+			D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP);
+
 		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDescription;
 		rootSignatureDescription.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
 
+		RootSignature.SetRootSignatureDesc(rootSignatureDescription.Desc_1_1, featureData.HighestVersion);
+		/*
 		// Serialize the root signature.
-		ComPtr<ID3DBlob> rootSignatureBlob;
+		/ComPtr<ID3DBlob> rootSignatureBlob;
 		ComPtr<ID3DBlob> errorBlob;
 		ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDescription,
 			featureData.HighestVersion, &rootSignatureBlob, &errorBlob));
 
 		// Create the root signature.
 		ThrowIfFailed(Device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(),
-			rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&RootSignature)));
+			rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&RootSignature)));*/
 
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
-		desc.pRootSignature = RootSignature.Get();
+		desc.pRootSignature = RootSignature.GetRootSignature().Get();
 		desc.InputLayout = { inputLayout, _countof(inputLayout) };
 		desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		desc.VS = CD3DX12_SHADER_BYTECODE(vertexShader->D3DData.Get());
@@ -174,40 +193,44 @@ namespace Dawn
 		ProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(this->FoV), aspectRatio, 0.1f, 100.0f);
 	}
 
-	void TestRenderLayer::Render(ComPtr<ID3D12GraphicsCommandList2> InCmdList)
+	void TestRenderLayer::Render(GfxCmdList* InCmdList)
 	{
 		BROFILER_CATEGORY("RenderLayer_Render", Brofiler::Color::AliceBlue)
 		CGfxState* state = PipelineState.Get();
-
+		auto innerCmdList = InCmdList->GetGraphicsCommandList();
 		
 		auto rtv = GfxBackend::GetCurrentBackbufferDescHandle();
 		auto dsv = GfxBackend::GetDepthBufferDescHandle();
 
 		if (usedMesh != nullptr)
 		{
-			InCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			InCmdList->IASetVertexBuffers(0, 1, &usedMesh->VertexBufferView.GetVertexBufferView());
-			InCmdList->IASetIndexBuffer(&usedMesh->IndexBufferView.GetIndexBufferView());
+			innerCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			//innerCmdList->IASetVertexBuffers(0, 1, &.GetVertexBufferView());
+			InCmdList->SetVertexBuffer(0, usedMesh->VertexBufferView);
+			InCmdList->SetIndexBuffer(usedMesh->IndexBufferView);
 		}
 
-		InCmdList->RSSetViewports(1, &GfxBackend::GetDevice()->GetViewport());
-		InCmdList->RSSetScissorRects(1, &GfxBackend::GetDevice()->GetScissorRect());
+		InCmdList->SetViewport(GfxBackend::GetDevice()->GetViewport());
+		InCmdList->SetScissorRect(GfxBackend::GetDevice()->GetScissorRect());
 
 		InCmdList->SetPipelineState(state);
-		InCmdList->SetGraphicsRootSignature(RootSignature.Get());
+		InCmdList->SetGraphicsRootSignature(RootSignature);
 
 
 		if (usedMesh != nullptr)
 		{
 			DirectX::XMMATRIX mvpMatrix = DirectX::XMMatrixMultiply(ModelMatrix, ViewMatrix);
 			mvpMatrix = DirectX::XMMatrixMultiply(mvpMatrix, ProjectionMatrix);
-			InCmdList->SetGraphicsRoot32BitConstants(0, sizeof(DirectX::XMMATRIX) / 4, &mvpMatrix, 0);
-			InCmdList->DrawIndexedInstanced(usedMesh->NumIndices, 1, 0, 0, 0);
+
+			InCmdList->SetGraphics32BitConstants(0, &mvpMatrix);
+		//	InCmdList->SetShaderResourceView(0, 0, diffuseTexture->TextureView, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+			InCmdList->DrawIndexed(usedMesh->NumIndices, 1, 0, 0, 0);
 		}
 	}
 
 	void TestRenderLayer::Free()
 	{
+		diffuseTexture.reset();
 		pixelShader.reset();
 		vertexShader.reset();
 		usedMesh.reset();
@@ -215,6 +238,6 @@ namespace Dawn
 		this->PipelineState.Reset();
 		this->GfxIndexBuffer.Reset();
 		this->VertexBuffer.Reset();
-		this->RootSignature.Reset();
+		this->RootSignature.GetRootSignature().Reset();
 	}
 }
