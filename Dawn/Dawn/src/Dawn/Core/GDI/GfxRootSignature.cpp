@@ -1,6 +1,5 @@
 #include "GfxRootSignature.h"
 #include "GfxBackend.h"
-#include "GfxDevice.h"
 
 namespace Dawn
 {
@@ -60,7 +59,7 @@ namespace Dawn
 		// up first.
 		Destroy();
 
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 
 		UINT numParameters = rootSignatureDesc.NumParameters;
 		D3D12_ROOT_PARAMETER1* pParameters = numParameters > 0 ? new D3D12_ROOT_PARAMETER1[numParameters] : nullptr;

@@ -1,13 +1,12 @@
 #include "GfxGenerateMipsPSO.h"
 //#include "GfxGenerateMips_CS.h"
 #include "GfxBackend.h"
-#include "GfxDevice.h"
 
 namespace Dawn
 {
 	GfxGenerateMipsPSO::GfxGenerateMipsPSO()
 	{
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 
 		D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;

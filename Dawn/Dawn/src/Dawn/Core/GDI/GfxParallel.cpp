@@ -7,7 +7,6 @@
 //-----------------------------------------------------------------------------
 #include "GfxParallel.h"
 #include "../../inc_common.h"
-#include "GfxDevice.h"
 
 namespace Dawn
 {

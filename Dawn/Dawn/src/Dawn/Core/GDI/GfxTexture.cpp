@@ -1,6 +1,5 @@
 #include "GfxTexture.h"
 #include "GfxBackend.h"
-#include "GfxDevice.h"
 #include "GfxResourceStateTracker.h"
 
 namespace Dawn
@@ -75,7 +74,7 @@ namespace Dawn
 			resDesc.Height = std::max(height, 1u);
 			resDesc.DepthOrArraySize = depthOrArraySize;
 
-			auto device = GfxBackend::GetDevice()->GetD3D12Device();
+			auto device = GfxBackend::GetDevice();
 
 			ThrowIfFailed(device->CreateCommittedResource(
 				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -150,7 +149,7 @@ namespace Dawn
 	{
 		if (m_d3d12Resource)
 		{
-			auto device = GfxBackend::GetDevice()->GetD3D12Device();
+			auto device = GfxBackend::GetDevice();
 
 			CD3DX12_RESOURCE_DESC desc(m_d3d12Resource->GetDesc());
 
@@ -182,7 +181,7 @@ namespace Dawn
 
 	GfxDescriptorAllocation GfxTexture::CreateShaderResourceView(const D3D12_SHADER_RESOURCE_VIEW_DESC* srvDesc) const
 	{
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 		auto srv = GfxBackend::AllocateDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		device->CreateShaderResourceView(m_d3d12Resource.Get(), srvDesc, srv.GetDescriptorHandle());
@@ -192,7 +191,7 @@ namespace Dawn
 
 	GfxDescriptorAllocation GfxTexture::CreateUnorderedAccessView(const D3D12_UNORDERED_ACCESS_VIEW_DESC* uavDesc) const
 	{
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 		auto uav = GfxBackend::AllocateDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		device->CreateUnorderedAccessView(m_d3d12Resource.Get(), nullptr, uavDesc, uav.GetDescriptorHandle());

@@ -6,12 +6,14 @@
 // Inclusions
 //-----------------------------------------------------------------------------
 #include "inc_gfx.h"
-#include "GfxDevice.h"
+#include "GfxContext.h"
 #include "GfxParallel.h"
+#include "Application.h"
 #include "GfxBackend.h"
 #include "imgui.h"
 #include "GfxQueue.h"
 #include "GfxDescriptorAllocator.h"
+#include "GfxResourceStateTracker.h"
 #include "GfxCmdList.h"
 #include "GfxTexture.h"
 #include "GfxRenderTarget.h"
@@ -20,53 +22,93 @@
 
 namespace Dawn
 {
-	GfxDevice g_Device;
+	const u32 g_NumFrames = 3;
 
-	ComPtr<ID3D12CommandList> g_CommandList;
-	uint64_t g_FrameFenceValues[g_NumFrames] = {};
-	uint64_t g_FenceValue = 0;
-	bool g_Initialized = false;
+	// Device Variables
+	static ComPtr<IDXGIAdapter3> g_Adapter;
+	static ComPtr<ID3D12Device2> g_Device;
+	static ComPtr<IDXGISwapChain3> g_SwapChain;
 
-	std::unique_ptr<GfxDescriptorAllocator> g_DescriptorAllocators[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
-	D3D12_RESOURCE_STATES g_LastResourceTransitionState = D3D12_RESOURCE_STATE_PRESENT;
 
-	inline HANDLE CreateEventHandle()
-	{
-		HANDLE FenceEvent;
+	// Backbuffer Variables
+	static GfxRenderTarget g_RenderTarget;
+	static GfxTexture g_BackBufferTextures[g_NumFrames];
+	static u32 g_CurrentBackBufferIndex;
 
-		FenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-		assert(FenceEvent && "Failed to create fence event.");
+	// Command Queue Variables
+	static std::shared_ptr<GfxQueue> g_DirectQueue;
+	static std::shared_ptr<GfxQueue> g_ComputeQueue;
+	static std::shared_ptr<GfxQueue> g_CopyQueue;
+	static uint64_t g_FrameFenceValues[g_NumFrames] = {};
+	static uint64_t g_FenceValue = 0;
+	static bool g_Initialized = false;
 
-		return FenceEvent;
-	}
+	// Allocator Variables
+	static std::unique_ptr<GfxDescriptorAllocator> g_DescriptorAllocators[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
+
+	// Window Settings
+	static bool g_UseVsync = false;
+	static u32 g_Width;
+	static u32 g_Height;
+	static D3D12_VIEWPORT g_Viewport;
+	static D3D12_RECT g_ScissorRect;
 
 	bool GfxBackend::IsInitialized()
 	{
 		return g_Initialized;
 	}
 
+	void UpdateRenderTargetViews()
+	{
+		for (int i = 0; i < g_NumFrames; ++i)
+		{
+			ComPtr<ID3D12Resource> backBuffer;
+			ThrowIfFailed(g_SwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer)));
+
+			GfxResourceStateTracker::AddGlobalResourceState(backBuffer.Get(), D3D12_RESOURCE_STATE_COMMON);
+
+			g_BackBufferTextures[i].SetD3D12Resource(backBuffer);
+			g_BackBufferTextures[i].CreateViews();
+		}
+	}
+
 	EResult GfxBackend::Initialize(int InWidth, int InHeight, HWND InHWnd, bool InUseVSync = false, bool InIsFullscreen = false)
 	{
-		// Check for DirectX Math library support.
-		if (!DirectX::XMVerifyCPUSupport())
-		{
-			MessageBoxA(NULL, "Failed to verify DirectX Math library support.", "Error", MB_OK | MB_ICONERROR);
+		g_UseVsync = InUseVSync;
+		g_Width = InWidth;
+		g_Height = InHeight;
+
+		g_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(InWidth), static_cast<float>(InHeight));
+		g_ScissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
+
+		g_Adapter = GfxContext::GetAdapter(false);
+		if (g_Adapter == nullptr)
 			return EResult_ERROR;
+
+		g_Device = GfxContext::CreateDevice(g_Adapter);
+		if (g_Device == nullptr)
+			return EResult_ERROR;
+
+		// allocate the queues
+		{
+			g_DirectQueue = std::make_shared<GfxQueue>(D3D12_COMMAND_LIST_TYPE_DIRECT);
+			g_ComputeQueue = std::make_shared<GfxQueue>(D3D12_COMMAND_LIST_TYPE_COMPUTE);
+			g_CopyQueue = std::make_shared<GfxQueue>(D3D12_COMMAND_LIST_TYPE_COPY);
 		}
 
-		if (g_Device.Initialize(InWidth, InHeight, InHWnd, InUseVSync, InIsFullscreen) != EResult_OK)
+		g_SwapChain = GfxContext::CreateSwapChain(InHWnd, g_DirectQueue->GetD3D12CommandQueue(), InWidth, InHeight, g_NumFrames);
+		if (g_SwapChain == nullptr)
 			return EResult_ERROR;
-
-		g_Device.GetQueue()->Flush();
-		g_Device.GetQueue(D3D12_COMMAND_LIST_TYPE_COPY)->Flush();
-		g_Device.GetQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE)->Flush();
-		g_Device.CreateDepthBuffer(InWidth, InHeight);
 
 
 		for (int i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
 		{
 			g_DescriptorAllocators[i] = std::make_unique<GfxDescriptorAllocator>(static_cast<D3D12_DESCRIPTOR_HEAP_TYPE>(i), 1);
 		}
+
+		UpdateRenderTargetViews();
+
+		g_CurrentBackBufferIndex = g_SwapChain->GetCurrentBackBufferIndex();
 
 		g_Initialized = true;
 
@@ -78,95 +120,68 @@ namespace Dawn
 	//
 	void GfxBackend::Shutdown()
 	{
-		g_Device.Shutdown();
+		if (!IsInitialized())
+			return;
+
+		Flush();
+
+		for (int i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
+		{
+			g_DescriptorAllocators[i].reset();
+		}
+
+		for (int i = 0; i < g_NumFrames; ++i)
+		{
+			g_BackBufferTextures[i].Reset();
+		}
+
+		{
+			g_ComputeQueue.reset();
+			g_CopyQueue.reset();
+			g_DirectQueue.reset();
+		}
+
+		{
+			g_SwapChain.Reset();
+			g_Device.Reset();
+			g_Adapter.Reset();
+		}
 	}
 
 	void GfxBackend::Resize(u32 InWidth, u32 InHeight)
 	{
-		//if (g_Device.Width != width || g_ClientHeight != height)
-		//{
 		if (!IsInitialized())
 			return;
 
-		g_Device.Resize(InWidth, InHeight);
-
-		//}
-	}
-
-	void GfxBackend::ClearRenderTarget(ComPtr<ID3D12GraphicsCommandList2> InCmdList, ComPtr<ID3D12Resource> InRenderTarget, DirectX::XMFLOAT4 InColor)
-	{
-		FLOAT clearColor[] = { InColor.x, InColor.y, InColor.z, InColor.w };
-
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtv = GfxBackend::GetCurrentBackbufferDescHandle();
-		InCmdList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-	}
-
-	void GfxBackend::ClearDepthBuffer(ComPtr<ID3D12GraphicsCommandList2> InCmdList, float InDepth)
-	{
-		auto Handle = GfxBackend::GetDepthBufferDescHandle();
-		InCmdList->ClearDepthStencilView(Handle, D3D12_CLEAR_FLAG_DEPTH, InDepth, 0, 0, nullptr);
-	}
-
-	//
-	// The UpdateBufferResource method is used to create a ID3D12Resource 
-	// that is large enough to store the buffer data passed to the function 
-	// and to create an intermediate buffer that is used to copy the CPU buffer data to the GPU.
-	//
-	void GfxBackend::UpdateBufferResource(ComPtr<ID3D12GraphicsCommandList2> InCommandList, ID3D12Resource** OutDestinationResource, ID3D12Resource** OutIntermediateResource,
-		size_t InNumElements, size_t InElementSize, const void* InBufferData, D3D12_RESOURCE_FLAGS InFlags)
-	{
-		size_t BufferSize = InNumElements * InElementSize;
-
-		ComPtr<ID3D12Device> Device = g_Device.GetD3D12Device();
-
-		ThrowIfFailed(Device->CreateCommittedResource
-		(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-			D3D12_HEAP_FLAG_NONE,
-			&CD3DX12_RESOURCE_DESC::Buffer(BufferSize, InFlags),
-			D3D12_RESOURCE_STATE_COPY_DEST,
-			nullptr,
-			IID_PPV_ARGS(OutDestinationResource)
-		));
-
-		if (InBufferData)
+		if (g_Width != InWidth || g_Height != InHeight)
 		{
-			ThrowIfFailed(Device->CreateCommittedResource
-			(
-				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-				D3D12_HEAP_FLAG_NONE,
-				&CD3DX12_RESOURCE_DESC::Buffer(BufferSize),
-				D3D12_RESOURCE_STATE_GENERIC_READ,
-				nullptr,
-				IID_PPV_ARGS(OutIntermediateResource)
-			));
+			g_Width = InWidth;
+			g_Height = InHeight;
+			g_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(InWidth), static_cast<float>(InHeight));
 
-			D3D12_SUBRESOURCE_DATA subresourceData = {};
-			subresourceData.pData = InBufferData;
-			subresourceData.RowPitch = BufferSize;
-			subresourceData.SlicePitch = subresourceData.RowPitch;
+			Flush();
 
-			UpdateSubresources(InCommandList.Get(), *OutDestinationResource, *OutIntermediateResource, 0, 0, 1, &subresourceData);
+			g_RenderTarget.AttachTexture(Color0, GfxTexture());
+			for (int i = 0; i < g_NumFrames; ++i)
+			{
+				GfxResourceStateTracker::RemoveGlobalResourceState(g_BackBufferTextures[i].GetD3D12Resource().Get());
+				g_BackBufferTextures[i].Reset();
+			}
+
+			DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
+			ThrowIfFailed(g_SwapChain->GetDesc(&swapChainDesc));
+			ThrowIfFailed(g_SwapChain->ResizeBuffers(g_NumFrames, g_Width,
+				g_Height, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
+
+			
+			g_CurrentBackBufferIndex = g_SwapChain->GetCurrentBackBufferIndex();
+
+			UpdateRenderTargetViews();
 		}
 	}
 
-	//
-	// Issues a switch state command for a speicfic resource to a passed command list 
-	//
-	void GfxBackend::TransitionResource(ComPtr<ID3D12GraphicsCommandList2> InCmdList, ComPtr<ID3D12Resource> InResource, D3D12_RESOURCE_STATES InPreviousState, D3D12_RESOURCE_STATES InState)
-	{
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition
-		(
-			InResource.Get(),
-			InPreviousState,
-			InState,
-			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-			D3D12_RESOURCE_BARRIER_FLAG_NONE
-		);
-
-		InCmdList->ResourceBarrier(1, &barrier);
-	}
-
+	
+	
 	//
 	// Reads a pre-compiled shader file into a blob!
 	//
@@ -239,36 +254,24 @@ namespace Dawn
 		return hr;
 	}
 
-	//
-	//
-	//
-	void GfxBackend::Reset(ComPtr<ID3D12GraphicsCommandList2> InCmdList)
+	void GfxBackend::Flush()
 	{
-		TransitionResource(InCmdList, GfxBackend::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		ClearRenderTarget(InCmdList, GfxBackend::GetCurrentBackbuffer(), DirectX::XMFLOAT4({ 0.4f, 0.6f, 0.9f, 1.0f }));
+		g_DirectQueue->Flush();
+		g_ComputeQueue->Flush();
+		g_CopyQueue->Flush();
 	}
 
 	//
 	//
 	//
-	void GfxBackend::Present(GfxTexture& InTexture)
+	u32 GfxBackend::Present(const GfxTexture& InTexture)
 	{
-		/*auto CommandQueue = g_Device.GetQueue();
-		ComPtr<ID3D12GraphicsCommandList2> CmdList(InCmdList->GetGraphicsCommandList());
-
-		TransitionResource(CmdList, GfxBackend::GetCurrentBackbuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-		u32 BackBufferIndex = g_Device.GetCurrentBufferIndex();
-		g_FrameFenceValues[BackBufferIndex] = CommandQueue->ExecuteCommandList(InCmdList);
-		BackBufferIndex = g_Device.Present();
-		CommandQueue->WaitForFenceValue(g_FrameFenceValues[BackBufferIndex]);*/
-
-
 		auto commandQueue = GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-		auto commandList = commandQueue->GetCommandList();
+		//auto commandList = commandQueue->GetCommandList();
 
-		auto& backBuffer = m_BackBufferTextures[m_CurrentBackBufferIndex];
+		//auto& backBuffer = g_BackBufferTextures[g_CurrentBackBufferIndex];
 
-		if (InTexture.IsValid())
+		/*if (InTexture.IsValid())
 		{
 			if (InTexture.GetD3D12ResourceDesc().SampleDesc.Count > 1)
 			{
@@ -278,65 +281,100 @@ namespace Dawn
 			{
 				commandList->CopyResource(backBuffer, InTexture);
 			}
-		}
+		}*/
 
-		GfxRenderTarget renderTarget;
-		renderTarget.AttachTexture(AttachmentPoint::Color0, backBuffer);
+		//GfxRenderTarget renderTarget;
+		//renderTarget.AttachTexture(AttachmentPoint::Color0, backBuffer);
 
-		commandList->TransitionBarrier(backBuffer, D3D12_RESOURCE_STATE_PRESENT);
-		commandQueue->ExecuteCommandList(commandList);
+		//commandList->TransitionBarrier(InTexture, D3D12_RESOURCE_STATE_PRESENT);
+		//commandQueue->ExecuteCommandList(commandList);
 
 		//UINT syncInterval = m_VSync ? 1 : 0;
 		//UINT presentFlags = m_IsTearingSupported && !m_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
-		g_Device.Present();
+		g_SwapChain->Present((g_UseVsync) ? 1 : 0, 0);
 
-		g_FrameFenceValues[BackBufferIndex] = commandQueue->Signal();
-		g_FrameFenceValues[BackBufferIndex] = Application::FrameCount();
+		g_FrameFenceValues[g_CurrentBackBufferIndex] = commandQueue->Signal();
+		g_FrameFenceValues[g_CurrentBackBufferIndex] = Application::GetFrameCount();
 
-		m_CurrentBackBufferIndex = m_dxgiSwapChain->GetCurrentBackBufferIndex();
+		g_CurrentBackBufferIndex = g_SwapChain->GetCurrentBackBufferIndex();
+		commandQueue->WaitForFenceValue(g_FrameFenceValues[g_CurrentBackBufferIndex]);
+		GfxBackend::ReleaseStaleDescriptors(g_FrameFenceValues[g_CurrentBackBufferIndex]);
 
-		commandQueue->WaitForFenceValue(g_FrameFenceValues[m_CurrentBackBufferIndex]);
-
-		GfxBackend::ReleaseStaleDescriptors(g_FrameFenceValues[m_CurrentBackBufferIndex]);
-
-		return m_CurrentBackBufferIndex;
+		return g_CurrentBackBufferIndex;
 	}
 
-	GfxDevice* GfxBackend::GetDevice()
+	D3D12_VIEWPORT GfxBackend::GetViewport()
 	{
-		return &g_Device;
+		return g_Viewport;
+	}
+
+	D3D12_RECT GfxBackend::GetScissorRect()
+	{
+		return g_ScissorRect;
+	}
+
+	ComPtr<ID3D12Device2> GfxBackend::GetDevice()
+	{
+		return g_Device;
+	}
+
+	ComPtr<IDXGISwapChain3> GfxBackend::GetSwapChain()
+	{
+		return g_SwapChain;
 	}
 
 	std::shared_ptr<GfxQueue> GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE type)
 	{
-		return g_Device.GetQueue(type);
+		std::shared_ptr<GfxQueue> CommandQueue;
+		switch (type)
+		{
+		case D3D12_COMMAND_LIST_TYPE_DIRECT:
+			CommandQueue = g_DirectQueue;
+			break;
+		case D3D12_COMMAND_LIST_TYPE_COMPUTE:
+			CommandQueue = g_ComputeQueue;
+			break;
+		case D3D12_COMMAND_LIST_TYPE_COPY:
+			CommandQueue = g_CopyQueue;
+			break;
+		default:
+			assert(false && "Invalid command queue type.");
+		}
+
+		return CommandQueue;
 	}
 
-	ComPtr<ID3D12Resource> GfxBackend::GetCurrentBackbuffer()
+	const GfxRenderTarget& GfxBackend::GetRenderTarget()
 	{
-		return g_Device.GetBackbuffer();
+		g_RenderTarget.AttachTexture(AttachmentPoint::Color0, g_BackBufferTextures[g_CurrentBackBufferIndex]);	
+		return g_RenderTarget;
 	}
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE GfxBackend::GetCurrentBackbufferDescHandle()
+	DXGI_SAMPLE_DESC GfxBackend::GetMultisampleQualityLevels(DXGI_FORMAT InBackBufferFormat, u32 InNumSamples,
+		D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS InFlags)
 	{
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtv
-		(
-			g_Device.GetRTVHeap()->GetCPUDescriptorHandleForHeapStart(),
-			g_Device.GetCurrentBufferIndex(),
-			g_Device.GetRTVDescriptorSize()
-		);
+		DXGI_SAMPLE_DESC sampleDesc = { 1, 0 };
 
-		return rtv;
-	}
+		D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS qualityLevels;
+		qualityLevels.Format = InBackBufferFormat;
+		qualityLevels.SampleCount = 1;
+		qualityLevels.Flags = InFlags;
+		qualityLevels.NumQualityLevels = 0;
 
-	D3D12_CPU_DESCRIPTOR_HANDLE GfxBackend::GetDepthBufferDescHandle()
-	{
-		return g_Device.GetDSVHeap()->GetCPUDescriptorHandleForHeapStart();
-	}
+		bool doesSupportMultisample = SUCCEEDED(g_Device->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &qualityLevels,
+			sizeof(D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS)));
 
-	ComPtr<ID3D12Resource> GfxBackend::GetDepthBuffer()
-	{
-		return g_Device.GetDepthBuffer();
+		while (qualityLevels.SampleCount <= InNumSamples && doesSupportMultisample && qualityLevels.NumQualityLevels > 0)
+		{
+			// That works...
+			sampleDesc.Count = qualityLevels.SampleCount;
+			sampleDesc.Quality = qualityLevels.NumQualityLevels - 1;
+
+			// But can we do better?
+			qualityLevels.SampleCount *= 2;
+		}
+
+		return sampleDesc;
 	}
 
 	GfxDescriptorAllocation GfxBackend::AllocateDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE InType, u32 InDescriptors)
@@ -354,7 +392,7 @@ namespace Dawn
 
 	u32 GfxBackend::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type)
 	{
-		return g_Device.GetD3D12Device()->GetDescriptorHandleIncrementSize(type);
+		return g_Device->GetDescriptorHandleIncrementSize(type);
 	}
 
 }

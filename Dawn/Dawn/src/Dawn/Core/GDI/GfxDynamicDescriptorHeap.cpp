@@ -1,6 +1,5 @@
 #include "GfxDynamicDescriptorHeap.h"
 #include "GfxBackend.h"
-#include "GfxDevice.h"
 #include "GfxCmdList.h"
 #include "GfxRootSignature.h"
 
@@ -15,7 +14,7 @@ namespace Dawn
 		, CurrentGPUDescriptorHandle(D3D12_DEFAULT)
 		, NumFreeHandles(0)
 	{
-		//DescriptorHandleIncrementSize = Application::Get().GetDescriptorHandleIncrementSize(InType);
+		DescriptorHandleIncrementSize = GfxBackend::GetDescriptorHandleIncrementSize(InType);
 
 		// Allocate space for staging CPU visible descriptors.
 		DescriptorHandleCache = std::make_unique<D3D12_CPU_DESCRIPTOR_HANDLE[]>(NumDescriptorsPerHeap);
@@ -125,8 +124,13 @@ namespace Dawn
 	{
 		auto device = GfxBackend::GetDevice();
 
+		D3D12_DESCRIPTOR_HEAP_DESC Desc = {};
+		Desc.Type = DescriptorHeapType;
+		Desc.NumDescriptors = NumDescriptorsPerHeap;
+		Desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap;
-		descriptorHeap = device->CreateDescriptorHeap(DescriptorHeapType, NumDescriptorsPerHeap, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+		device->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&descriptorHeap));
 
 		return descriptorHeap;
 	}
@@ -138,7 +142,7 @@ namespace Dawn
 
 		if (numDescriptorsToCommit > 0)
 		{
-			auto device = GfxBackend::GetDevice()->GetD3D12Device();
+			auto device = GfxBackend::GetDevice();
 			auto d3d12GraphicsCommandList = InCommandList.GetGraphicsCommandList().Get();
 			assert(d3d12GraphicsCommandList != nullptr);
 
@@ -218,7 +222,7 @@ namespace Dawn
 			StaleDescriptorTableBitMask = DescriptorTableBitMask;
 		}
 
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 
 		D3D12_GPU_DESCRIPTOR_HANDLE hGPU = CurrentGPUDescriptorHandle;
 		device->CopyDescriptorsSimple(1, CurrentCPUDescriptorHandle, cpuDescriptor, DescriptorHeapType);

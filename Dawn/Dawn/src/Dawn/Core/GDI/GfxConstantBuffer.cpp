@@ -1,6 +1,5 @@
 #include "GfxConstantBuffer.h"
 #include "GfxBackend.h"
-#include "GfxDevice.h"
 #include "Core/Math.h"
 
 namespace Dawn
@@ -23,7 +22,7 @@ namespace Dawn
 		d3d12ConstantBufferViewDesc.BufferLocation = m_d3d12Resource->GetGPUVirtualAddress();
 		d3d12ConstantBufferViewDesc.SizeInBytes = static_cast<UINT>(Math::AlignUp(m_SizeInBytes, 16));
 
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 
 		device->CreateConstantBufferView(&d3d12ConstantBufferViewDesc, m_ConstantBufferView.GetDescriptorHandle());
 	}

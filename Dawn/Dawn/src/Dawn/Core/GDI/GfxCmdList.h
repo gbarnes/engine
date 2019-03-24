@@ -127,24 +127,24 @@ namespace Dawn
 		 * Copy the contents to a vertex buffer in GPU memory.
 		 */
 		void CopyVertexBuffer(GfxVertexBuffer& vertexBuffer, size_t numVertices, size_t vertexStride, const void* vertexBufferData);
-		template<typename T>
+		/*template<typename T>
 		void CopyVertexBuffer(GfxVertexBuffer& vertexBuffer, const std::vector<T>& vertexBufferData)
 		{
 			CopyVertexBuffer(vertexBuffer, vertexBufferData.size(), sizeof(T), vertexBufferData.data());
-		}
+		}*/
 
 		/**
 		 * Copy the contents to a index buffer in GPU memory.
 		 */
 		void CopyIndexBuffer(GfxIndexBuffer& indexBuffer, size_t numIndicies, DXGI_FORMAT indexFormat, const void* indexBufferData);
-		template<typename T>
+		/*template<typename T>
 		void CopyIndexBuffer(GfxIndexBuffer& indexBuffer, const std::vector<T>& indexBufferData)
 		{
 			assert(sizeof(T) == 2 || sizeof(T) == 4);
 
 			DXGI_FORMAT indexFormat = (sizeof(T) == 2) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
 			CopyIndexBuffer(indexBuffer, indexBufferData.size(), indexFormat, indexBufferData.data());
-		}
+		}*/
 
 		/**
 		 * Copy the contents to a byte address buffer in GPU memory.
@@ -218,12 +218,12 @@ namespace Dawn
 		 * Set a set of 32-bit constants on the graphics pipeline.
 		 */
 		void SetGraphics32BitConstants(uint32_t rootParameterIndex, uint32_t numConstants, const void* constants);
-		template<typename T>
+		/*template<typename T>
 		void SetGraphics32BitConstants(uint32_t rootParameterIndex, const T& constants)
 		{
 			static_assert(sizeof(T) % sizeof(uint32_t) == 0, "Size of type must be a multiple of 4 bytes");
 			SetGraphics32BitConstants(rootParameterIndex, sizeof(T) / sizeof(uint32_t), &constants);
-		}
+		}*/
 
 		/**
 		 * Set a set of 32-bit constants on the compute pipeline.

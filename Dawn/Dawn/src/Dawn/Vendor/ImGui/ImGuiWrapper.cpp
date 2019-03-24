@@ -4,7 +4,6 @@
 #include "Vendor/ImGui/imgui_impl_dx12.h"
 
 #include "Core/GDI/GfxBackend.h"
-#include "Core/GDI/GfxDevice.h"
 
 namespace Dawn
 {
@@ -22,21 +21,25 @@ namespace Dawn
 		io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 		io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
 
-		GfxDevice* Device = GfxBackend::GetDevice();
+		auto Device = GfxBackend::GetDevice();
 		if (Device == nullptr)
 		{
 			DWN_CORE_ERROR("There is no available graphics device!");
 			return;
 		}
 
+		D3D12_DESCRIPTOR_HEAP_DESC Desc = {};
+		Desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		Desc.NumDescriptors = 1;
+		Desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-		g_D3DSrvDescHeap = Device->CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+		ThrowIfFailed(Device->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&g_D3DSrvDescHeap)));
 
 		ImGui_ImplWin32_Init(InHwnd);
 		ImGui_ImplDX12_Init
 		(
-			Device->GetD3D12Device().Get(),
-			g_NumFrames,
+			Device.Get(),
+			3,
 			DXGI_FORMAT_R8G8B8A8_UNORM,
 			g_D3DSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
 			g_D3DSrvDescHeap->GetGPUDescriptorHandleForHeapStart()

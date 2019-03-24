@@ -1,6 +1,5 @@
 #include "GfxCmdList.h"
 #include "GfxBackend.h"
-#include "GfxDevice.h"
 
 // This Inlcude is bad and should be swapped once 
 // we get a file system up and running 
@@ -38,7 +37,7 @@ namespace Dawn
 	GfxCmdList::GfxCmdList(D3D12_COMMAND_LIST_TYPE type)
 		: m_d3d12CommandListType(type)
 	{
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 
 		ThrowIfFailed(device->CreateCommandAllocator(m_d3d12CommandListType, IID_PPV_ARGS(&m_d3d12CommandAllocator)));
 
@@ -136,7 +135,7 @@ namespace Dawn
 
 	void GfxCmdList::CopyBuffer(GfxBuffer& buffer, size_t numElements, size_t elementSize, const void* bufferData, D3D12_RESOURCE_FLAGS flags)
 	{
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 
 		size_t bufferSize = numElements * elementSize;
 
@@ -219,7 +218,7 @@ namespace Dawn
 
 	void GfxCmdList::LoadTextureView(GfxTexture& texture, Image* image, TextureUsage textureUsage)
 	{
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 
 		/*auto iter = ms_TextureCache.find();
 		if (iter != ms_TextureCache.end())
@@ -348,7 +347,7 @@ namespace Dawn
 			m_GenerateMipsPSO = std::make_unique<GfxGenerateMipsPSO>();
 		}
 
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 
 		auto resource = texture.GetD3D12Resource();
 		auto resourceDesc = resource->GetDesc();
@@ -462,7 +461,7 @@ namespace Dawn
 
 	void GfxCmdList::GenerateMips_BGR(GfxTexture& texture)
 	{
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 
 		auto resource = texture.GetD3D12Resource();
 		auto resourceDesc = resource->GetDesc();
@@ -543,7 +542,7 @@ namespace Dawn
 
 	void GfxCmdList::GenerateMips_sRGB(GfxTexture& texture)
 	{
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 
 		// Create a UAV compatible texture.
 		auto resource = texture.GetD3D12Resource();
@@ -638,7 +637,7 @@ namespace Dawn
 			m_PanoToCubemapPSO = std::make_unique<GfxPanoToCubemapPSO>();
 		}
 
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 
 		auto cubemapResource = cubemapTexture.GetD3D12Resource();
 		if (!cubemapResource) return;
@@ -741,7 +740,7 @@ namespace Dawn
 
 	void GfxCmdList::CopyTextureSubresource(GfxTexture& texture, uint32_t firstSubresource, uint32_t numSubresources, D3D12_SUBRESOURCE_DATA* subresourceData)
 	{
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 		auto destinationResource = texture.GetD3D12Resource();
 		if (destinationResource)
 		{

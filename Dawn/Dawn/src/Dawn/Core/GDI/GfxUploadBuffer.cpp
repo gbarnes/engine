@@ -1,5 +1,4 @@
 #include "GfxUploadBuffer.h"
-#include "GfxDevice.h"
 #include "GfxBackend.h"
 #include "inc_core.h"
 #include <new>
@@ -63,7 +62,7 @@ namespace Dawn
 		GpuPtr(D3D12_GPU_VIRTUAL_ADDRESS(0))
 
 	{
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 		ThrowIfFailed(device->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 			D3D12_HEAP_FLAG_NONE,

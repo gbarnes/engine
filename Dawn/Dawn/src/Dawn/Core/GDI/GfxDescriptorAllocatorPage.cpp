@@ -1,6 +1,5 @@
 #include "GfxDescriptorAllocatorPage.h"
 #include "GfxBackend.h"
-#include "GfxDevice.h"
 #include "GfxDescriptorAllocator.h"
 #include "GfxDescriptorAllocation.h"
 
@@ -11,9 +10,14 @@ namespace Dawn
 		, NumDescriptorsInHeap(InNumDescriptors)
 	{
 		// TODO: mhm this isn't very nice since it could fail?!
-		this->InternalHeapDescriptor = GfxBackend::GetDevice()->CreateDescriptorHeap(InType, InNumDescriptors);
+		D3D12_DESCRIPTOR_HEAP_DESC Desc = {};
+		Desc.Type = InType;
+		Desc.NumDescriptors = InNumDescriptors;
+
+		ThrowIfFailed(GfxBackend::GetDevice()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&this->InternalHeapDescriptor)));
+
 		BaseDescriptor = InternalHeapDescriptor->GetCPUDescriptorHandleForHeapStart();
-		DescriptorHandleIncrementSize = GfxBackend::GetDevice()->GetD3D12Device()->GetDescriptorHandleIncrementSize(InType);
+		DescriptorHandleIncrementSize = GfxBackend::GetDevice()->GetDescriptorHandleIncrementSize(InType);
 		VarNumFreeHandles = InNumDescriptors;
 
 		AddNewBlock(0, VarNumFreeHandles);

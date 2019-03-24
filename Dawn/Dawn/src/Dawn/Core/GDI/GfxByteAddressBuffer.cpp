@@ -1,7 +1,6 @@
 #include "GfxByteAddressBuffer.h"
 
 #include "GfxBackend.h"
-#include "GfxDevice.h"
 #include "Core/Math.h"
 
 namespace Dawn
@@ -22,7 +21,7 @@ namespace Dawn
 
 	void GfxByteAddressBuffer::CreateViews(size_t numElements, size_t elementSize)
 	{
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 
 		// Make sure buffer size is aligned to 4 bytes.
 		m_BufferSize = Math::AlignUp(numElements * elementSize, 4);

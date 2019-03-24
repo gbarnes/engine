@@ -1,5 +1,4 @@
 #include "GfxQueue.h"
-#include "GfxDevice.h"
 #include "GfxBackend.h"
 
 #include "GfxCmdList.h"
@@ -19,11 +18,11 @@ namespace Dawn
 		desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 		desc.NodeMask = 0;
 
-		GfxDevice* Device = GfxBackend::GetDevice();
-		assert(Device && "GfxDevice is null!");
+		auto device = GfxBackend::GetDevice();
+		assert(device && "GfxDevice is null!");
 
-		ThrowIfFailed(Device->GetD3D12Device()->CreateCommandQueue(&desc, IID_PPV_ARGS(&CmdQueue)));
-		Fence = Device->CreateFence();
+		ThrowIfFailed(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&CmdQueue)));
+		ThrowIfFailed(device->CreateFence(FenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence)));
 
 		switch (InType)
 		{

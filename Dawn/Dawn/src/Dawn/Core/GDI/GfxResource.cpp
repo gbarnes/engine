@@ -1,6 +1,5 @@
 #include "GfxResource.h"
 #include "GfxBackend.h"
-#include "GfxDevice.h"
 #include "GfxResourceStateTracker.h"
 
 namespace Dawn
@@ -11,7 +10,7 @@ namespace Dawn
 
 	GfxResource::GfxResource(const D3D12_RESOURCE_DESC& resourceDesc, const D3D12_CLEAR_VALUE* clearValue, const std::wstring& name)
 	{
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 
 		if (clearValue)
 		{

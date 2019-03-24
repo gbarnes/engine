@@ -1,7 +1,6 @@
 #include "TestRenderLayer.h"
 #include "Core/GDI/GfxBackend.h"
 #include "Core/GDI/GfxQueue.h"
-#include "Core/GDI/GfxDevice.h"
 #include "Core/GDI/inc_gfx_types.h"
 #include <d3d12.h>
 #include "Core/GDI/d3dx12.h"
@@ -16,14 +15,14 @@ namespace Dawn
 {
 
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, (size_t)(&((VertexPosColor*)0)->Position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  (size_t)(&((VertexPosColor*)0)->Color), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	D3D12_INPUT_ELEMENT_DESC inputLayout2[] = {
+	/*D3D12_INPUT_ELEMENT_DESC inputLayout2[] = {
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, (size_t)(&((VertexPosUV*)0)->Position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0,  (size_t)(&((VertexPosUV*)0)->UV), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};
+	};*/
 
 
 	ComPtr<ID3DBlob> vsBlob;
@@ -53,13 +52,12 @@ namespace Dawn
 		this->CamPosition[2] = positionArray[2];
 	}
 
-
 	void TestRenderLayer::Setup()
 	{
 		CEventDispatcher::Subscribe(FOVChangedEvtKey, BIND_EVENT_MEMBER(TestRenderLayer::OnFOVChanged));
 		CEventDispatcher::Subscribe(CamPosChangedEvtKey, BIND_EVENT_MEMBER(TestRenderLayer::OnCamPosChanged));
 
-		ComPtr<ID3D12Device2> Device = GfxBackend::GetDevice()->GetD3D12Device();
+		ComPtr<ID3D12Device2> Device = GfxBackend::GetDevice();
 		auto CommandQueue = GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 		auto GfxCmdList = CommandQueue->GetCommandList();
 		CommandQueue->Flush();
@@ -132,16 +130,16 @@ namespace Dawn
 		rootSignatureDescription.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
 
 		RootSignature.SetRootSignatureDesc(rootSignatureDescription.Desc_1_1, featureData.HighestVersion);
-		/*
+		
 		// Serialize the root signature.
-		/ComPtr<ID3DBlob> rootSignatureBlob;
+		/*ComPtr<ID3DBlob> rootSignatureBlob;
 		ComPtr<ID3DBlob> errorBlob;
 		ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDescription,
 			featureData.HighestVersion, &rootSignatureBlob, &errorBlob));
 
 		// Create the root signature.
 		ThrowIfFailed(Device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(),
-			rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&RootSignature)));*/
+			rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&RootSig)));*/
 
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
@@ -164,7 +162,12 @@ namespace Dawn
 		desc.DepthStencilState.StencilEnable = false;
 		desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 		//desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+		//desc.SampleDesc = GfxBackend::GetMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, D3D12_MAX_MULTISAMPLE_SAMPLE_COUNT);
+		//desc.SampleDesc.Count = 4;
+		//desc.SampleDesc.Quality = DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN;
+
 		desc.SampleDesc.Count = 1;
+		desc.SampleDesc.Quality = 0;
 		desc.SampleMask = UINT_MAX;
 
 		ThrowIfFailed(Device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&PipelineState)));
@@ -198,23 +201,17 @@ namespace Dawn
 		BROFILER_CATEGORY("RenderLayer_Render", Brofiler::Color::AliceBlue)
 		CGfxState* state = PipelineState.Get();
 		auto innerCmdList = InCmdList->GetGraphicsCommandList();
-		
-		auto rtv = GfxBackend::GetCurrentBackbufferDescHandle();
-		auto dsv = GfxBackend::GetDepthBufferDescHandle();
-
-		if (usedMesh != nullptr)
-		{
-			innerCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			//innerCmdList->IASetVertexBuffers(0, 1, &.GetVertexBufferView());
-			InCmdList->SetVertexBuffer(0, usedMesh->VertexBufferView);
-			InCmdList->SetIndexBuffer(usedMesh->IndexBufferView);
-		}
-
-		InCmdList->SetViewport(GfxBackend::GetDevice()->GetViewport());
-		InCmdList->SetScissorRect(GfxBackend::GetDevice()->GetScissorRect());
 
 		InCmdList->SetPipelineState(state);
 		InCmdList->SetGraphicsRootSignature(RootSignature);
+		
+
+		if (usedMesh != nullptr)
+		{
+			InCmdList->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			InCmdList->SetVertexBuffer(0, usedMesh->VertexBufferView);
+			InCmdList->SetIndexBuffer(usedMesh->IndexBufferView);
+		}
 
 
 		if (usedMesh != nullptr)
@@ -222,9 +219,9 @@ namespace Dawn
 			DirectX::XMMATRIX mvpMatrix = DirectX::XMMatrixMultiply(ModelMatrix, ViewMatrix);
 			mvpMatrix = DirectX::XMMatrixMultiply(mvpMatrix, ProjectionMatrix);
 
-			InCmdList->SetGraphics32BitConstants(0, &mvpMatrix);
+			InCmdList->SetGraphics32BitConstants(0, sizeof(DirectX::XMMATRIX) / 4, &mvpMatrix);
 		//	InCmdList->SetShaderResourceView(0, 0, diffuseTexture->TextureView, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-			InCmdList->DrawIndexed(usedMesh->NumIndices, 1, 0, 0, 0);
+			InCmdList->DrawIndexed(usedMesh->NumIndices);
 		}
 	}
 

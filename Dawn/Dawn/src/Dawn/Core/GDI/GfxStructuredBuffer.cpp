@@ -1,7 +1,6 @@
 #include "GfxStructuredBuffer.h"
 #include "GfxResourceStateTracker.h"
 #include "GfxBackend.h"
-#include "GfxDevice.h"
 
 namespace Dawn
 {
@@ -33,7 +32,7 @@ namespace Dawn
 
 	void GfxStructuredBuffer::CreateViews(size_t numElements, size_t elementSize)
 	{
-		auto device = GfxBackend::GetDevice()->GetD3D12Device();
+		auto device = GfxBackend::GetDevice();
 
 		m_NumElements = numElements;
 		m_ElementSize = elementSize;

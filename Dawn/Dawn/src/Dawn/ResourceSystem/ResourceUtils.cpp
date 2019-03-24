@@ -11,8 +11,14 @@ namespace Dawn
 		for (u32 i = 0; i < InNum; ++i)
 		{
 			Mesh* mesh = InMesh[i];
-			InCmdList.CopyIndexBuffer(mesh->IndexBufferView, mesh->Indices);
-			InCmdList.CopyVertexBuffer(mesh->VertexBufferView, mesh->Vertices);
+
+			if (mesh->NumIndices > 0 && mesh->NumVertices > 0)
+			{
+				size_t sizeOfStruct = sizeof(VertexPosColor);
+				DXGI_FORMAT indexFormat = (sizeof(mesh->Indices[0]) == 2) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
+				InCmdList.CopyIndexBuffer(mesh->IndexBufferView, mesh->NumIndices, indexFormat, mesh->Indices.data());
+				InCmdList.CopyVertexBuffer(mesh->VertexBufferView, mesh->NumVertices, sizeof(mesh->Vertices[0]), mesh->Vertices.data());
+			}
 		}
 	}
 
