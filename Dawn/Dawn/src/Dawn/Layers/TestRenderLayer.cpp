@@ -19,10 +19,10 @@ namespace Dawn
 			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	/*D3D12_INPUT_ELEMENT_DESC inputLayout2[] = {
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, (size_t)(&((VertexPosUV*)0)->Position), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0,  (size_t)(&((VertexPosUV*)0)->UV), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};*/
+	D3D12_INPUT_ELEMENT_DESC inputLayout2[] = {
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0,  D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
 
 
 	ComPtr<ID3DBlob> vsBlob;
@@ -69,7 +69,6 @@ namespace Dawn
 			auto handle = rs->LoadFile("Model/cube.obj");
 			if (handle.IsValid)
 			{
-				
 				usedMesh = ResourceTable::GetMesh(handle);
 				auto meshPtr = usedMesh.get();
 				CopyMeshesToGPU(*GfxCmdList, { &meshPtr }, 1);
@@ -77,14 +76,14 @@ namespace Dawn
 		}
 
 		// vertex shader loading
-		auto shaderId = rs->LoadFile("Shader/test_vs.cso");
+		auto shaderId = rs->LoadFile("Shader/phong_vs.cso");
 		if (shaderId.IsValid)
 		{
 			vertexShader = ResourceTable::GetShader(shaderId);
 		}
 
 		// pixel shader loading
-		shaderId = rs->LoadFile("Shader/test_ps.cso");
+		shaderId = rs->LoadFile("Shader/phong_ps.cso");
 		if (shaderId.IsValid)
 		{
 			pixelShader = ResourceTable::GetShader(shaderId);
@@ -110,24 +109,24 @@ namespace Dawn
 			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
 		// A single 32-bit constant root parameter that is used by the vertex shader.
-		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
+		CD3DX12_ROOT_PARAMETER1 rootParameters[2];
 		rootParameters[0].InitAsConstants(sizeof(DirectX::XMMATRIX) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
-		//CD3DX12_DESCRIPTOR_RANGE1 textureSRV(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-		//CD3DX12_DESCRIPTOR_RANGE1 textureSampler(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
+		CD3DX12_DESCRIPTOR_RANGE1 textureSRV(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+		CD3DX12_DESCRIPTOR_RANGE1 textureSampler(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
 
-		//rootParameters[1].InitAsDescriptorTable(1, &textureSRV, D3D12_SHADER_VISIBILITY_PIXEL);
-		//rootParameters[2].InitAsDescriptorTable(1, &textureSampler, D3D12_SHADER_VISIBILITY_PIXEL);
-		
-		CD3DX12_STATIC_SAMPLER_DESC linearClampSampler(0, D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 
-			D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP);
+		rootParameters[1].InitAsDescriptorTable(1, &textureSRV, D3D12_SHADER_VISIBILITY_PIXEL);
+
+
+		CD3DX12_STATIC_SAMPLER_DESC linearRepeatSampler(0, D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR);
+		CD3DX12_STATIC_SAMPLER_DESC anisotropic(0, D3D12_FILTER_COMPARISON_ANISOTROPIC);
+
 
 		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDescription;
-		rootSignatureDescription.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
+		rootSignatureDescription.Init_1_1(_countof(rootParameters), rootParameters, 1, &anisotropic, rootSignatureFlags);
 
 		RootSignature.SetRootSignatureDesc(rootSignatureDescription.Desc_1_1, featureData.HighestVersion);
 		
@@ -144,7 +143,7 @@ namespace Dawn
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
 		desc.pRootSignature = RootSignature.GetRootSignature().Get();
-		desc.InputLayout = { inputLayout, _countof(inputLayout) };
+		desc.InputLayout = { inputLayout2, _countof(inputLayout2) };
 		desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		desc.VS = CD3DX12_SHADER_BYTECODE(vertexShader->D3DData.Get());
 		desc.PS = CD3DX12_SHADER_BYTECODE(pixelShader->D3DData.Get());
@@ -220,16 +219,25 @@ namespace Dawn
 			mvpMatrix = DirectX::XMMatrixMultiply(mvpMatrix, ProjectionMatrix);
 
 			InCmdList->SetGraphics32BitConstants(0, sizeof(DirectX::XMMATRIX) / 4, &mvpMatrix);
-		//	InCmdList->SetShaderResourceView(0, 0, diffuseTexture->TextureView, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+			InCmdList->SetShaderResourceView(1, 0, diffuseTexture->TextureView, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
 			InCmdList->DrawIndexed(usedMesh->NumIndices);
 		}
 	}
 
 	void TestRenderLayer::Free()
 	{
+		diffuseTexture->TextureView.Reset();
 		diffuseTexture.reset();
+
+		pixelShader->D3DData.Reset();
 		pixelShader.reset();
+
+		vertexShader->D3DData.Reset();
 		vertexShader.reset();
+
+		usedMesh->IndexBufferView.Reset();
+		usedMesh->VertexBufferView.Reset();
 		usedMesh.reset();
 
 		this->PipelineState.Reset();

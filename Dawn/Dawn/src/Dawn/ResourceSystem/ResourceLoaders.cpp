@@ -58,15 +58,15 @@ namespace Dawn
 				for (u32 i = 0; i < numOfVertices; ++i)
 				{
 					//VertexPosNormalUV vertex = {};
-					//VertexPosUV vertex = {};
-					VertexPosColor vertex = {};
+					VertexPosUV vertex = {};
+					//VertexPosColor vertex = {};
 					vertex.Position = DirectX::XMFLOAT3(attrib.vertices[3 * i], attrib.vertices[3 * i + 1], attrib.vertices[3 * i + 2]);
 
 					//if(attrib.normals.size() > 0)
 					//	vertex.Normal = DirectX::XMFLOAT3(attrib.normals[3 * i], attrib.normals[3 * i + 1], attrib.normals[3 * i + 2]);
 
-					float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-					vertex.Color = DirectX::XMFLOAT3(r, r, r);
+					//float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+				//	vertex.Color = DirectX::XMFLOAT3(r, r, r);
 
 					mesh->Vertices.emplace_back(vertex);
 				}
@@ -87,8 +87,8 @@ namespace Dawn
 						mesh->IndicesNormals.emplace_back(index.normal_index);
 						mesh->IndicesUV.emplace_back(index.texcoord_index);
 
-						//mesh->Vertices[index.vertex_index].UV = DirectX::XMFLOAT2(attrib.texcoords[2 * index.texcoord_index + 0],
-						//	attrib.texcoords[2 * index.texcoord_index + 1]);
+						mesh->Vertices[index.vertex_index].UV = DirectX::XMFLOAT2(attrib.texcoords[2 * index.texcoord_index + 0],
+							attrib.texcoords[2 * index.texcoord_index + 1]);
 					}
 					
 					mesh->NumIndices = (u32)mesh->Indices.size();

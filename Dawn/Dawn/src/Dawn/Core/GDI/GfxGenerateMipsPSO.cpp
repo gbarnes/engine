@@ -1,5 +1,5 @@
 #include "GfxGenerateMipsPSO.h"
-//#include "GfxGenerateMips_CS.h"
+#include "GfxGenerateMips_CS.h"
 #include "GfxBackend.h"
 
 namespace Dawn
@@ -43,7 +43,7 @@ namespace Dawn
 		} pipelineStateStream;
 
 		pipelineStateStream.pRootSignature = m_RootSignature.GetRootSignature().Get();
-		pipelineStateStream.CS = { nullptr, sizeof(1) };
+		pipelineStateStream.CS = { g_GenerateMips_CS, sizeof(g_GenerateMips_CS) };
 
 		D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = {
 			sizeof(PipelineStateStream), &pipelineStateStream

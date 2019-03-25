@@ -8,11 +8,11 @@ struct VertexPosColor
 	DirectX::XMFLOAT3 Color;
 };
 
-/*struct VertexPosUV
+struct VertexPosUV
 {
 	DirectX::XMFLOAT3 Position;
 	DirectX::XMFLOAT2 UV;
-};*/
+};
 
 struct VertexPosNormalUV
 {

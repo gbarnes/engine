@@ -51,7 +51,7 @@ namespace Dawn
 	{
 		MeshHandle Id;
 		FileHandle FileId;
-		std::vector<VertexPosColor> Vertices;
+		std::vector<VertexPosUV> Vertices;
 		std::vector<u16> Indices;
 		std::vector<u16> IndicesNormals;
 		std::vector<u16> IndicesUV;

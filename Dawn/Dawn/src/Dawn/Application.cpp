@@ -173,6 +173,7 @@ namespace Dawn
 				break;
 		}
 
+		
 		depthTexture.Reset();
 		//g_RenderTarget.GetTexture(AttachmentPoint::Color0).Reset();
 		//g_RenderTarget.GetTexture(AttachmentPoint::DepthStencil).Reset();

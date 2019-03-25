@@ -1,3 +1,26 @@
+local p = premake
+
+p.api.register {
+	name = "shadermodel",
+	scope = "config",
+	kind = "string",
+	allowed = {
+		"2.0",
+		"3.0",
+		"4.0_level_9_1",
+		"4.0_level_9_3",
+		"4.0",
+		"4.1",
+		"5.0",
+		"rootsig_1.0",
+		"rootsig_1.1",
+		"6.0",
+		"6.1",
+		"6.2",
+		"6.3"
+	}
+}
+
 workspace "Dawn"
 	architecture "x64"
 
@@ -79,7 +102,7 @@ project "Dawn"
 		symbols "On"
 
 
-    shadermodel("5.0")
+    shadermodel("6.0")
 
     shaderassembler("AssemblyCode")
 
