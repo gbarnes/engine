@@ -14,6 +14,7 @@
 #include "GfxQueue.h"
 #include "GfxDescriptorAllocator.h"
 #include "GfxResourceStateTracker.h"
+#include "GfxRootSignature.h"
 #include "GfxCmdList.h"
 #include "GfxTexture.h"
 #include "GfxRenderTarget.h"
@@ -28,7 +29,6 @@ namespace Dawn
 	static ComPtr<IDXGIAdapter3> g_Adapter;
 	static ComPtr<ID3D12Device2> g_Device;
 	static ComPtr<IDXGISwapChain3> g_SwapChain;
-
 
 	// Backbuffer Variables
 	static GfxRenderTarget g_RenderTarget;
@@ -46,7 +46,13 @@ namespace Dawn
 	// Allocator Variables
 	static std::unique_ptr<GfxDescriptorAllocator> g_DescriptorAllocators[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
 
-	// Window Settings
+	// Root Signatures
+	static std::vector<std::shared_ptr<GfxRootSignature>> g_RootSignatures;
+
+	// Pipeline States
+	static std::vector<ComPtr<ID3D12PipelineState>> g_PipelineStates;
+
+	// Display Info
 	static bool g_UseVsync = false;
 	static u32 g_Width;
 	static u32 g_Height;
@@ -125,15 +131,21 @@ namespace Dawn
 
 		Flush();
 
+		for (auto rootSig : g_RootSignatures)
+			rootSig.reset();
+
+		g_RootSignatures.clear();
+
+		for (auto pipelineState : g_PipelineStates)
+			pipelineState.Reset();
+
+		g_PipelineStates.clear();
+
 		for (int i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
-		{
 			g_DescriptorAllocators[i].reset();
-		}
 
 		for (int i = 0; i < g_NumFrames; ++i)
-		{
 			g_BackBufferTextures[i].Reset();
-		}
 
 		{
 			g_ComputeQueue.reset();
@@ -253,6 +265,7 @@ namespace Dawn
 
 		return hr;
 	}
+
 
 	void GfxBackend::Flush()
 	{
@@ -395,4 +408,47 @@ namespace Dawn
 		return g_Device->GetDescriptorHandleIncrementSize(type);
 	}
 
+	u32 GfxBackend::CreateRootSignature(u32 InNumParams, CD3DX12_ROOT_PARAMETER1* InParams, u32 InNumSampler, 
+		const CD3DX12_STATIC_SAMPLER_DESC* InSampler,
+		D3D12_ROOT_SIGNATURE_FLAGS InFlags = D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_NONE)
+	{
+		D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
+		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+		if (FAILED(g_Device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
+		{
+			featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+		}
+
+		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDescription;
+		rootSignatureDescription.Init_1_1(InNumParams, InParams, InNumSampler, InSampler, InFlags);
+
+		std::shared_ptr<GfxRootSignature> sig = std::make_shared<GfxRootSignature>();
+		sig->SetRootSignatureDesc(rootSignatureDescription.Desc_1_1, featureData.HighestVersion);
+		g_RootSignatures.emplace_back(sig);
+		return static_cast<u32>(g_RootSignatures.size() - 1);
+	}
+
+	std::shared_ptr<GfxRootSignature> GfxBackend::GetRootSignature(u32 InIndex)
+	{
+		if (g_RootSignatures.size() < InIndex)
+			return nullptr;
+
+		return g_RootSignatures[InIndex];
+	}
+
+	u32 GfxBackend::CreatePipelineState(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* InDesc)
+	{
+		ComPtr<ID3D12PipelineState> state;
+		ThrowIfFailed(g_Device->CreateGraphicsPipelineState(InDesc, IID_PPV_ARGS(&state)));
+		g_PipelineStates.emplace_back(state);
+		return static_cast<u32>(g_PipelineStates.size() - 1);
+	}
+
+	ComPtr<ID3D12PipelineState> GfxBackend::GetPipelineState(u32 InIndex)
+	{
+		if (g_PipelineStates.size() < InIndex)
+			return nullptr;
+
+		return g_PipelineStates[InIndex];
+	}
 }

@@ -14,13 +14,13 @@
 namespace Dawn
 {
 
-	CJobQueue::CJobQueue()
+	JobQueue::JobQueue()
 	{
 		Bottom = 0;
 		Top = 0;
 	}
 
-	void CJobQueue::Push(SJob* InJob)
+	void JobQueue::Push(Job* InJob)
 	{
 		long b = Bottom;
 		Jobs[b & MASK] = InJob;
@@ -28,7 +28,7 @@ namespace Dawn
 		Bottom = b + 1;
 	}
 
-	SJob* CJobQueue::Steal(void)
+	Job* JobQueue::Steal(void)
 	{
 		long t = Top;
 
@@ -38,7 +38,7 @@ namespace Dawn
 		if (t < b)
 		{
 			// non-empty queue
-			SJob* Job = Jobs[t & MASK];
+			Job* Job = Jobs[t & MASK];
 
 			// TODO (gb): take a look again at the source material 
 			// in order to check why the access violation happens with a lot of tasks
@@ -58,7 +58,7 @@ namespace Dawn
 	}
 
 
-	SJob* CJobQueue::Pop(void)
+	Job* JobQueue::Pop(void)
 	{
 		long b = Bottom - 1;
 		_InterlockedExchange(&Bottom, b);
@@ -70,7 +70,7 @@ namespace Dawn
 		if (t <= b)
 		{
 			// non-empty queue
-			SJob* job = Jobs[b & MASK];
+			Job* job = Jobs[b & MASK];
 			if (t != b)
 			{
 				// there's still more than one item left in the queue

@@ -17,7 +17,7 @@ namespace Dawn
 		return Meshes[index];
 	}
 
-	std::shared_ptr<Shader> ResourceTable::GetShader(ShaderHandle InHandle)
+	std::shared_ptr<Shader> ResourceTable::GetShader(const ShaderHandle& InHandle)
 	{
 		u32 index = InHandle.Index;
 		if (Shaders.size() < index)

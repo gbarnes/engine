@@ -1,26 +1,3 @@
-local p = premake
-
-p.api.register {
-	name = "shadermodel",
-	scope = "config",
-	kind = "string",
-	allowed = {
-		"2.0",
-		"3.0",
-		"4.0_level_9_1",
-		"4.0_level_9_3",
-		"4.0",
-		"4.1",
-		"5.0",
-		"rootsig_1.0",
-		"rootsig_1.1",
-		"6.0",
-		"6.1",
-		"6.2",
-		"6.3"
-	}
-}
-
 workspace "Dawn"
 	architecture "x64"
 
@@ -60,15 +37,20 @@ project "Dawn"
 		"Dawn/vendor/imgui/",
 		"Dawn/vendor/DirectXTex/",
 		"Dawn/vendor/brofiler/src/",
+		"Dawn/vendor/assimp/include/",
 		"%{prj.name}/src/Dawn/"
 	}
+	
 
 	links 
 	{
 		"ImGui",
 		"DirectXTex",
-		"Brofiler"
+		"Brofiler",
+		"Dawn/vendor/assimp/lib/x64/assimp-vc140-mt.lib"
 	}
+	
+	libdirs { "Dawn/vendor/assimp/lib/x64/*" }
 
 	filter "system:windows"
 		cppdialect "C++17"
@@ -83,7 +65,8 @@ project "Dawn"
 
 		postbuildcommands 
 		{
-			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox")
+			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/assimp/bin/x64 ../bin/" .. outputdir .. "/Sandbox")
 		}
 
 	filter "configurations:Debug" 
@@ -102,7 +85,7 @@ project "Dawn"
 		symbols "On"
 
 
-    shadermodel("6.0")
+    shadermodel("5.0")
 
     shaderassembler("AssemblyCode")
 
@@ -149,8 +132,9 @@ project "Sandbox"
 		"Dawn/src",
 		"Dawn/vendor/DirectXTex/",
 		"Dawn/vendor/brofiler/src/",
+		"Dawn/vendor/assimp/include/",
 	}
-
+	
 	links 
 	{
 		"Dawn"

@@ -18,12 +18,19 @@
 
 namespace Dawn 
 {
+	enum GfxRootSignatureType
+	{
+		RootSig_Standard,
+		RootSig_UI
+	};
+
 	class GfxDevice;
 	class GfxQueue;
 	class GfxDescriptorAllocation;
 	class GfxCmdList;
 	class GfxTexture;
 	class GfxRenderTarget;
+	class GfxRootSignature;
 
 	namespace GfxBackend 
 	{
@@ -48,6 +55,14 @@ namespace Dawn
 		void Resize(u32 InWidth, u32 InHeight);
 		const GfxRenderTarget& GetRenderTarget();
 		DXGI_SAMPLE_DESC  GetMultisampleQualityLevels(DXGI_FORMAT InBackBufferFormat, u32 InNumSamples, D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS InFlags = D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS::D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE);
+
+		// Root Signature methods
+		u32 CreateRootSignature(u32 InNumParams, CD3DX12_ROOT_PARAMETER1* InParams, u32 InNumSamplers, const CD3DX12_STATIC_SAMPLER_DESC* InSampler, D3D12_ROOT_SIGNATURE_FLAGS InFlags);
+		std::shared_ptr<GfxRootSignature> GetRootSignature(u32 InIndex);
+
+		// Pipeline State methods
+		u32 CreatePipelineState(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* InDesc);
+		ComPtr<ID3D12PipelineState> GetPipelineState(u32 InIndex);
 
 		// Shader methods
 		HRESULT CompileShader(LPCWSTR InSrcFile, LPCSTR InEntryPoint, LPCSTR InProfile, ID3DBlob** OutBlob);

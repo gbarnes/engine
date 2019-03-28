@@ -37,7 +37,7 @@ namespace Dawn
 		DirectX::XMMATRIX ProjectionMatrix;
 
 		float FoV = 45.0f;
-		float CamPosition[3] = { 0, 3, -10 };
+		float CamPosition[3] = { 0, 3, 10 };
 	};
 
 }

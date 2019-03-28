@@ -12,8 +12,8 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Typedefs
 	//-----------------------------------------------------------------------------
-	struct SJob;
-	typedef void(*JobFunction)(SJob*);
+	struct Job;
+	typedef void(*JobFunction)(Job*);
 
 
 	//-----------------------------------------------------------------------------
@@ -22,13 +22,13 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// 
 	//-----------------------------------------------------------------------------
-	struct SJob
+	struct Job
 	{
 		JobFunction Function;
-		SJob* Parent;
+		Job* Parent;
 		std::atomic_uint UnfinishedJobs;
 		char Data[52];
 		std::atomic_uint ContinuationCount; // new
-		SJob* Continuations[15];    // new
+		Job* Continuations[15];    // new
 	};
 }

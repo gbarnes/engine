@@ -19,7 +19,7 @@ namespace Dawn
 
 		double STime::GetTotalNanoseconds() const;
 		double STime::GetTotalMicroseconds() const;
-		double STime::GetTotalMilliSeconds() const;
+		double STime::GetTotalMilliseconds() const;
 		double STime::GetTotalSeconds() const;
 	};
 

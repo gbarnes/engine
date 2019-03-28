@@ -62,7 +62,7 @@ namespace Dawn
 		return InternalTotalTime * 1e-3;
 	}
 
-	double STime::GetTotalMilliSeconds() const
+	double STime::GetTotalMilliseconds() const
 	{
 		return InternalTotalTime * 1e-6;
 	}

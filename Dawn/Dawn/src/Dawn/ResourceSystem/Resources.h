@@ -53,8 +53,6 @@ namespace Dawn
 		FileHandle FileId;
 		std::vector<VertexPosUV> Vertices;
 		std::vector<u16> Indices;
-		std::vector<u16> IndicesNormals;
-		std::vector<u16> IndicesUV;
 		std::vector<Submesh> Submeshes;
 		std::vector<MaterialHandle> Materials;
 		u32 NumIndices;

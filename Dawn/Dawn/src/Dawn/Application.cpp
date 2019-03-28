@@ -13,33 +13,24 @@
 #include "Layers/TestRenderLayer.h"
 #include "ResourceSystem/ResourceSystem.h"
 #include "ResourceSystem/ResourceLoaders.h"
+#include "Rendering/RenderResourceHelper.h"
+#include "Rendering/RenderDebugInterface.h"
+#include "debug_draw.h"
 #include "brofiler.h"
 
-//#include "Core/JobSystem/JobSystem.h"
+#include "JobSystem/JobSystem.h"
 
-/*
-void empty_job2(Dawn::SJob* InJob)
+static std::mutex mutex;
+void processAnimations(Dawn::Job* InJob)
 {
-	cout2_mutex.lock();
-	std::cout << "Hello world - Thread Index: " << Dawn::CJobSystem::ThreadIndex << "\n";
-	cout2_mutex.unlock();
+	u32 x = 0;
+	for (u32 i = 0; i < 10000; i++)
+		x += 1;
+	
+	mutex.lock();
+	DWN_CORE_INFO("Processed Animations {0} on Thread Index: {1}", x, Dawn::JobSystem::ThreadIndex);
+	mutex.unlock();
 }
-
-/*void empty_job(SJob* InJob)
-{
-cout2_mutex.lock();
-int i = 12 + 12;
-std::cout << "#" << x <<": 12 + 12 = " << i << ", Thread Index: " << CJobSystem::ThreadIndex << "\n";
-
-OutputDebugString(L"");
-
-x++;
-cout2_mutex.unlock();
-
-/*SJob* newJob = CJobSystem::CreateJob(&empty_job2);
-CJobSystem::Run(newJob);
-CJobSystem::Wait(newJob);
-}*/
 
 
 /*CJobSystem::Initialize();
@@ -113,7 +104,7 @@ namespace Dawn
 		// END Subscriptions
 
 		// Resource System initialization
-		if (!ResourceSystem.Initialize("../Assets/", { ".obj", ".jpg", ".cso", ".png" }))
+		if (!ResourceSystem.Initialize("E:/Git/engine/Dawn/Assets/", { ".obj", ".jpg", ".cso", ".png" }))
 		{
 			DWN_CORE_ERROR("Couldn't initialize resource system");
 			system("pause");
@@ -121,7 +112,7 @@ namespace Dawn
 		}
 
 		ResourceSystem.AddRef();
-		ResourceSystem.RegisterLoader(ResourceType_StaticMesh, BIND_FS_LOADER(Dawn::RS_LoadStaticMesh));
+		ResourceSystem.RegisterLoader(ResourceType_StaticMesh, BIND_FS_LOADER(Dawn::RS_LoadStaticMeshWithAssimp));
 		ResourceSystem.RegisterLoader(ResourceType_Shader, BIND_FS_LOADER(Dawn::RS_LoadShader));
 		ResourceSystem.RegisterLoader(ResourceType_Image, BIND_FS_LOADER(Dawn::RS_LoadImage));
 
@@ -161,25 +152,40 @@ namespace Dawn
 			return;
 		}
 
-		Load();
-		SetupLayers();
+		if (JobSystem::Initialize() != EResult_OK)
+		{
+			DWN_CORE_ERROR("Couldn't initialize job system!\n");
+			system("pause");
+			return;
+		}
+
+
+		{
+			Load();
+			SetupLayers();
+		}
+
+		Job* Root = JobSystem::CreateJob(&processAnimations);
+		JobSystem::Run(Root);
 
 		DWN_CORE_INFO("Core Context initialized.");
 
 		while (true)
 		{
-			
 			if (Window.PeekMessages())
 				break;
 		}
 
-		
 		depthTexture.Reset();
+
 		//g_RenderTarget.GetTexture(AttachmentPoint::Color0).Reset();
 		//g_RenderTarget.GetTexture(AttachmentPoint::DepthStencil).Reset();
-		ResourceSystem.Shutdown();
+		
+		
 		ClearLayers();
-		GfxBackend::Shutdown();
+		GfxBackend::Shutdown(); 
+		JobSystem::Shutdown();
+		ResourceSystem.Shutdown();
 
 		DWN_CORE_INFO("Core Context shutdown.");
 	}
@@ -227,7 +233,9 @@ namespace Dawn
 			TextureUsage::Depth,
 			L"Depth Render Target");
 
-		
+		RenderResourceHelper::LoadCommonShaders();
+		RenderResourceHelper::CreateCommonPipelineStates();
+
 		// Attach the textures to the render target.
 		//g_RenderTarget.AttachTexture(AttachmentPoint::Color0, colorTexture);
 	//	g_RenderTarget.AttachTexture(AttachmentPoint::DepthStencil, depthTexture);
@@ -247,6 +255,7 @@ namespace Dawn
 
 		Clock.Tick();
 		
+
 		auto CmdQueue = GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 		auto CmdList = CmdQueue->GetCommandList();
 
@@ -263,7 +272,6 @@ namespace Dawn
 			CmdList->SetViewport(GfxBackend::GetViewport());
 			CmdList->SetScissorRect(GfxBackend::GetScissorRect());
 			CmdList->SetRenderTarget(RT);
-			
 		}
 
 		for (Layer* layer : Layers)
@@ -271,13 +279,12 @@ namespace Dawn
 			layer->Update();
 			layer->Render(CmdList.get());
 		}
-		
-		//CmdQueue->ExecuteCommandList(CmdList);
+
 		CmdList->TransitionBarrier(ColorText, D3D12_RESOURCE_STATE_PRESENT);
 		CmdQueue->ExecuteCommandList(CmdList);
+
 		//g_RenderTarget.GetTexture(AttachmentPoint::Color0)
 		GfxBackend::Present(ColorText);
-		//GfxBackend::GetSwapChain()->Present(0, 0);
 	}
 
 	void Application::SetupLayers()

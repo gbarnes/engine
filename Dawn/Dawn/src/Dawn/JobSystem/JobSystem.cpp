@@ -14,31 +14,31 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Public Static initialization!
 	//-----------------------------------------------------------------------------
-	unsigned int CJobSystem::ThreadCount = 1;
-	thread_local unsigned int CJobSystem::ThreadIndex = 0;
+	unsigned int JobSystem::ThreadCount = 1;
+	thread_local unsigned int JobSystem::ThreadIndex = 0;
 
 	//-----------------------------------------------------------------------------
 	// Thread specific data
 	//-----------------------------------------------------------------------------
-	std::vector<std::thread> CJobSystem::WorkerThreads;
-	CJobQueue* CJobSystem::WorkerThreadQueues;
-	std::vector<bool> CJobSystem::IsThreadActive;
+	std::vector<std::thread> JobSystem::WorkerThreads;
+	JobQueue* JobSystem::WorkerThreadQueues;
+	std::vector<bool> JobSystem::IsThreadActive;
 
 	//-----------------------------------------------------------------------------
 	// Job Allocations
 	//-----------------------------------------------------------------------------
-	thread_local SJob CJobSystem::JobAllocator[NUMBER_OF_JOBS];
-	thread_local unsigned int CJobSystem::AllocatedJobs = 0u;
+	thread_local Job JobSystem::JobAllocator[NUMBER_OF_JOBS];
+	thread_local unsigned int JobSystem::AllocatedJobs = 0u;
 
 	std::mutex cout_mutex;
 
 	//-----------------------------------------------------------------------------
 	// Initializes the JobSystem!
 	//-----------------------------------------------------------------------------
-	EResult CJobSystem::Initialize()
+	EResult JobSystem::Initialize()
 	{
 		ThreadCount = std::thread::hardware_concurrency();
-		WorkerThreadQueues = new CJobQueue[ThreadCount];
+		WorkerThreadQueues = new JobQueue[ThreadCount];
 		WorkerThreads.resize(ThreadCount - 1);
 		IsThreadActive.resize(ThreadCount - 1);
 		SpawnWorkerThreads();
@@ -46,7 +46,7 @@ namespace Dawn
 		return EResult_OK;
 	}
 
-	EResult CJobSystem::Shutdown()
+	EResult JobSystem::Shutdown()
 	{
 		SafeDelete(WorkerThreadQueues);
 
@@ -56,13 +56,13 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Beating Heart method from a thread!
 	//-----------------------------------------------------------------------------
-	void CJobSystem::TickWorkerThread(int InThreadIndex)
+	void JobSystem::TickWorkerThread(int InThreadIndex)
 	{
-		CJobSystem::ThreadIndex = InThreadIndex;
+		JobSystem::ThreadIndex = InThreadIndex;
 		//std::cout << "Hello World";
 		while (IsThreadActive[ThreadIndex - 1] == true)
 		{
-			SJob* Job = GetJobX();
+			Job* Job = GetJobX();
 			if (Job != nullptr)
 			{
 				Execute(Job);
@@ -73,7 +73,7 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Spawns the worker threads and queues!
 	//-----------------------------------------------------------------------------
-	EResult CJobSystem::SpawnWorkerThreads()
+	EResult JobSystem::SpawnWorkerThreads()
 	{
 		unsigned int Count = ThreadCount - 1;
 		for (unsigned int i = 0; i < Count; i++)
@@ -93,10 +93,10 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Creates a new parent job by a given JobFunction!
 	//-----------------------------------------------------------------------------
-	SJob* CJobSystem::CreateJob(JobFunction InFunction)
+	Job* JobSystem::CreateJob(JobFunction InFunction)
 	{
 		// the allocation should maybe done differently? Pool Allocator or something
-		SJob* Job = Allocate();
+		Job* Job = Allocate();
 		Job->Function = InFunction;
 		Job->Parent = nullptr;
 		Job->UnfinishedJobs = 1;
@@ -107,14 +107,14 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Creates a new job as a child of an existing one. 
 	//-----------------------------------------------------------------------------
-	SJob* CJobSystem::CreateJobAsChild(SJob* InParent, JobFunction InFunction)
+	Job* JobSystem::CreateJobAsChild(Job* InParent, JobFunction InFunction)
 	{
 		// increment the count of the unfinished jobs in a atomic fashion
 		// in order to prevent race conditions!
 		InParent->UnfinishedJobs++;
 
 		// the allocation should maybe done differently? Pool Allocator or something
-		SJob* Job = Allocate();
+		Job* Job = Allocate();
 		Job->Function = InFunction;
 		Job->Parent = InParent;
 		Job->UnfinishedJobs = 1;
@@ -125,24 +125,24 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Adds the job to the queue of the current worker thread!
 	//-----------------------------------------------------------------------------
-	void CJobSystem::Run(SJob* InJob)
+	void JobSystem::Run(Job* InJob)
 	{
-		CJobQueue* Queue = GetWorkerThreadQueue();
+		JobQueue* Queue = GetWorkerThreadQueue();
 		Queue->Push(InJob);
 	}
 
 	//-----------------------------------------------------------------------------
 	// Adds the job to the queue of the current worker thread!
 	//-----------------------------------------------------------------------------
-	CJobQueue* CJobSystem::GetWorkerThreadQueue()
+	JobQueue* JobSystem::GetWorkerThreadQueue()
 	{
-		return &CJobSystem::WorkerThreadQueues[ThreadIndex];
+		return &JobSystem::WorkerThreadQueues[ThreadIndex];
 	}
 
 	//-----------------------------------------------------------------------------
 	// Closes a given worker thread!
 	//-----------------------------------------------------------------------------
-	void CJobSystem::ShutdownWorkerThread(unsigned int InThreadIndex)
+	void JobSystem::ShutdownWorkerThread(unsigned int InThreadIndex)
 	{
 		if (IsThreadActive.size() < InThreadIndex)
 			return;
@@ -153,16 +153,16 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Closes a given worker thread!
 	//-----------------------------------------------------------------------------
-	SJob* CJobSystem::GetJobX()
+	Job* JobSystem::GetJobX()
 	{
-		CJobQueue* Queue = GetWorkerThreadQueue();
+		JobQueue* Queue = GetWorkerThreadQueue();
 
-		SJob* Job = Queue->Pop();
-		if (Job == nullptr)
+		Job* job = Queue->Pop();
+		if (job == nullptr)
 		{
 			unsigned int randomIndex = rand() % (ThreadCount - 0 + 1) + 0;
 
-			CJobQueue* StealQueue = &WorkerThreadQueues[randomIndex];
+			JobQueue* StealQueue = &WorkerThreadQueues[randomIndex];
 			if (StealQueue == Queue)
 			{
 				// don't try to steal from ourselves
@@ -170,24 +170,24 @@ namespace Dawn
 				return nullptr;
 			}
 
-			SJob* StolenJob = StealQueue->Steal();
+			Job* stolenJob = StealQueue->Steal();
 
-			if (StolenJob == nullptr)
+			if (stolenJob == nullptr)
 			{
 				// we couldn't steal a job from the other queue either, so we just yield our time slice for now
 				std::this_thread::yield();
 				return nullptr;
 			}
-			return StolenJob;
+			return stolenJob;
 		}
 
-		return Job;
+		return job;
 	}
 
 	//-----------------------------------------------------------------------------
 	// Closes a given worker thread!
 	//-----------------------------------------------------------------------------
-	bool CJobSystem::IsEmpty(SJob* InJob)
+	bool JobSystem::IsEmpty(Job* InJob)
 	{
 		return (InJob->UnfinishedJobs == 0);
 	}
@@ -195,7 +195,7 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Closes a given worker thread!
 	//-----------------------------------------------------------------------------
-	void CJobSystem::Execute(SJob* InJob)
+	void JobSystem::Execute(Job* InJob)
 	{
 		(InJob->Function)(InJob);
 		Finish(InJob);
@@ -204,7 +204,7 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Closes a given worker thread!
 	//-----------------------------------------------------------------------------
-	void CJobSystem::Finish(SJob* InJob)
+	void JobSystem::Finish(Job* InJob)
 	{
 		const unsigned int UnfinishedJobs = (--InJob->UnfinishedJobs);
 
@@ -223,7 +223,7 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Closes a given worker thread!
 	//-----------------------------------------------------------------------------
-	SJob* CJobSystem::Allocate()
+	Job* JobSystem::Allocate()
 	{
 		const unsigned int index = AllocatedJobs++;
 		return &JobAllocator[index & (MAX_JOB_COUNT - 1u)];
@@ -232,7 +232,7 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Closes a given worker thread!
 	//-----------------------------------------------------------------------------
-	bool CJobSystem::HasJobCompleted(const SJob* InJob)
+	bool JobSystem::HasJobCompleted(const Job* InJob)
 	{
 		return (InJob->UnfinishedJobs == 0);
 	}
@@ -240,7 +240,7 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Closes a given worker thread!
 	//-----------------------------------------------------------------------------
-	void CJobSystem::AddContinuation(SJob* InAncestor, SJob* InContinuation)
+	void JobSystem::AddContinuation(Job* InAncestor, Job* InContinuation)
 	{
 		const int32_t Count = InAncestor->ContinuationCount.fetch_add(1);
 		InAncestor->Continuations[Count - 1] = InContinuation;
@@ -249,12 +249,12 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	// Closes a given worker thread!
 	//-----------------------------------------------------------------------------
-	void CJobSystem::Wait(const SJob* InJob)
+	void JobSystem::Wait(const Job* InJob)
 	{
 		// wait until the job has completed. in the meantime, work on any other job.
 		while (!HasJobCompleted(InJob))
 		{
-			SJob* NextJob = GetJobX();
+			Job* NextJob = GetJobX();
 			if (NextJob != nullptr)
 			{
 				Execute(NextJob);

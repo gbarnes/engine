@@ -5,6 +5,7 @@
 #include "inc_gfx_types.h"
 #include <stdexcept>
 
+
 namespace std
 {
 	// Source: https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x

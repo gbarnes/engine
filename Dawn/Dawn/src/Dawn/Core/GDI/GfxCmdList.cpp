@@ -247,7 +247,7 @@ namespace Dawn
 			//case DirectX::TEX_DIMENSION_TEXTURE2D:
 				textureDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 
 					static_cast<UINT64>(image->Width), static_cast<UINT>(image->Height), 
-					1u);
+					1u, 1u);
 			//	break;
 			//case DirectX::TEX_DIMENSION_TEXTURE3D:
 			//	textureDesc = CD3DX12_RESOURCE_DESC::Tex3D(metadata.format, static_cast<UINT64>(metadata.width), static_cast<UINT>(metadata.height), static_cast<UINT16>(metadata.depth));

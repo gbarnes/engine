@@ -14,7 +14,7 @@ namespace Dawn
 		// specialized methods to receive resources of specific types.
 
 		static std::shared_ptr<Mesh> GetMesh(MeshHandle InHandle);
-		static std::shared_ptr<Shader> GetShader(ShaderHandle InHandle);
+		static std::shared_ptr<Shader> GetShader(const ShaderHandle& InHandle);
 		static std::shared_ptr<Image> GetImage(ImageHandle InHandle);
 		static void Shutdown();
 	private:

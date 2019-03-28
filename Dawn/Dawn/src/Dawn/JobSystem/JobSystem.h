@@ -24,7 +24,7 @@ namespace Dawn
 	//-----------------------------------------------------------------------------
 	//  
 	//-----------------------------------------------------------------------------
-	class CJobSystem
+	class JobSystem
 	{
 	public:
 		static unsigned int ThreadCount;
@@ -32,28 +32,28 @@ namespace Dawn
 
 		static EResult Initialize();
 		static EResult Shutdown();
-		static SJob* CreateJob(JobFunction InFunction);
-		static SJob* CreateJobAsChild(SJob* InParent, JobFunction InFunction);
-		static void AddContinuation(SJob* InAncestor, SJob* InContinuation);
-		static void Run(SJob* InJob);
-		static SJob* GetJobX();
-		static void Wait(const SJob* InJob);
-		static void Execute(SJob* InJob);
+		static Job* CreateJob(JobFunction InFunction);
+		static Job* CreateJobAsChild(Job* InParent, JobFunction InFunction);
+		static void AddContinuation(Job* InAncestor, Job* InContinuation);
+		static void Run(Job* InJob);
+		static Job* GetJobX();
+		static void Wait(const Job* InJob);
+		static void Execute(Job* InJob);
 		static void ShutdownWorkerThread(unsigned int InThreadIndex);
 
 	private:
 		static std::vector<std::thread> WorkerThreads;
-		static CJobQueue* WorkerThreadQueues;
+		static JobQueue* WorkerThreadQueues;
 		static std::vector<bool> IsThreadActive;
-		static thread_local SJob JobAllocator[NUMBER_OF_JOBS];
+		static thread_local Job JobAllocator[NUMBER_OF_JOBS];
 		static thread_local unsigned int AllocatedJobs;
 
-		static CJobQueue* GetWorkerThreadQueue();
+		static JobQueue* GetWorkerThreadQueue();
 		static void TickWorkerThread(int ThreadIndex);
-		static bool IsEmpty(SJob* InJob);
+		static bool IsEmpty(Job* InJob);
 		static EResult SpawnWorkerThreads();
-		static void Finish(SJob* InJob);
-		static SJob* Allocate();
-		static bool HasJobCompleted(const SJob* InJob);
+		static void Finish(Job* InJob);
+		static Job* Allocate();
+		static bool HasJobCompleted(const Job* InJob);
 	};
 }

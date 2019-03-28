@@ -20,7 +20,6 @@ namespace Dawn
 	};
 
 	class Event;
-	class CGfxRootSignature;
 	class ResourceSystem;
 
 	class DAWN_API Application : public EObject
