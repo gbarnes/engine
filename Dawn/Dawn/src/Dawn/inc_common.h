@@ -25,6 +25,7 @@ using namespace Microsoft::WRL;
 #include <map> // for std::map
 #include <mutex> // for std::mutex
 #include <vector> // for std::vector
+#include "glm.hpp"
 
 // The min/max macros conflict with like-named member functions.
 // Only use std::min and std::max defined in <algorithm>.
@@ -65,6 +66,11 @@ typedef short s16;
 typedef int i32;
 typedef long i64;
 typedef u128 FileHandle;
+
+typedef glm::mat4 mat4;
+typedef glm::vec4 vec4;
+typedef glm::vec3 vec3;
+typedef glm::vec2 vec2;
 
 #define _KB(x) (x * 1024)
 #define _MB(x) (x * 1024 * 1024)

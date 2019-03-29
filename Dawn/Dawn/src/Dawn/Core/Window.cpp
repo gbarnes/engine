@@ -3,6 +3,7 @@
 #include <windowsx.h>
 #include "Vendor/ImGui/ImGuiWrapper.h"
 #include "imgui.h"
+#include "Input.h"
 
 namespace Dawn
 {
@@ -226,9 +227,9 @@ namespace Dawn
 		}
 		case WM_MOUSEMOVE:
 		{
-			//int xPos = GET_X_LPARAM(lParam);
-			//int yPos = GET_Y_LPARAM(lParam);
-			//CEventDispatcher::Trigger(EVENT_KEY("MouseMoved"), MouseMovedEvent(xPos, yPos));
+			int xPos = GET_X_LPARAM(lParam);
+			int yPos = GET_Y_LPARAM(lParam);
+			Input::MousePos = vec2(xPos, yPos);
 			break;
 		}
 		case WM_LBUTTONUP:
@@ -242,7 +243,7 @@ namespace Dawn
 			if (message == WM_MBUTTONUP) { button = 2; }
 			if (message == WM_XBUTTONUP) { button = (GET_XBUTTON_WPARAM(wParam) == XBUTTON1) ? 3 : 4; }
 
-			//CEventDispatcher::Trigger(EVENT_KEY("MouseReleased"), MouseReleasedEvent(button));
+			Input::MouseBtnMap[button] = KeyState::Pressed;
 			break;
 		}
 		case WM_LBUTTONDOWN: case WM_LBUTTONDBLCLK:
@@ -256,22 +257,17 @@ namespace Dawn
 			if (message == WM_MBUTTONDOWN || message == WM_MBUTTONDBLCLK) { button = 2; }
 			if (message == WM_XBUTTONDOWN || message == WM_XBUTTONDBLCLK) { button = (GET_XBUTTON_WPARAM(wParam) == XBUTTON1) ? 3 : 4; }
 
-			//CEventDispatcher::Trigger(EVENT_KEY("MousePressed"), MousePressedEvent(button));
+			
+			Input::MouseBtnMap[button] = KeyState::Down;
 			break;
 		}
-		/*case WM_CHAR:
-		{
-			ImGuiIO& io = ImGui::GetIO();
-			// You can also use ToAscii()+GetKeyboardState() to retrieve characters.
-			if (wParam > 0 && wParam < 0x10000)
-				io.AddInputCharacter((unsigned short)wParam);
+		case WM_KEYDOWN: case WM_SYSKEYDOWN: case WM_SYSCHAR:
+			Input::KeyCodeMap[wParam] = KeyState::Down;
 			break;
-		}*/
-		case WM_KEYDOWN:
-		case WM_KEYUP:
-		case WM_SYSKEYDOWN:
-		case WM_SYSKEYUP:
-		case WM_SYSCHAR:
+		case WM_KEYUP:case WM_SYSKEYUP:
+			Input::KeyCodeMap[wParam] = KeyState::Pressed;
+			break;
+		/*case WM_SYSCHAR: case WM_SYSKEYDOWN: case WM_SYSKEYUP:
 		{
 			bool alt = (::GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
 
@@ -294,7 +290,7 @@ namespace Dawn
 			}
 
 			break;
-		}
+		}*/
 		default:
 		{
 			return DefWindowProc(hwnd, message, wParam, lParam);
@@ -304,13 +300,8 @@ namespace Dawn
 
 		return 0;
 	}
-
-	//-----------------------------------------------------------------------------
-	// Takes care of successfully freeing all resources!
-	//-----------------------------------------------------------------------------
+	
 	Window::~Window(void)
 	{
-		//SKY_PRINT_CONSOLE("skyDXWin32View:", "destructing object..", 0x0D);
-		//SKY_INFO(skyLogChannel::TXT_FILE, "skyDXWin32View: destructing object..");
 	}
 }

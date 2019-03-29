@@ -132,6 +132,17 @@ namespace Dawn
 
 		Clock.Tick();
 
+		if (Input::IsMouseButtonPressed(MouseBtn_Left))
+		{
+			vec2 pos = Input::GetMousePosition();
+			DWN_CORE_INFO("Mouse btn pressed at position: {0} {1}", pos.x, pos.y);
+		}
+
+		if (Input::IsKeyPressed(KeyCode_A))
+		{
+			DWN_CORE_INFO("Key a is pressed!");
+		}
+
 		glEnable(GL_DEPTH_TEST);
 		glViewport(0, 0, Settings.Width, Settings.Height);
 		glClearColor(0.4f, 0.6f, 0.9f, 1.0f);
@@ -144,6 +155,7 @@ namespace Dawn
 		}
 
 		GDI->Present();
+		Input::Reset();
 	}
 
 	void Application::SetupLayers()

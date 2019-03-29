@@ -7,5 +7,6 @@
 #include "Core/Events/MouseEvent.h"
 #include "Core/Timer.h"
 #include "Core/Math.h"
+#include "Core/Input.h"
 
 #include <Brofiler.h>

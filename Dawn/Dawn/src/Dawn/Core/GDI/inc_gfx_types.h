@@ -6,11 +6,6 @@
 
 namespace Dawn
 {
-	typedef glm::mat4 mat4;
-	typedef glm::vec4 vec4;
-	typedef glm::vec3 vec3;
-	typedef glm::vec2 vec2;
-
 	struct DAWN_API VertexPosUV
 	{
 		vec3 Position;
