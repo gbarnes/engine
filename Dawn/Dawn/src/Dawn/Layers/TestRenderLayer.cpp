@@ -1,13 +1,10 @@
 #include "TestRenderLayer.h"
-#include "Core/GDI/GfxBackend.h"
-#include "Core/GDI/GfxQueue.h"
-#include "Core/GDI/inc_gfx_types.h"
+#include "Core/GDI/inc_gfx.h"
 #include "Application.h"
 #include "inc_core.h"
-#include "Core/GDI/GfxCmdList.h"
 #include "UI/UIEditorEvents.h"
 #include "ResourceSystem/ResourceUtils.h"
-#include "debug_draw.h"
+#include "Rendering/RenderResourceHelper.h"
 
 namespace Dawn
 {
@@ -41,11 +38,6 @@ namespace Dawn
 		CEventDispatcher::Subscribe(CamPosChangedEvtKey, BIND_EVENT_MEMBER(TestRenderLayer::OnCamPosChanged));
 
 
-		ComPtr<ID3D12Device2> Device = GfxBackend::GetDevice();
-		auto CommandQueue = GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-		auto GfxCmdList = CommandQueue->GetCommandList();
-		CommandQueue->Flush();
-
 		RefPtr<ResourceSystem> rs(ResourceSystem::Get());
 
 		// mesh loading
@@ -55,7 +47,7 @@ namespace Dawn
 			{
 				usedMesh = ResourceTable::GetMesh(handle);
 				auto meshPtr = usedMesh.get();
-				CopyMeshesToGPU(*GfxCmdList, { &meshPtr }, 1);
+				CopyMeshesToGPU({ &meshPtr }, 1);
 			}
 		}
 
@@ -64,67 +56,63 @@ namespace Dawn
 		{
 			diffuseTexture = ResourceTable::GetImage(imageId);
 			auto imagePtr = diffuseTexture.get();
-			CopyImagesToGPU(*GfxCmdList, { &imagePtr }, 1);
+			CopyImagesToGPU({ &imagePtr }, 1);
 		}
-
-		auto fenceValue = CommandQueue->ExecuteCommandList(GfxCmdList);
-		CommandQueue->WaitForFenceValue(fenceValue);
-		CommandQueue->Flush();
 	}
 
 	void TestRenderLayer::Update()
 	{
 		float angle = static_cast<float>(Timer::GetTime().GetTotalSeconds() * 90.0);
-		const DirectX::XMVECTOR rotationAxis = DirectX::XMVectorSet(0, 1, 0, 0);
-		ModelMatrix = DirectX::XMMatrixRotationAxis(rotationAxis, DirectX::XMConvertToRadians(angle));
+		vec3 rotationAxis(0, 1, 0);
+		mat4 trans(1.0f);
+		Model = glm::rotate(trans, glm::radians(angle), rotationAxis);
 
-		// Update the view matrix.
-		const DirectX::XMVECTOR eyePosition = DirectX::XMVectorSet(CamPosition[0], CamPosition[1], CamPosition[2], 1);
-		const DirectX::XMVECTOR focusPoint = DirectX::XMVectorSet(0, 0, 0, 1);
-		const DirectX::XMVECTOR upDirection = DirectX::XMVectorSet(0, 1, 0, 0);
-		ViewMatrix = DirectX::XMMatrixLookAtLH(eyePosition, focusPoint, upDirection);
+		vec3 eyePos(CamPosition[0], CamPosition[1], CamPosition[2]);
+		vec3 focusPoint(0, 0, 0);
+		vec3 upDirection(0, 1, 0);
+		View = glm::lookAt(eyePos, focusPoint, upDirection);
 
-		SAppSettings* Settings = Application::GetSettings();
-
-		// Update the projection matrix.
-		float aspectRatio = Settings->WindowWidth / static_cast<float>(Settings->WindowHeight);
-		ProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(this->FoV), aspectRatio, 0.1f, 100.0f);
+		AppSettings* Settings = Application::GetSettings();
+		Perspective = glm::perspective(glm::radians(this->FoV), (float)Settings->Width / (float)Settings->Height, 0.1f, 100.0f);
 	}
 
-	void TestRenderLayer::Render(GfxCmdList* InCmdList)
+	void TestRenderLayer::Render()
 	{
-		
-		BROFILER_CATEGORY("RenderLayer_Render", Brofiler::Color::AliceBlue)
+		BROFILER_CATEGORY("RenderLayer_Render", Brofiler::Color::AliceBlue);
 
-		auto innerCmdList = InCmdList->GetGraphicsCommandList();
+		//if (!RenderResourceHelper::CommonShaders.ID_Debug.IsValid)
+		//	return;
 
-		InCmdList->SetPipelineState(GfxBackend::GetPipelineState(0));
-		InCmdList->SetGraphicsRootSignature(*GfxBackend::GetRootSignature(0).get());
-		
-		if (usedMesh != nullptr)
-		{
-			DirectX::XMMATRIX mvpMatrix = DirectX::XMMatrixMultiply(ModelMatrix, ViewMatrix);
-			mvpMatrix = DirectX::XMMatrixMultiply(mvpMatrix, ProjectionMatrix);
-			
-			InCmdList->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			InCmdList->SetVertexBuffer(0, usedMesh->VertexBufferView);
-			InCmdList->SetIndexBuffer(usedMesh->IndexBufferView);
-			InCmdList->SetGraphics32BitConstants(0, sizeof(DirectX::XMMATRIX) / 4, &mvpMatrix);
-			InCmdList->SetShaderResourceView(1, 0, diffuseTexture->TextureView, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-			InCmdList->DrawIndexed(usedMesh->NumIndices);
-		}
+		auto shader = ResourceTable::GetShader(RenderResourceHelper::CommonShaders.ID_Debug);
+		glUseProgram(shader->GDI_ShaderId);
+
+		glActiveTexture(GL_TEXTURE0);
+
+		glUniform1i(glGetUniformLocation(shader->GDI_ShaderId, "ourTexture"), 0);
+		glBindTexture(GL_TEXTURE_2D, diffuseTexture->GDI_TextureId);
+
+		// set pojection
+		glUniformMatrix4fv(glGetUniformLocation(shader->GDI_ShaderId, "model"), 1, GL_FALSE, &Model[0][0]);
+
+		// set pojection
+		glUniformMatrix4fv(glGetUniformLocation(shader->GDI_ShaderId, "view"), 1, GL_FALSE, &View[0][0]);
+
+		// set pojection
+		glUniformMatrix4fv(glGetUniformLocation(shader->GDI_ShaderId, "projection"), 1, GL_FALSE, &Perspective[0][0]);
+
+
+		glBindVertexArray(usedMesh->GDI_VAOId);
+		glDrawElements(GL_TRIANGLES, usedMesh->NumIndices, GL_UNSIGNED_SHORT, 0);
+		glBindVertexArray(0);
 	}
 
 	void TestRenderLayer::Free()
 	{
-		diffuseTexture->TextureView.Reset();
+		/*diffuseTexture->TextureView.Reset();
 		diffuseTexture.reset();
 
 		usedMesh->IndexBufferView.Reset();
 		usedMesh->VertexBufferView.Reset();
-		usedMesh.reset();
-
-		this->GfxIndexBuffer.Reset();
-		this->VertexBuffer.Reset();
+		usedMesh.reset();*/
 	}
 }

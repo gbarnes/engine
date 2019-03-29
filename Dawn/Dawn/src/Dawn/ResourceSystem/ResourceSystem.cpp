@@ -22,7 +22,7 @@ namespace Dawn
 		if (InExtension == ".jpg" || InExtension == ".png" || InExtension == ".bmp")
 			return ResourceType_Image;
 
-		if (InExtension == ".cso")
+		if (InExtension == ".shader")
 			return ResourceType_Shader;
 
 		return ResourceType_None;

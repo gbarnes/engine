@@ -1,11 +1,7 @@
 #pragma once
 #include "inc_common.h"
-#include "Core/GDI/GfxVerticeFormats.h"
-#include "Core/GDI/GfxIndexBuffer.h"
-#include "Core/GDI/GfxVertexBuffer.h"
-#include "Core/GDI/GfxTexture.h"
-#include <d3d12.h>
 #include "inc_core.h"
+#include "Core/GDI/inc_gfx_types.h"
 
 namespace Dawn
 {
@@ -38,7 +34,7 @@ namespace Dawn
 	{
 		ShaderHandle Id;
 		FileHandle FileId;
-		ComPtr<ID3DBlob> D3DData;
+		u32 GDI_ShaderId;
 	};
 
 	struct DAWN_API Material
@@ -57,8 +53,7 @@ namespace Dawn
 		std::vector<MaterialHandle> Materials;
 		u32 NumIndices;
 		u32 NumVertices;
-		GfxIndexBuffer IndexBufferView;
-		GfxVertexBuffer VertexBufferView;
+		u32 GDI_VBOId, GDI_VAOId, GDI_EBOId; // Refactor this later on!
 	};
 
 	struct DAWN_API AnimatedMesh : public Mesh
@@ -73,6 +68,6 @@ namespace Dawn
 		u32 Width;
 		u32 Height;
 		u16 ChannelsPerPixel;
-		GfxTexture TextureView;
+		u32 GDI_TextureId;
 	};
 }

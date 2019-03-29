@@ -1,10 +1,4 @@
 #pragma once
-//---------------------------------------------------------------------------//
-//        Copyright 2016  Immersive Pixels. All Rights Reserved.			 //
-
-//-----------------------------------------------------------------------------
-// Inclusions
-//-----------------------------------------------------------------------------
 #include "Job.h"
 #include "JobQueue.h"
 #include <atomic>
@@ -12,6 +6,41 @@
 #include <thread>
 
 #include "inc_common.h"
+
+
+/*
+static std::mutex mutex;
+void processAnimations(Dawn::Job* InJob)
+{
+	u32 x = 0;
+	for (u32 i = 0; i < 10000; i++)
+		x += 1;
+
+	std::lock_guard<std::mutex> lck { mutex };
+	DWN_CORE_INFO("Processed Animations {0} on Thread Index: {1}", x, Dawn::JobSystem::ThreadIndex);
+}
+
+
+CJobSystem::Initialize();
+
+	unsigned int ThreadIndex = CJobSystem::ThreadIndex;
+
+	SJob* Root = CJobSystem::CreateJob(&empty_job2);
+	for (unsigned int i = 0; i < 500; ++i)
+	{
+		SJob* Job = CJobSystem::CreateJobAsChild(Root, &empty_job2);
+		CJobSystem::Run(Job);
+	}
+
+	CJobSystem::Run(Root);
+	CJobSystem::Wait(Root);
+
+	//RenderCommand::Packet p = RenderCommand::Create<Draw>(sizeof(Draw));
+	//Draw* d = RenderCommand::GetCommand<Draw>(p);
+	*/
+
+
+
 
 // Has to be power of two! Because of binary operation in allocate!
 #define MAX_JOB_COUNT 4096 

@@ -16,10 +16,8 @@ namespace Dawn
 
 	struct CommonShaderHandles
 	{
-		ShaderHandle ID_PhongVS;
-		ShaderHandle ID_PhongPS;
-		ShaderHandle ID_DebugVS;
-		ShaderHandle ID_DebugPS;
+		ShaderHandle ID_Phong;
+		ShaderHandle ID_Debug;
 	};
 
 	namespace RenderResourceHelper

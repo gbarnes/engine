@@ -1,23 +1,11 @@
-//---------------------------------------------------------------------------//
-//        Copyright 2016  Immersive Pixels. All Rights Reserved.			 //
-
-
 #include "Window.h"
 #include <windows.h>
 #include <windowsx.h>
-#include "Core/GDI/GfxBackend.h"
 #include "Vendor/ImGui/ImGuiWrapper.h"
 #include "imgui.h"
 
 namespace Dawn
 {
-
-	///////////////////////////////////////////////////////////////////////////////
-	// Window Member Definitions
-	///////////////////////////////////////////////////////////////////////////////
-	//-----------------------------------------------------------------------------
-	// Creates a new instance of the win32 view. 
-	//-----------------------------------------------------------------------------
 	Window::Window()
 	{
 		this->Instance = nullptr;
@@ -33,14 +21,6 @@ namespace Dawn
 		this->Height = 600;
 	}
 
-
-
-	//-----------------------------------------------------------------------------
-	// Initializes the Win32 Window with WNDCLASSEX and registers the window 
-	// properties, but in order to create the window you need to call VCreate().
-	// Method will return SKY_ERROR in case of any  error or SKY_OK in case 
-	// everything was ok. 
-	//-----------------------------------------------------------------------------
 	EResult Window::Initialize(std::wstring InTitle, int InWidth, int InHeight, bool InIsFullscreen,
 		int InColorBits, int InDepthBits, int InAlphaBits)
 	{
@@ -89,10 +69,6 @@ namespace Dawn
 		return EResult_OK;
 	}
 
-	//-----------------------------------------------------------------------------
-	// Finally creates the window and the opengl context. This method returns
-	// SKY_ERROR if something goes wrong. 
-	//-----------------------------------------------------------------------------
 	EResult Window::Create(void)
 	{
 		if (!IsInitialized)
@@ -239,7 +215,7 @@ namespace Dawn
 
 			int width = clientRect.right - clientRect.left;
 			int height = clientRect.bottom - clientRect.top;
-			GfxBackend::Resize(width, height);
+			// TODO resize method here!
 			//ImGuiWrapper::Resize(); //DO we really need this?! 
 			break;
 		}
@@ -266,7 +242,7 @@ namespace Dawn
 			if (message == WM_MBUTTONUP) { button = 2; }
 			if (message == WM_XBUTTONUP) { button = (GET_XBUTTON_WPARAM(wParam) == XBUTTON1) ? 3 : 4; }
 
-			CEventDispatcher::Trigger(EVENT_KEY("MouseReleased"), MouseReleasedEvent(button));
+			//CEventDispatcher::Trigger(EVENT_KEY("MouseReleased"), MouseReleasedEvent(button));
 			break;
 		}
 		case WM_LBUTTONDOWN: case WM_LBUTTONDBLCLK:
@@ -280,7 +256,7 @@ namespace Dawn
 			if (message == WM_MBUTTONDOWN || message == WM_MBUTTONDBLCLK) { button = 2; }
 			if (message == WM_XBUTTONDOWN || message == WM_XBUTTONDBLCLK) { button = (GET_XBUTTON_WPARAM(wParam) == XBUTTON1) ? 3 : 4; }
 
-			CEventDispatcher::Trigger(EVENT_KEY("MousePressed"), MousePressedEvent(button));
+			//CEventDispatcher::Trigger(EVENT_KEY("MousePressed"), MousePressedEvent(button));
 			break;
 		}
 		/*case WM_CHAR:

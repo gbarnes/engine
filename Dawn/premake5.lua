@@ -13,6 +13,8 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 include "Dawn/vendor/imgui"
 include "Dawn/vendor/DirectXTex"
 include "Dawn/vendor/brofiler"
+include "Dawn/vendor/glad"
+include "Dawn/vendor/pugixml"
 
 project "Dawn"
 	location "Dawn"
@@ -25,8 +27,8 @@ project "Dawn"
 	files
 	{
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp",
-		"%{prj.name}/shader/**.hlsl"
+		"%{prj.name}/src/**.cpp"--,
+		--"%{prj.name}/shader/**.hlsl"
 	}
 
 	includedirs
@@ -35,18 +37,23 @@ project "Dawn"
 		"Dawn/vendor/tinyobjloader/include/",
 		"Dawn/vendor/stb/include/",
 		"Dawn/vendor/imgui/",
+		"Dawn/vendor/glm/",
 		"Dawn/vendor/DirectXTex/",
 		"Dawn/vendor/brofiler/src/",
 		"Dawn/vendor/assimp/include/",
+		"Dawn/vendor/glad/glad/",
+		"Dawn/vendor/pugixml/src/",
 		"%{prj.name}/src/Dawn/"
+
 	}
 	
-
 	links 
 	{
 		"ImGui",
 		"DirectXTex",
 		"Brofiler",
+		"glad",
+		"pugixml",
 		"Dawn/vendor/assimp/lib/x64/assimp-vc140-mt.lib"
 	}
 	
@@ -85,30 +92,30 @@ project "Dawn"
 		symbols "On"
 
 
-    shadermodel("5.0")
+    -- shadermodel("5.0")
 
-    shaderassembler("AssemblyCode")
+    -- shaderassembler("AssemblyCode")
 
-    local shader_dir = "../Assets/Shader/"
+    -- local shader_dir = "../Assets/Shader/"
 
    -- HLSL files that don't end with 'Extensions' will be ignored as they will be
    -- used as includes
-   filter("files:**.hlsl")
-      flags("ExcludeFromBuild")
-      shaderobjectfileoutput(shader_dir.."%{file.basename}"..".cso")
-      shaderassembleroutput(shader_dir.."%{file.basename}"..".asm")
+   -- filter("files:**.hlsl")
+     --  flags("ExcludeFromBuild")
+   --    shaderobjectfileoutput(shader_dir.."%{file.basename}"..".cso")
+    --   shaderassembleroutput(shader_dir.."%{file.basename}"..".asm")
 
-   filter("files:**_ps.hlsl")
-      removeflags("ExcludeFromBuild")
-      shadertype("Pixel")
+   -- filter("files:**_ps.hlsl")
+   --    removeflags("ExcludeFromBuild")
+   --    shadertype("Pixel")
 
-   filter("files:**_vs.hlsl")
-      removeflags("ExcludeFromBuild")
-      shadertype("Vertex")
+   -- filter("files:**_vs.hlsl")
+   --    removeflags("ExcludeFromBuild")
+   --    shadertype("Vertex")
 
 
    -- Warnings as errors
-   shaderoptions({"/WX"})
+   -- shaderoptions({"/WX"})
 
 project "Sandbox"
 	location "Sandbox"
@@ -131,8 +138,11 @@ project "Sandbox"
 		"Dawn/vendor/stb/include/",
 		"Dawn/src",
 		"Dawn/vendor/DirectXTex/",
+		"Dawn/vendor/glad/glad/",
 		"Dawn/vendor/brofiler/src/",
 		"Dawn/vendor/assimp/include/",
+		"Dawn/vendor/glm/",
+		"Dawn/vendor/pugixml/src/"
 	}
 	
 	links 

@@ -41,7 +41,7 @@ namespace Dawn
 		WorkerThreadQueues = new JobQueue[ThreadCount];
 		WorkerThreads.resize(ThreadCount - 1);
 		IsThreadActive.resize(ThreadCount - 1);
-		SpawnWorkerThreads();
+		//SpawnWorkerThreads();
 
 		return EResult_OK;
 	}

@@ -1,6 +1,6 @@
 #include "SandboxApp.h"
 
-SandboxApp::SandboxApp(Dawn::SAppSettings& InSettings) 
+SandboxApp::SandboxApp(AppSettings& InSettings)
 	: Application(InSettings)
 	 
 {

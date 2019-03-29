@@ -10,22 +10,15 @@
 
 namespace Dawn
 {
-	struct SAppSettings
-	{
-		std::wstring Title;
-		u32 WindowWidth;
-		u32 WindowHeight;
-		bool IsFullscreen;
-		bool UseVsync;
-	};
 
+	class GfxGDI;
 	class Event;
 	class ResourceSystem;
 
 	class DAWN_API Application : public EObject
 	{
 	public:
-		Application(SAppSettings& InSettings);
+		Application(AppSettings& InSettings);
 		virtual ~Application();
 		void Run();
 
@@ -34,14 +27,10 @@ namespace Dawn
 			return RefPtr<Application>(Locator::Get<Application>(AppLocatorId));
 		}
 
-		inline static SAppSettings* GetSettings()
+		inline static AppSettings* GetSettings()
 		{
 			return &Get()->Settings;
 		}
-
-		void OnMouseMovedEvent(Event& InEvent);
-		void OnMousePressedEvent(Event& InEvent);
-		void OnMouseReleasedEvent(Event& InEvent);
 
 		static uint64_t GetFrameCount()
 		{
@@ -49,9 +38,10 @@ namespace Dawn
 		}
 
 	protected:
+		std::unique_ptr<GfxGDI> GDI;
 		Window Window;
 		ResourceSystem ResourceSystem;
-		SAppSettings Settings;
+		AppSettings Settings;
 		Timer Clock;
 
 		virtual void SetupLayers();
@@ -68,7 +58,7 @@ namespace Dawn
 	private:
 		std::vector<Layer*> Layers;
 		std::vector<Layer*>::iterator LayerInsertCount;
-
+		bool IsInitialized = false;
 		static uint64_t FrameCount;
 	};
 

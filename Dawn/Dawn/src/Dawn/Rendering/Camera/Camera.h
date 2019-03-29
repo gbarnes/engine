@@ -15,14 +15,27 @@ namespace Dawn
 		Vec3 LookAt = {0.0f, 0.0f, 0.0f};
 		Vec3 Up = { 0.0f, 1.0f, 0.0f };
 
-		const DirectX::XMMATRIX CalculateView()
+		Mat4 Projection;
+
+		const Mat4 CalculateView()
 		{
 			return DirectX::XMMatrixLookAtLH(Position, LookAt, Up);
 		}
 
-		const DirectX::XMMATRIX CalculatePerspective()
+		void CalculatePerspective()
 		{
-			return DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(FieldOfView), AspectRatio, NearZ, FarZ);
+			
+			Projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(FieldOfView), AspectRatio, NearZ, FarZ);
+		}
+
+		const Vec3 WorldToScreenPoint(Vec3 InPoint)
+		{
+			return DirectX::XMVector3Project(InPoint, 0, 0, 0, 0, 0, 1, Projection, CalculateView(), MAT4_IDENTITY);
+		}
+
+		const Vec3 ScreenToWorldPoint(Vec3 InPoint)
+		{
+			return DirectX::XMVector3Unproject(InPoint, 0, 0, 0, 0, 0, 1, Projection, CalculateView(), MAT4_IDENTITY);
 		}
 	};
 }

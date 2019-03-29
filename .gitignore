@@ -29,3 +29,11 @@ Dawn/Dawn/vendor/brofiler/bin-int/
 Dawn/Dawn/vendor/TaskScheduler/Scheduler/bin/
 Dawn/Dawn/vendor/TaskScheduler/Scheduler/bin-int/
 Dawn/Dawn/vendor/brofiler/Brofiler.vcxproj.user
+Dawn/Dawn/vendor/pugixml/bin/
+Dawn/Dawn/vendor/pugixml/pugixml.vcxproj
+Dawn/Dawn/vendor/pugixml/bin-int/
+Dawn/Dawn/vendor/glad/bin/
+Dawn/Dawn/vendor/glad/bin-int/
+Dawn/Dawn/vendor/glad/glad.vcxproj.user
+Dawn/Dawn/vendor/glad/glad.vcxproj.filters
+Dawn/Dawn/vendor/glad/glad.vcxproj

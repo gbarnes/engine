@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/GDI/GfxCmdList.h"
+#include <inc_common.h>
 
 namespace Dawn
 {
@@ -7,7 +7,7 @@ namespace Dawn
 	struct Image;
 	struct FileMetaData;
 
-	void CopyImagesToGPU(GfxCmdList& InCmdList, Image** InImage, u32 InNum);
-	void CopyMeshesToGPU(GfxCmdList& InCmdList, Mesh** InMesh, u32 InNum);
+	void CopyImagesToGPU(Image** InImage, u32 InNum);
+	void CopyMeshesToGPU(Mesh** InMesh, u32 InNum);
 	std::string ToFullFilePath(std::string InWorkspacePath, FileMetaData* InMetaData);
 }

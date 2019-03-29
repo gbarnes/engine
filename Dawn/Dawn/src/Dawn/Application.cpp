@@ -1,11 +1,6 @@
 #include "Application.h"
 #include "imgui.h"
-#include "Core/GDI/GfxBackend.h"
-#include "Core/GDI/GfxQueue.h"
-#include "Core/GDI/GfxCmdList.h"
-#include "Core/GDI/GfxRenderTarget.h"
-#include "Core/GDI/GfxTexture.h"
-#include "Core/GDI/inc_gfx_types.h"
+
 #include "Core/Event.h"
 #include "Core/Events/MouseEvent.h"
 #include "inc_common.h"
@@ -13,56 +8,20 @@
 #include "Layers/TestRenderLayer.h"
 #include "ResourceSystem/ResourceSystem.h"
 #include "ResourceSystem/ResourceLoaders.h"
-#include "Rendering/RenderResourceHelper.h"
-#include "Rendering/RenderDebugInterface.h"
 #include "debug_draw.h"
 #include "brofiler.h"
-
 #include "JobSystem/JobSystem.h"
+#include "Rendering/RenderResourceHelper.h"
 
-static std::mutex mutex;
-void processAnimations(Dawn::Job* InJob)
-{
-	u32 x = 0;
-	for (u32 i = 0; i < 10000; i++)
-		x += 1;
-	
-	mutex.lock();
-	DWN_CORE_INFO("Processed Animations {0} on Thread Index: {1}", x, Dawn::JobSystem::ThreadIndex);
-	mutex.unlock();
-}
-
-
-/*CJobSystem::Initialize();
-
-	unsigned int ThreadIndex = CJobSystem::ThreadIndex;
-
-	SJob* Root = CJobSystem::CreateJob(&empty_job2);
-	for (unsigned int i = 0; i < 500; ++i)
-	{
-		SJob* Job = CJobSystem::CreateJobAsChild(Root, &empty_job2);
-		CJobSystem::Run(Job);
-	}
-
-	CJobSystem::Run(Root);
-	CJobSystem::Wait(Root);
-	
-	//RenderCommand::Packet p = RenderCommand::Create<Draw>(sizeof(Draw));
-	//Draw* d = RenderCommand::GetCommand<Draw>(p);
-	*/
-
-
+#define USE_OPENGL_GFX
+#include "Core/GDI/inc_gfx.h"
 
 namespace Dawn
 {
-	DirectX::XMFLOAT4 g_ClearColor = { 0.4f, 0.6f, 0.9f, 1.0f };
 	SEventHandle g_MouseMovedEvtHandle, g_MousePressedHandle, g_MouseReleasedHandle;
 	uint64_t Application::FrameCount = 0;
 
-	GfxTexture depthTexture;
-	GfxRenderTarget g_RenderTarget;
-
-	Application::Application(SAppSettings& InSettings)
+	Application::Application(AppSettings& InSettings)
 	{
 		this->Settings = InSettings;
 		Locator::Add(AppLocatorId, this);
@@ -73,38 +32,11 @@ namespace Dawn
 		Locator::Remove(AppLocatorId);
 	}
 
-	void Application::OnMouseMovedEvent(Event& InEvent)
-	{
-		/*MouseMovedEvent& e = static_cast<MouseMovedEvent&>(InEvent);
-		ImGuiIO& io = ImGui::GetIO();
-		io.MousePos = ImVec2(e.GetX(), e.GetY());*/
-	}
-
-	void Application::OnMousePressedEvent(Event& InEvent)
-	{
-		/*ImGuiIO& io = ImGui::GetIO();
-		MousePressedEvent& e = static_cast<MousePressedEvent&>(InEvent);
-		io.MouseDown[e.GetButton()] = true;*/
-	}
-
-	void Application::OnMouseReleasedEvent(Event& InEvent)
-	{
-		/*ImGuiIO& io = ImGui::GetIO();
-		MouseReleasedEvent& e = static_cast<MouseReleasedEvent&>(InEvent);
-		io.MouseDown[e.GetButton()] = false;*/
-	}
-
 
 	void Application::Run()
 	{
-		// BEGIN Subscriptions
-		g_MouseMovedEvtHandle = CEventDispatcher::Subscribe(EVENT_KEY("MouseMoved"), BIND_EVENT_MEMBER(Application::OnMouseMovedEvent));
-		g_MousePressedHandle = CEventDispatcher::Subscribe(EVENT_KEY("MousePressed"), BIND_EVENT_MEMBER(Application::OnMousePressedEvent));
-		g_MouseReleasedHandle = CEventDispatcher::Subscribe(EVENT_KEY("MouseReleased"), BIND_EVENT_MEMBER(Application::OnMouseReleasedEvent));
-		// END Subscriptions
-
 		// Resource System initialization
-		if (!ResourceSystem.Initialize("E:/Git/engine/Dawn/Assets/", { ".obj", ".jpg", ".cso", ".png" }))
+		if (!ResourceSystem.Initialize("E:/Git/engine/Dawn/Assets/", { ".obj", ".jpg", ".png", ".shader" }))
 		{
 			DWN_CORE_ERROR("Couldn't initialize resource system");
 			system("pause");
@@ -124,8 +56,12 @@ namespace Dawn
 		}
 
 		// Window Creation Setup
-		EResult Result = this->Window.Initialize(Settings.Title, Settings.WindowWidth,
-								Settings.WindowHeight, Settings.IsFullscreen, 32, 32, 8);
+		EResult Result = this->Window.Initialize(Settings.Title, Settings.Width,
+								Settings.Height, Settings.IsFullscreen, 
+								Settings.ColorBits, Settings.DepthBits, 
+								Settings.AlphaBits);
+
+		this->Window.OnWindowPaint = std::bind(&Application::Tick, this);
 
 		if (Result != EResult_OK)
 		{
@@ -133,21 +69,19 @@ namespace Dawn
 			system("pause");
 			return;
 		}
-
-		Clock.Reset();
-		this->Window.OnWindowPaint = std::bind(&Application::Tick, this);
-	
+		
 		if (Window.Create() != EResult_OK)
 		{
 			DWN_CORE_ERROR("Couldn't create window system");
 			system("pause");
 			return;
 		}
+		Settings.Hwnd = Window.GetHwnd();
 
-		// Graphics System Setups.
-		if (GfxBackend::Initialize(Settings.WindowWidth, Settings.WindowHeight, Window.GetHwnd(), true, false) != EResult_OK)
+		GDI = CreateGDI();
+		if (!GDI->Init(Settings))
 		{
-			DWN_CORE_ERROR("Couldn't initialize graphics device!\n");
+			DWN_CORE_ERROR("Couldn't initialize GDI!\n");
 			system("pause");
 			return;
 		}
@@ -159,16 +93,15 @@ namespace Dawn
 			return;
 		}
 
-
 		{
 			Load();
 			SetupLayers();
 		}
 
-		Job* Root = JobSystem::CreateJob(&processAnimations);
-		JobSystem::Run(Root);
-
 		DWN_CORE_INFO("Core Context initialized.");
+		
+		IsInitialized = true;
+		Clock.Reset();
 
 		while (true)
 		{
@@ -176,115 +109,41 @@ namespace Dawn
 				break;
 		}
 
-		depthTexture.Reset();
-
-		//g_RenderTarget.GetTexture(AttachmentPoint::Color0).Reset();
-		//g_RenderTarget.GetTexture(AttachmentPoint::DepthStencil).Reset();
-		
-		
 		ClearLayers();
-		GfxBackend::Shutdown(); 
+		GDI->Shutdown();
 		JobSystem::Shutdown();
 		ResourceSystem.Shutdown();
 
 		DWN_CORE_INFO("Core Context shutdown.");
 	}
 
-
 	void Application::Load()
 	{
-		auto commandQueue = GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-		auto commandList = commandQueue->GetCommandList();
-
-		DXGI_FORMAT backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-		DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT;
-
-		DXGI_SAMPLE_DESC sampleDesc = GfxBackend::GetMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, D3D12_MAX_MULTISAMPLE_SAMPLE_COUNT);
-
-		// Create an off-screen render target with a single color buffer and a depth buffer.
-		auto colorDesc = CD3DX12_RESOURCE_DESC::Tex2D(backBufferFormat,
-			Settings.WindowWidth, Settings.WindowHeight,
-			1, 1,
-			4, DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN,
-			D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
-
-		/*D3D12_CLEAR_VALUE colorClearValue;
-		colorClearValue.Format = colorDesc.Format;
-		colorClearValue.Color[0] = 0.4f;
-		colorClearValue.Color[1] = 0.6f;
-		colorClearValue.Color[2] = 0.9f;
-		colorClearValue.Color[3] = 1.0f;
-
-		GfxTexture colorTexture = GfxTexture(colorDesc, &colorClearValue,
-			TextureUsage::RenderTarget,
-			L"Color Render Target");*/
-
-		// Create a depth buffer.
-		auto depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(depthBufferFormat,
-			Settings.WindowWidth, Settings.WindowHeight,
-			1, 1,
-			1, 0,
-			D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-		D3D12_CLEAR_VALUE depthClearValue;
-		depthClearValue.Format = depthDesc.Format;
-		depthClearValue.DepthStencil = { 1.0f, 0 };
-
-		depthTexture = GfxTexture(depthDesc, &depthClearValue,
-			TextureUsage::Depth,
-			L"Depth Render Target");
-
 		RenderResourceHelper::LoadCommonShaders();
-		RenderResourceHelper::CreateCommonPipelineStates();
-
-		// Attach the textures to the render target.
-		//g_RenderTarget.AttachTexture(AttachmentPoint::Color0, colorTexture);
-	//	g_RenderTarget.AttachTexture(AttachmentPoint::DepthStencil, depthTexture);
-
-		auto fenceValue = commandQueue->ExecuteCommandList(commandList);
-		commandQueue->WaitForFenceValue(fenceValue);
 	}
 
 	void Application::Tick()
-	{
-		if (!GfxBackend::IsInitialized())
+	{BROFILER_FRAME("MainThread")
+		
+		if (!IsInitialized)
 			return;
-
-		BROFILER_FRAME("MainThread")
 
 		++Application::FrameCount;
 
 		Clock.Tick();
+
+		glEnable(GL_DEPTH_TEST);
+		glViewport(0, 0, Settings.Width, Settings.Height);
+		glClearColor(0.4f, 0.6f, 0.9f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-
-		auto CmdQueue = GfxBackend::GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-		auto CmdList = CmdQueue->GetCommandList();
-
-		auto RT = GfxBackend::GetRenderTarget();
-		auto ColorText = RT.GetTexture(AttachmentPoint::Color0);
-		RT.AttachTexture(AttachmentPoint::DepthStencil, depthTexture);
-
-		{
-			FLOAT clearColor[] = { 0.4f, 0.5f, 0.9f, 1.0f };
-			
-			CmdList->TransitionBarrier(ColorText, D3D12_RESOURCE_STATE_RENDER_TARGET);
-			CmdList->ClearTexture(ColorText, clearColor);
-			CmdList->ClearDepthStencilTexture(depthTexture, D3D12_CLEAR_FLAG_DEPTH);
-			CmdList->SetViewport(GfxBackend::GetViewport());
-			CmdList->SetScissorRect(GfxBackend::GetScissorRect());
-			CmdList->SetRenderTarget(RT);
-		}
-
 		for (Layer* layer : Layers)
 		{
 			layer->Update();
-			layer->Render(CmdList.get());
+			layer->Render();
 		}
 
-		CmdList->TransitionBarrier(ColorText, D3D12_RESOURCE_STATE_PRESENT);
-		CmdQueue->ExecuteCommandList(CmdList);
-
-		//g_RenderTarget.GetTexture(AttachmentPoint::Color0)
-		GfxBackend::Present(ColorText);
+		GDI->Present();
 	}
 
 	void Application::SetupLayers()

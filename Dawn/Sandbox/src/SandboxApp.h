@@ -1,22 +1,25 @@
 #pragma once
-
 #include <Dawn.h>
 
 class SandboxApp : public Dawn::Application
 {
 public:
-	SandboxApp(Dawn::SAppSettings& InSettings);
+	SandboxApp(AppSettings& InSettings);
 	~SandboxApp();
 };
 
 Dawn::Application* Dawn::CreateApplication()
 {
-	Dawn::SAppSettings Settings = {
+	AppSettings Settings = {
+		0, // HWND will be provided by the app later on!
 		L"Sandbox Game", 
 		1280,
 		720,
 		false,
-		true
+		true,
+		32,
+		32,
+		8
 	};
 
 	return new SandboxApp(Settings);

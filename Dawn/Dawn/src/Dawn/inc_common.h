@@ -126,3 +126,24 @@ struct DAWN_API GenericHandle
 	u32 Generation : 20;
 	bool IsValid = false;
 };
+
+struct DAWN_API AppSettings
+{
+	HWND Hwnd;
+	std::wstring Title;
+	u32 Width;
+	u32 Height;
+	bool IsFullscreen;
+	bool UseVsync;
+	u32 ColorBits = 32;
+	u32 DepthBits = 32;
+	u32 AlphaBits = 8;
+};
+
+inline void ThrowIfFailed(HRESULT hr)
+{
+	if (FAILED(hr))
+	{
+		throw std::exception();
+	}
+}
