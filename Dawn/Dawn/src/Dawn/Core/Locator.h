@@ -14,7 +14,7 @@ namespace Dawn
 	public:
 
 		template <typename T>
-		static T* Get(std::string& InId)
+		static T* Get(std::string&& InId)
 		{
 			static_assert(std::is_base_of<EObject, T>::value, "T must derive from CEObject");
 			
@@ -24,8 +24,8 @@ namespace Dawn
 
 			return dynamic_cast<T*>(object);
 		}
-		static void Add(std::string& InId, Dawn::EObject* InInstance);
-		static void Remove(std::string& InId);
+		static void Add(std::string&& InId, Dawn::EObject* InInstance);
+		static void Remove(std::string&& InId);
 
 	private:
 

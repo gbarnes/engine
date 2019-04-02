@@ -5,13 +5,13 @@ namespace Dawn
 {
 	std::map< std::string, Dawn::EObject* > Locator::Instances;
 
-	void Locator::Add(std::string& InId, Dawn::EObject* InInstance)
+	void Locator::Add(std::string&& InId, Dawn::EObject* InInstance)
 	{
 		InInstance->AddRef();
 		Instances.emplace(InId, InInstance);
 	}
 
-	void Locator::Remove(std::string& InId)
+	void Locator::Remove(std::string&& InId)
 	{
 		auto it = Instances.find(InId);
 		if (it == Instances.end())

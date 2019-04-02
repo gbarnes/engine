@@ -70,7 +70,7 @@ namespace Dawn
 	GenericHandle ResourceTable::LookUpResource(ResourceType InType, FileHandle InResource)
 	{
 		BROFILE
-		GenericHandle Id = {};
+		GenericHandle Id = INVALID_HANDLE;
 
 		// This is a pretty bad solution for something like this and I don't like it
 		// at all lets try to find a simpler solution later on, Gavin Barnes, 03/22/19

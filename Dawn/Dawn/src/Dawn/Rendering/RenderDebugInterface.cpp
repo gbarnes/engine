@@ -5,5 +5,36 @@
 
 namespace Dawn
 {
-	
+	float QuadVertexUV[] = {
+		// Pos      // Tex
+		0.0f, 1.0f, 0.0f, 1.0f,
+		1.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+
+		0.0f, 1.0f, 0.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 0.0f, 1.0f, 0.0f
+	};
+
+	void RenderDebugInterface::Box()
+	{
+
+	}
+
+	void RenderDebugInterface::Line()
+	{
+
+	}
+
+	void RenderDebugInterface::Quad()
+	{
+
+	}
+
+	void RenderDebugInterface::Plane()
+	{
+
+	}
+
+
 }

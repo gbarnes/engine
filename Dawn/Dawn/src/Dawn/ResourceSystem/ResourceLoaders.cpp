@@ -96,7 +96,7 @@ namespace Dawn
 			if (!ResourceTable::TrackResource(ResourceType_StaticMesh, mesh))
 			{
 				delete mesh;
-				return MeshHandle();
+				return INVALID_HANDLE;
 			}
 
 			return Id;
@@ -107,7 +107,7 @@ namespace Dawn
 		}
 
 
-		return Id;
+		return INVALID_HANDLE;
 	}
 
 	ShaderHandle RS_LoadShader(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InMetaData)
@@ -127,7 +127,7 @@ namespace Dawn
 		if (!result)
 		{
 			DWN_CORE_ERROR("Couldn't parse shader xml!");
-			return existingHandle;
+			return INVALID_HANDLE;
 		}
 
 
@@ -163,7 +163,7 @@ namespace Dawn
 				for (auto shaderToDelete : shadersToDelete)
 					glDeleteShader(shaderToDelete);
 
-				return ShaderHandle();
+				return INVALID_HANDLE;
 			}
 			else
 			{
@@ -179,7 +179,7 @@ namespace Dawn
 		if (!ResourceTable::TrackResource(ResourceType_Shader, shader))
 		{
 			delete shader;
-			return ShaderHandle();
+			return INVALID_HANDLE;
 		}
 
 		return shader->Id;
@@ -216,6 +216,6 @@ namespace Dawn
 			return image->Id;
 		}
 
-		return Id;
+		return INVALID_HANDLE;
 	}
 }

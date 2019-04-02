@@ -5,6 +5,7 @@
 
 #include "Core/Window.h"
 #include "ResourceSystem/ResourceSystem.h"
+#include "EntitySystem/World.h"
 
 #define AppLocatorId std::string("App")
 
@@ -39,7 +40,8 @@ namespace Dawn
 
 	protected:
 		std::unique_ptr<GfxGDI> GDI;
-		Window Window;
+		World World;
+		std::unique_ptr<Window> Window;
 		ResourceSystem ResourceSystem;
 		AppSettings Settings;
 		Timer Clock;

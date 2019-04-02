@@ -12,7 +12,11 @@
 #include "brofiler.h"
 #include "JobSystem/JobSystem.h"
 #include "Rendering/RenderResourceHelper.h"
-
+#include "EntitySystem/World.h"
+#include "EntitySystem/EntityTable.h"
+#include "EntitySystem/ComponentTable.h"
+#include "EntitySystem/Transform/Transform.h"
+#include "EntitySystem/Camera/Camera.h"
 #define USE_OPENGL_GFX
 #include "Core/GDI/inc_gfx.h"
 
@@ -24,6 +28,7 @@ namespace Dawn
 	Application::Application(AppSettings& InSettings)
 	{
 		this->Settings = InSettings;
+		Window = std::make_unique<Dawn::Window>();
 		Locator::Add(AppLocatorId, this);
 	}
 
@@ -31,7 +36,6 @@ namespace Dawn
 	{
 		Locator::Remove(AppLocatorId);
 	}
-
 
 	void Application::Run()
 	{
@@ -56,12 +60,12 @@ namespace Dawn
 		}
 
 		// Window Creation Setup
-		EResult Result = this->Window.Initialize(Settings.Title, Settings.Width,
+		EResult Result = this->Window->Initialize(Settings.Title, Settings.Width,
 								Settings.Height, Settings.IsFullscreen, 
 								Settings.ColorBits, Settings.DepthBits, 
 								Settings.AlphaBits);
 
-		this->Window.OnWindowPaint = std::bind(&Application::Tick, this);
+		this->Window->OnWindowPaint = std::bind(&Application::Tick, this);
 
 		if (Result != EResult_OK)
 		{
@@ -70,13 +74,13 @@ namespace Dawn
 			return;
 		}
 		
-		if (Window.Create() != EResult_OK)
+		if (Window->Create() != EResult_OK)
 		{
 			DWN_CORE_ERROR("Couldn't create window system");
 			system("pause");
 			return;
 		}
-		Settings.Hwnd = Window.GetHwnd();
+		Settings.Hwnd = Window->GetHwnd();
 
 		GDI = CreateGDI();
 		if (!GDI->Init(Settings))
@@ -105,7 +109,7 @@ namespace Dawn
 
 		while (true)
 		{
-			if (Window.PeekMessages())
+			if (Window->PeekMessages())
 				break;
 		}
 
@@ -120,6 +124,13 @@ namespace Dawn
 	void Application::Load()
 	{
 		RenderResourceHelper::LoadCommonShaders();
+
+		// Boot up World!
+		World.AddRef();
+		World.AddTable(std::make_unique<ComponentTable<Transform>>());
+		World.AddTable(std::make_unique<ComponentTable<Camera>>());
+		EntityId testEntity = EntityTable::Create("Test");
+		World.AddComponent(testEntity, Transform());
 	}
 
 	void Application::Tick()
@@ -162,7 +173,7 @@ namespace Dawn
 	{
 		LayerInsertCount = Layers.begin();
 
-		this->PushLayer(new ImGuiLayer(Window.GetHwnd()));
+		this->PushLayer(new ImGuiLayer(Window->GetHwnd()));
 		this->PushLayer(new TestRenderLayer());
 
 		for (Layer* layer : Layers)

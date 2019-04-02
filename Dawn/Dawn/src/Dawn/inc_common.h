@@ -21,11 +21,13 @@ using namespace Microsoft::WRL;
 #include <iostream>
 #include <memory>
 #include <assert.h>
+#include <array>
 
 #include <map> // for std::map
 #include <mutex> // for std::mutex
 #include <vector> // for std::vector
 #include "glm.hpp"
+#include "gtx/quaternion.hpp"
 
 // The min/max macros conflict with like-named member functions.
 // Only use std::min and std::max defined in <algorithm>.
@@ -67,6 +69,7 @@ typedef int i32;
 typedef long i64;
 typedef u128 FileHandle;
 
+typedef glm::quat quat;
 typedef glm::mat4 mat4;
 typedef glm::vec4 vec4;
 typedef glm::vec3 vec3;
@@ -132,6 +135,8 @@ struct DAWN_API GenericHandle
 	u32 Generation : 20;
 	bool IsValid = false;
 };
+
+#define INVALID_HANDLE {0,0, false}
 
 struct DAWN_API AppSettings
 {
