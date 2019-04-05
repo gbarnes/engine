@@ -8,7 +8,7 @@ namespace Dawn
 	{
 		MouseBtn_Left,
 		MouseBtn_Right,
-		MouseBtn_Middle, // add more mouse buttons later?!, gbarnes 03/29/19
+		MouseBtn_Middle, 
 		MouseBtn_X1,
 		MouseBtn_X2,
 		MouseBtn_Num
@@ -107,32 +107,34 @@ namespace Dawn
 			return MousePos;
 		}
 
-		inline static bool IsMouseButtonDown(MouseBtn InType)
+		static bool IsMouseButtonDown(MouseBtn InType)
 		{
 			return MouseBtnMap[InType] == KeyState::Down;
 		}
 
-		inline static bool IsMouseButtonUp(MouseBtn InType)
+		static bool IsMouseButtonUp(MouseBtn InType)
 		{
 			return MouseBtnMap[InType] == KeyState::Up;
 		}
 
-		inline static bool IsMouseButtonPressed(MouseBtn InType)
+		static bool IsMouseButtonPressed(MouseBtn InType)
 		{
 			return MouseBtnMap[InType] == KeyState::Pressed;
 		}
 
-		inline static bool IsKeyDown(KeyCode InType)
+		static bool IsKeyDown(KeyCode InType)
 		{
-			return KeyCodeMap[InType] == KeyState::Down;
+			return (GetAsyncKeyState(InType) & 0x8000) != 0; //
 		}
 
-		inline static bool IsKeyUp(KeyCode InType)
+		static bool IsKeyUp(KeyCode InType)
 		{
-			return KeyCodeMap[InType] == KeyState::Up;
+			// This should somehow be handled different and a more sophisticated solution needs to be implemented
+		    // instead of relying on windows functions, but then we only target windows anyways, gbarnes 04/04/19
+			return (GetAsyncKeyState(InType) & 0x8000) == 0; 
 		}
 
-		inline static bool IsKeyPressed(KeyCode InType)
+		static bool IsKeyPressed(KeyCode InType)
 		{
 			return KeyCodeMap[InType] == KeyState::Pressed;
 		}
@@ -142,7 +144,7 @@ namespace Dawn
 	private:
 		static vec2 MousePos;
 		static KeyState MouseBtnMap[MouseBtn_Num];
-		static KeyState KeyCodeMap[KEY_CODE_AMOUNT];
+		static std::map<KeyCode,KeyState> KeyCodeMap;
 	};
 
 	

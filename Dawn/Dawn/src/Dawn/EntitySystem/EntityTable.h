@@ -14,6 +14,7 @@ namespace Dawn
 		static void Remove(const EntityId& InId);
 	private:
 		static u32 CurrentId;
+		static u32 TotalCount;
 		static std::array<Entity, MAX_NUM_OF_ENTITIES> Entities;
 		static std::array<EntityId, MAX_NUM_OF_ENTITIES> EntityIds;
 	};

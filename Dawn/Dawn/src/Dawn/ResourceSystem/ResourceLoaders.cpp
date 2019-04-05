@@ -6,6 +6,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader.h>
 #define STB_IMAGE_IMPLEMENTATION
+#define STBI_FAILURE_USERMSG 
 #include <stb_image.h>
 
 #include "assimp/postprocess.h"
@@ -193,7 +194,9 @@ namespace Dawn
 
 		std::string path = ToFullFilePath(InWorkspacePath, InFile);
 		int x, y, n;
-		unsigned char *data = stbi_load(path.c_str(), &x, &y, &n, 0);
+		unsigned char *data = stbi_load(path.c_str(), &x, &y, &n, 4);
+		
+		
 		if (data != nullptr)
 		{
 			stbi__vertical_flip(data, x, y, n);
@@ -206,6 +209,7 @@ namespace Dawn
 
 			image->Id.Index = (u32)ResourceTable::ResourceCount(ResourceType_Image);
 			image->Id.IsValid = true;
+			image->Id.Generation = 0;
 
 			if (!ResourceTable::TrackResource(ResourceType_Image, image))
 			{
@@ -213,7 +217,13 @@ namespace Dawn
 				delete image;
 				return ImageHandle();
 			}
+
+			//stbi_image_free(data);
 			return image->Id;
+		}
+		else
+		{
+			DWN_CORE_ERROR("{0} ({1}) ", stbi_failure_reason(), InFile->Name);
 		}
 
 		return INVALID_HANDLE;

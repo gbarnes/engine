@@ -5,6 +5,7 @@ namespace Dawn
 	std::array<Entity, MAX_NUM_OF_ENTITIES> EntityTable::Entities;
 	std::array<EntityId, MAX_NUM_OF_ENTITIES> EntityTable::EntityIds;
 	u32 EntityTable::CurrentId = 0;
+	u32 EntityTable::TotalCount = 0;
 
 	const Entity* EntityTable::Get(const EntityId& InId)
 	{
@@ -29,7 +30,13 @@ namespace Dawn
 
 		EntityIds[CurrentId] = NewHandle;
 		Entities[CurrentId] = { NewHandle, InName };
-		CurrentId = EntityIds.size() + 1;
+
+		u32 TempId = CurrentId;
+		CurrentId = TotalCount + 1;
+		
+		if (TotalCount >= TempId)
+			TotalCount++;
+
 		return NewHandle;
 	}
 

@@ -1,7 +1,6 @@
 #pragma once
 #include "inc_common.h"
 #include "inc_core.h"
-
 #include "Component.h"
 #include "ComponentTable.h"
 #include "Entity.h"
@@ -12,15 +11,17 @@ namespace Dawn
 #define MAX_NUM_OF_COMPONENT_TYPES 48
 
 	class BaseComponentTable;
+	struct Camera;
 
 	class DAWN_API World : public EObject
 	{
 	public:
-		World() = default;
+		World();
+		~World();
 
 		inline static RefPtr<World> Get()
 		{
-			return RefPtr<World>(Locator::Get<World>(WorldLocatorId));
+			return RefPtr<World>(Locator::Get<World>("World"));
 		}
 
 		template <typename T>
@@ -39,8 +40,27 @@ namespace Dawn
 			return table->Add(InEntity, InComponent);
 		}
 
+		template<typename T>
+		T* GetComponentByEntity(EntityId& InEntity)
+		{
+			ComponentTable<T>* table = GetTable<T>();
+			return table->GetByEntityId(InEntity);
+		}
+
+		template<typename T>
+		T* GetComponentById(ComponentId& InComponent)
+		{
+			ComponentTable<T>* table = GetTable<T>();
+			return table->GetById(InComponent);
+		}
+
+		Camera* CreateCamera(std::string& InName, vec3 InPosition, float InAspectRatio,
+			float InNearZ, float InFarZ, float InFoV, vec4 InClearColor);
+
+		Camera* GetCamera(u32 InId);
 
 	private:
+		std::vector<EntityId> CameraEntities;
 		std::array<std::unique_ptr<BaseComponentTable>, MAX_NUM_OF_COMPONENT_TYPES> ComponentTables;
 		
 		template<typename T>

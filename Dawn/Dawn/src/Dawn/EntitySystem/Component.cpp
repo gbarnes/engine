@@ -1,4 +1,6 @@
 #include "Component.h"
+#include "EntityTable.h"
+#include "Entity.h"
 
 namespace Dawn
 {

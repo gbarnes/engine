@@ -6,7 +6,6 @@
 namespace Dawn
 {
 #define MAX_NUM_OF_COMPONENTS 4096
-#
 
 	class DAWN_API BaseComponentTable
 	{
@@ -43,8 +42,12 @@ namespace Dawn
 
 			Components[CurrentId] = std::move(InComponent);
 			EntityToComponent[InEntity.Index] = CurrentId;
+			
+			u32 TempId = CurrentId;
+			CurrentId = TotalCount + 1;
 
-			CurrentId = (u32)Components.size() + 1;
+			if (TotalCount >= TempId)
+				TotalCount++;
 
 			return id;
 		}
@@ -75,7 +78,7 @@ namespace Dawn
 			if (!id.IsValid)
 				return nullptr;
 
-			return Components[id.Index];
+			return &Components[id.Index];
 		}
 
 		T* GetById(const ComponentId& InId)
@@ -93,6 +96,7 @@ namespace Dawn
 			return &Components[InId.Index];
 		}
 	protected:
+		u32 TotalCount = 0;
 		u32 CurrentId = 0;
 		// mapping one entityid to one component id means that we only can have one component of this type per entity!
 		std::map<EntityRawId, ComponentRawId> EntityToComponent; 

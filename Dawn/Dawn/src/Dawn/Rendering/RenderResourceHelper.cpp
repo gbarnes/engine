@@ -5,6 +5,12 @@
 
 namespace Dawn 
 {
+	ShaderHandle CommonShaderHandles::DebugPrim;
+	ShaderHandle CommonShaderHandles::Phong;
+	ShaderHandle CommonShaderHandles::Debug;
+	ShaderHandle EditorShaderHandles::Grid;
+	
+
 	void RenderResourceHelper::LoadCommonShaders()
 	{
 		// Create the common shader resources in the order 
@@ -13,7 +19,9 @@ namespace Dawn
 		//CommonShaders.ID_PhongVS = rs->LoadFile("Shader/phong_vs.glsl");
 		//CommonShaders.ID_PhongPS = rs->LoadFile("Shader/phong_ps.glsl");
 
-		CommonShaders.ID_Debug = rs->LoadFile("Shader/debug_gl.shader");
+		CommonShaderHandles::DebugPrim = rs->LoadFile("Shader/debug_prim.shader");
+		CommonShaderHandles::Debug = rs->LoadFile("Shader/debug_gl.shader");
+		EditorShaderHandles::Grid = rs->LoadFile("Shader/editor_grid.shader");
 		//CommonShaders.ID_DebugPS = rs->LoadFile("Shader/debug_ps.glsl");
 	}
 

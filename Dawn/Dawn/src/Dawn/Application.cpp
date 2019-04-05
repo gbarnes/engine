@@ -40,7 +40,7 @@ namespace Dawn
 	void Application::Run()
 	{
 		// Resource System initialization
-		if (!ResourceSystem.Initialize("E:/Git/engine/Dawn/Assets/", { ".obj", ".jpg", ".png", ".shader" }))
+		if (!ResourceSystem.Initialize("E:/Git/engine/Dawn/Assets/", { ".obj", ".jpg", ".png", ".shader", ".PNG" }))
 		{
 			DWN_CORE_ERROR("Couldn't initialize resource system");
 			system("pause");
@@ -65,7 +65,7 @@ namespace Dawn
 								Settings.ColorBits, Settings.DepthBits, 
 								Settings.AlphaBits);
 
-		this->Window->OnWindowPaint = std::bind(&Application::Tick, this);
+		this->Window->OnWindowPaint = std::bind(&Application::Tick, this); 
 
 		if (Result != EResult_OK)
 		{
@@ -106,10 +106,11 @@ namespace Dawn
 		
 		IsInitialized = true;
 		Clock.Reset();
+		Input::Reset();
 
 		while (true)
 		{
-			if (Window->PeekMessages())
+			if (!Window->PeekMessages())
 				break;
 		}
 
@@ -121,6 +122,8 @@ namespace Dawn
 		DWN_CORE_INFO("Core Context shutdown.");
 	}
 
+	Camera* g_Camera;
+
 	void Application::Load()
 	{
 		RenderResourceHelper::LoadCommonShaders();
@@ -129,8 +132,15 @@ namespace Dawn
 		World.AddRef();
 		World.AddTable(std::make_unique<ComponentTable<Transform>>());
 		World.AddTable(std::make_unique<ComponentTable<Camera>>());
-		EntityId testEntity = EntityTable::Create("Test");
-		World.AddComponent(testEntity, Transform());
+		
+		g_Camera = CreateCamera("Cam0",
+									vec3(0, 3, 10), 
+									(float)Settings.Width / (float)Settings.Height, 
+									0.1f, 100.0f, 65.0f, 
+									vec4(0.4f, 0.6f, 0.9f, 1.0f)
+								  );
+		
+		CameraUtils::CalculatePerspective(g_Camera);
 	}
 
 	void Application::Tick()
@@ -143,7 +153,7 @@ namespace Dawn
 
 		Clock.Tick();
 
-		if (Input::IsMouseButtonPressed(MouseBtn_Left))
+		/*if (Input::IsMouseButtonPressed(MouseBtn_Left))
 		{
 			vec2 pos = Input::GetMousePosition();
 			DWN_CORE_INFO("Mouse btn pressed at position: {0} {1}", pos.x, pos.y);
@@ -152,11 +162,11 @@ namespace Dawn
 		if (Input::IsKeyPressed(KeyCode_A))
 		{
 			DWN_CORE_INFO("Key a is pressed!");
-		}
+		}*/
 
 		glEnable(GL_DEPTH_TEST);
 		glViewport(0, 0, Settings.Width, Settings.Height);
-		glClearColor(0.4f, 0.6f, 0.9f, 1.0f);
+		glClearColor(g_Camera->ClearColor[0], g_Camera->ClearColor[1], g_Camera->ClearColor[2], g_Camera->ClearColor[3]);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		for (Layer* layer : Layers)

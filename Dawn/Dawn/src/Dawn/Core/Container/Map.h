@@ -35,7 +35,7 @@ namespace Dawn
 		}
 
 	private:
-		// TODO (gb): use better naming here! Just for testing atm.
+		
 		K InternalKey;
 		V InternalValue;
 	};

@@ -15,9 +15,6 @@ namespace Dawn
 		void Render();
 		void Free();
 
-		void OnFOVChanged(Event& InEvent);
-		void OnCamPosChanged(Event& InEvent);
-
 	private:
 		mat4 View;
 		mat4 Model;

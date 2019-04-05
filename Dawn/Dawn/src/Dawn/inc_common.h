@@ -131,8 +131,8 @@ void SafeDelete(T*& a)
 //template <size_t N1, size_t N2>
 struct DAWN_API GenericHandle
 {
-	u32 Index : 12;
-	u32 Generation : 20;
+	u32 Index;
+	u32 Generation;
 	bool IsValid = false;
 };
 

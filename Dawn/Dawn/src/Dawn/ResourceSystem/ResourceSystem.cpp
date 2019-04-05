@@ -19,7 +19,7 @@ namespace Dawn
 		if (InExtension == ".fbx")
 			return ResourceType_AnimatedMesh;
 
-		if (InExtension == ".jpg" || InExtension == ".png" || InExtension == ".bmp")
+		if (InExtension == ".jpg" || InExtension == ".png" || InExtension == ".bmp" || InExtension == ".PNG")
 			return ResourceType_Image;
 
 		if (InExtension == ".shader")
@@ -149,5 +149,14 @@ namespace Dawn
 		return std::find(Filters.begin(), Filters.end(), InExtension) != Filters.end();
 	}
 
-	
+	std::vector<FileMetaData> ResourceSystem::GetAllMetaFiles()
+	{
+		std::vector<FileMetaData> files;
+		for (auto it : this->MetaDatabase) 
+		{
+			files.emplace_back(it.second);
+		}
+
+		return files;
+	}
 }

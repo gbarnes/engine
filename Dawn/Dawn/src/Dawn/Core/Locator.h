@@ -22,7 +22,7 @@ namespace Dawn
 			if (object == nullptr)
 				return nullptr;
 
-			return dynamic_cast<T*>(object);
+			return static_cast<T*>(object);
 		}
 		static void Add(std::string&& InId, Dawn::EObject* InInstance);
 		static void Remove(std::string&& InId);

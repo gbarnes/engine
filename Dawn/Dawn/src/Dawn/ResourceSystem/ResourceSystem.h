@@ -52,6 +52,7 @@ namespace Dawn
 		GenericHandle LoadFile(std::string InFilename);
 		GenericHandle LoadFile(FileHandle InHandle);
 
+		std::vector<FileMetaData> GetAllMetaFiles();
 
 	private:
 		std::vector<std::string> Filters;

@@ -16,13 +16,18 @@ namespace Dawn
 
 	struct CommonShaderHandles
 	{
-		ShaderHandle ID_Phong;
-		ShaderHandle ID_Debug;
+		static ShaderHandle Phong;
+		static ShaderHandle Debug;
+		static ShaderHandle DebugPrim;
+	};
+
+	struct EditorShaderHandles
+	{
+		static ShaderHandle Grid;
 	};
 
 	namespace RenderResourceHelper
 	{
-		static CommonShaderHandles CommonShaders;
 		void LoadCommonShaders();
 		void CreateCommonPipelineStates();
 	}

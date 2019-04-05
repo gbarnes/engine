@@ -14,7 +14,6 @@ namespace Dawn
 		static u32 TableCounter; // the global index counter for all components
 	};
 
-
 	template <typename T>
 	struct DAWN_API Component
 	{
@@ -28,5 +27,10 @@ namespace Dawn
 		}
 
 		ComponentId Id;
+
+		const Entity* Component::GetEntity()
+		{
+			return EntityTable::Get(Id.Entity);
+		}
 	};
 }

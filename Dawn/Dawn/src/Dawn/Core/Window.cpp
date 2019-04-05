@@ -175,7 +175,7 @@ namespace Dawn
 		{
 			if (this->MSG.message == WM_QUIT || this->MSG.message == WM_CLOSE)
 			{
-				return true;
+				return false;
 			}
 
 
@@ -183,7 +183,7 @@ namespace Dawn
 			DispatchMessage(&this->MSG);
 		}
 
-		return false;
+		return true;
 	}
 
 
@@ -199,16 +199,7 @@ namespace Dawn
 
 		switch (message)
 		{
-		case WM_PAINT:
-		{
-			Window* window = (Window*)GetProp(hwnd, L"Window");
-			if (NULL != window)
-			{
-				if(window->OnWindowPaint != nullptr)
-					window->OnWindowPaint();
-			}
-			break;
-		}
+
 		case WM_SIZE:
 		{
 			RECT clientRect = {};
@@ -230,8 +221,8 @@ namespace Dawn
 			int xPos = GET_X_LPARAM(lParam);
 			int yPos = GET_Y_LPARAM(lParam);
 			Input::MousePos = vec2(xPos, yPos);
-			break;
-		}
+			
+		}break;
 		case WM_LBUTTONUP:
 		case WM_RBUTTONUP:
 		case WM_MBUTTONUP:
@@ -242,14 +233,14 @@ namespace Dawn
 			if (message == WM_RBUTTONUP) { button = 1; }
 			if (message == WM_MBUTTONUP) { button = 2; }
 			if (message == WM_XBUTTONUP) { button = (GET_XBUTTON_WPARAM(wParam) == XBUTTON1) ? 3 : 4; }
-
+			
 			Input::MouseBtnMap[button] = KeyState::Pressed;
-			break;
-		}
-		case WM_LBUTTONDOWN: case WM_LBUTTONDBLCLK:
-		case WM_RBUTTONDOWN: case WM_RBUTTONDBLCLK:
-		case WM_MBUTTONDOWN: case WM_MBUTTONDBLCLK:
-		case WM_XBUTTONDOWN: case WM_XBUTTONDBLCLK:
+			
+		}break;
+		case WM_LBUTTONDOWN: 
+		case WM_RBUTTONDOWN: 
+		case WM_MBUTTONDOWN: 
+		case WM_XBUTTONDOWN: 
 		{
 			int button = 0;
 			if (message == WM_LBUTTONDOWN || message == WM_LBUTTONDBLCLK) { button = 0; }
@@ -259,14 +250,14 @@ namespace Dawn
 
 			
 			Input::MouseBtnMap[button] = KeyState::Down;
-			break;
-		}
+			
+		}break;
 		case WM_KEYDOWN: case WM_SYSKEYDOWN: case WM_SYSCHAR:
-			Input::KeyCodeMap[wParam] = KeyState::Down;
-			break;
-		case WM_KEYUP:case WM_SYSKEYUP:
-			Input::KeyCodeMap[wParam] = KeyState::Pressed;
-			break;
+			Input::KeyCodeMap[(KeyCode)wParam] = KeyState::Down;
+		break;
+		case WM_KEYUP: case WM_SYSKEYUP: 
+			Input::KeyCodeMap[(KeyCode)wParam] = KeyState::Pressed;
+		break;
 		/*case WM_SYSCHAR: case WM_SYSKEYDOWN: case WM_SYSKEYUP:
 		{
 			bool alt = (::GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
@@ -291,12 +282,21 @@ namespace Dawn
 
 			break;
 		}*/
-		default:
+
+		case WM_PAINT:
 		{
+			Window* window = (Window*)GetProp(hwnd, L"Window");
+			if (NULL != window)
+			{
+				if (window->OnWindowPaint != nullptr)
+					window->OnWindowPaint();
+			}
+			
+		} break;
+		default:
 			return DefWindowProc(hwnd, message, wParam, lParam);
 			break;
-		}
-		}
+		} 
 
 		return 0;
 	}
