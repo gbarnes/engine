@@ -15,8 +15,8 @@ Dawn::Application* Dawn::CreateApplication()
 		L"Sandbox Game", 
 		1280,
 		720,
-		false,
-		true,
+		false, // fullscreen
+		true, // vsync 
 		32,
 		32,
 		8

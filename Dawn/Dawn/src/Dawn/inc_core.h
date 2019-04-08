@@ -8,5 +8,5 @@
 #include "Core/Timer.h"
 #include "Core/Math.h"
 #include "Core/Input.h"
-
+#include "Core/Type.h"
 #include <Brofiler.h>

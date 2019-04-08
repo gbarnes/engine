@@ -16,6 +16,8 @@ namespace Dawn
 	{
 		auto transform = const_cast<Entity*>(InEntity)->GetTransform();
 
+		auto type = Transform::GetType()->Get<vec3>(transform, "Position");
+
 		if (ImGui::CollapsingHeader("Entity"))
 		{
 			ImGui::Indent(10.0f);
@@ -139,6 +141,29 @@ namespace Dawn
 		ImGui::End();
 	}
 
+	bool g_ShowSceneWindow = false;
+	void ShowSceneWindow()
+	{
+		ImGui::Begin("Scene", &g_ShowSceneWindow);
+
+		
+		if (ImGui::TreeNode("Root"))
+		{
+			/*if (ImGui::TreeNode("Editor Camera"))
+			{
+				ImGui::TreePop();
+			}*/
+
+			if (ImGui::Button("Editor Camera"))
+			{
+
+			}
+
+			ImGui::TreePop();
+		}
+
+		ImGui::End();
+	}
 
 
 	void Dawn::RenderEditorUI()
@@ -147,6 +172,7 @@ namespace Dawn
 		{
 			if (ImGui::BeginMenu("World"))
 			{
+				if (ImGui::MenuItem("Scene")) { g_ShowSceneWindow = !g_ShowSceneWindow; }
 				if (ImGui::MenuItem("Camera")) {g_ShowCameraEditWindow = !g_ShowCameraEditWindow;}
 				ImGui::EndMenu();
 			}
@@ -190,6 +216,9 @@ namespace Dawn
 
 		if (g_showAssetBrowser)
 			ShowAssetBrowserWindow();
+
+		if (g_ShowSceneWindow)
+			ShowSceneWindow();
 	}
 
 

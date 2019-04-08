@@ -97,9 +97,8 @@ namespace Dawn
 			vec3 up = TransformUtils::CalculateUp(g_camTransform);
 			vec3 forward = TransformUtils::CalculateForward(g_camTransform);
 
-
-			vec3 input = vec3(0, 0, 0);
 			float velocity = (Input::IsKeyDown(KeyCode_Shift)) ? 25.5f : 6.5f;
+
 
 			if (Input::IsKeyDown(KeyCode_A))
 			{
@@ -113,12 +112,12 @@ namespace Dawn
 
 			if (Input::IsKeyDown(KeyCode_W))
 			{
-				g_camTransform->Position += forward *  velocity * timeDelta;
+				g_camTransform->Position += forward * velocity * timeDelta;
 			}
 
 			if (Input::IsKeyDown(KeyCode_S))
 			{
-				g_camTransform->Position -= forward *  velocity * timeDelta;
+				g_camTransform->Position -= forward * velocity * timeDelta;
 			}
 			
 			if (Input::IsKeyDown(KeyCode_Q))

@@ -22,6 +22,7 @@ using namespace Microsoft::WRL;
 #include <memory>
 #include <assert.h>
 #include <array>
+#include <functional>
 
 #include <map> // for std::map
 #include <mutex> // for std::mutex

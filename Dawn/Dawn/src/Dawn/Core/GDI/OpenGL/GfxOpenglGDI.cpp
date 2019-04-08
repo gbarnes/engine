@@ -43,7 +43,7 @@ namespace Dawn
 			wglMakeCurrent(hDC, hRC); // Make our OpenGL 3.2 context current
 
 			PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-			wglSwapIntervalEXT(1); //VSYNC NOT LOCKED TO 60
+			wglSwapIntervalEXT((InSettings.UseVsync) ?  1 : 0); //VSYNC NOT LOCKED TO 60
 		}
 		else {
 			hRC = tempOpenGLContext; // If we didn't have support for OpenGL 3.x and up, use the OpenGL 2.1 context
