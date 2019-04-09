@@ -2,7 +2,7 @@
 #include "imgui.h"
 #include "inc_common.h"
 #include "UI/UIEditorEvents.h"
-
+#include "imgui_editor_components.h"
 #include "EntitySystem/Entity.h"
 #include "EntitySystem/EntityTable.h"
 #include "EntitySystem/Transform/Transform.h"
@@ -12,30 +12,6 @@
 
 namespace Dawn 
 {
-	void ShowEntity(const Entity* InEntity)
-	{
-		auto transform = const_cast<Entity*>(InEntity)->GetTransform();
-
-		auto type = Transform::GetType()->Get<vec3>(transform, "Position");
-
-		if (ImGui::CollapsingHeader("Entity"))
-		{
-			ImGui::Indent(10.0f);
-			ImGui::Text("Id: %u", InEntity->Id.Index);
-			ImGui::Text("Name: %s", InEntity->Name.c_str());
-			ImGui::Unindent(10.0f);
-		}
-
-		if (ImGui::CollapsingHeader("Transform"))
-		{
-			ImGui::Indent(10.0f);
-			ImGui::InputFloat3("Position", &transform->Position[0]);
-			ImGui::InputFloat3("Scale", &transform->Scale[0]);
-			ImGui::InputFloat4("Rotation", &transform->Rotation[0]);
-			ImGui::Unindent(10.0f);
-		}
-	}
-
 	ResourceSystem* g_ResourceSystem = nullptr;
 	std::vector<FileMetaData> g_MetaData;
 	bool g_showAssetBrowser = false;
@@ -95,68 +71,44 @@ namespace Dawn
 		ImGui::End();
 	}
 
-	bool g_ShowCameraEditWindow = false;
-	void ShowCameraEditWindow()
+	Entity* g_SelectedEntity = nullptr;
+	bool g_ShowPropertyWindow = false;
+	void ShowPropertyWindow()
 	{
-		auto camera = GetCamera(0);
-		auto transform = camera->GetTransform();
-		auto entity = camera->GetEntity();
-	
-		ImGui::Begin(entity->Name.c_str(), &g_ShowCameraEditWindow);
+		ImGui::Begin(g_SelectedEntity->Name.c_str(), &g_ShowPropertyWindow);
 
-		ShowEntity(entity);
+		ShowEntity(g_SelectedEntity);
 
-		if (ImGui::CollapsingHeader("Camera"))
+		auto world = World::Get();
+		auto components = world->GetComponentTypesByEntity(g_SelectedEntity->Id);
+		for (auto component : components)
 		{
-			ImGui::Indent(10.0f);
-
-			auto forward = TransformUtils::CalculateForward(transform);
-			auto up = TransformUtils::CalculateUp(transform);
-			auto right = TransformUtils::CalculateRight(transform);
-
-			ImGui::Text("Forward %.2f %.2f %.2f", forward.x, forward.y, forward.z);
-			ImGui::Text("Up %.2f %.2f %.2f", up.x, up.y, up.z);
-			ImGui::Text("Right %.2f %.2f %.2f", right.x, right.y, right.z);
-			ImGui::Spacing();
-
-			ImGui::InputFloat3("World Up", &camera->WorldUp[0]);
-
-			ImGui::ColorEdit4("Clear Color", &camera->ClearColor[0]);
-
-			if (ImGui::SliderFloat("Field Of View", &camera->FieldOfView, 12.0f, 120.0f))
-				CameraUtils::CalculatePerspective(camera);
-
-			if (ImGui::SliderFloat("Aspect Ratio", &camera->AspectRatio, 0.0, 20.0f))
-				CameraUtils::CalculatePerspective(camera);
-
-			if (ImGui::SliderFloat("NearZ", &camera->NearZ, 0.01f, 2.0f))
-				CameraUtils::CalculatePerspective(camera);
-
-			if (ImGui::SliderFloat("FarZ", &camera->FarZ, 100.0f, 10000.0f))
-				CameraUtils::CalculatePerspective(camera);
-
-			ImGui::Unindent(10.0f);
+			if (component == "Camera")
+				ShowCameraComponent(world->GetComponentByEntity<Camera>(g_SelectedEntity->Id));
+			else if(component == "Transform")
+				ShowTransformComponent(world->GetComponentByEntity<Transform>(g_SelectedEntity->Id));
 		}
-		
+
 		ImGui::End();
 	}
 
 	bool g_ShowSceneWindow = false;
 	void ShowSceneWindow()
 	{
-		ImGui::Begin("Scene", &g_ShowSceneWindow);
+		auto world = World::Get();
+		auto transforms = world->GetComponentsByType<Transform>();
 
-		
+		ImGui::Begin("Scene", &g_ShowSceneWindow);
 		if (ImGui::TreeNode("Root"))
 		{
-			/*if (ImGui::TreeNode("Editor Camera"))
+			for (auto transform : transforms)
 			{
-				ImGui::TreePop();
-			}*/
-
-			if (ImGui::Button("Editor Camera"))
-			{
-
+				auto entity = transform->GetEntity();
+				if (ImGui::Button(entity->Name.c_str(), ImVec2(ImGui::CalcItemWidth(), 10)))
+				{
+					g_ShowPropertyWindow = true;
+					g_SelectedEntity = const_cast<Entity*>(entity);
+				}
 			}
 
 			ImGui::TreePop();
@@ -173,7 +125,7 @@ namespace Dawn
 			if (ImGui::BeginMenu("World"))
 			{
 				if (ImGui::MenuItem("Scene")) { g_ShowSceneWindow = !g_ShowSceneWindow; }
-				if (ImGui::MenuItem("Camera")) {g_ShowCameraEditWindow = !g_ShowCameraEditWindow;}
+				//if (ImGui::MenuItem("Camera")) {g_ShowCameraEditWindow = !g_ShowCameraEditWindow;}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Assets"))
@@ -211,8 +163,8 @@ namespace Dawn
 		if (g_ShowFpsCounter)
 			ShowFpsCounter();
 
-		if (g_ShowCameraEditWindow)
-			ShowCameraEditWindow();
+		if (g_ShowPropertyWindow)
+			ShowPropertyWindow();
 
 		if (g_showAssetBrowser)
 			ShowAssetBrowserWindow();

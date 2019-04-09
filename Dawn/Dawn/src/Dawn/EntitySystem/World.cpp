@@ -28,18 +28,21 @@ namespace Dawn
 		if (!e.IsValid)
 			return nullptr;
 
-		Transform t = MAKE_TRANSFORM(InPosition);
-		AddComponent(e, t);
+		Transform* t = this->MakeComponent<Transform>();
+		t->Position = InPosition;
+		t->Rotation = quat(1, 0, 0, 0);
+		t->Scale = vec3(1, 1, 1);
+		AddComponent<Transform>(e, t);
 
-		Camera c = {};
-		c.AspectRatio = InAspectRatio;
-		c.NearZ = InNearZ;
-		c.FarZ = InFarZ;
-		c.FieldOfView = InFoV;
-		c.ClearColor = InClearColor;
-		c.WorldUp = vec3(0, 1, 0);
+		Camera* c = this->MakeComponent<Camera>();
+		c->AspectRatio = InAspectRatio;
+		c->NearZ = InNearZ;
+		c->FarZ = InFarZ;
+		c->FieldOfView = InFoV;
+		c->ClearColor = InClearColor;
+		c->WorldUp = vec3(0, 1, 0);
 
-		auto componentId = AddComponent(e, c);
+		auto componentId = AddComponent<Camera>(e, c);
 		if (!componentId.IsValid)
 			return nullptr;
 
@@ -57,5 +60,27 @@ namespace Dawn
 			return nullptr;
 
 		return this->GetComponentByEntity<Camera>(e);
+	}
+
+	//
+	// Returns all the component type names for a specific 
+	// entity! This is mainly used for editor handling.
+	//
+	std::vector<std::string> World::GetComponentTypesByEntity(EntityId& InEntity)
+	{
+		std::vector<std::string> components;
+
+		for (int i = 0; i < ComponentTables.size(); ++i)
+		{
+			// once we hit the first empty table pointer
+			// we just break since there won't be anymore tables ahead.
+			if (ComponentTables[i] == nullptr)
+				break;
+
+			if (ComponentTables[i]->ComponentForEntityExists(InEntity))
+				components.emplace_back(ComponentTables[i]->GetTypeName());
+		}
+
+		return components;
 	}
 }

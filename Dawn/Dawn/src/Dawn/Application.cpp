@@ -130,8 +130,8 @@ namespace Dawn
 
 		// Boot up World!
 		World.AddRef();
-		World.AddTable(std::make_unique<ComponentTable<Transform>>());
-		World.AddTable(std::make_unique<ComponentTable<Camera>>());
+		World.AddTable("Transform", std::make_unique<ComponentTable<Transform>>());
+		World.AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
 		
 		g_Camera = CreateCamera("Cam0",
 									vec3(0, 3, 10), 

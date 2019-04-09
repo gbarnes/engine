@@ -49,6 +49,11 @@ namespace Dawn
 		g_camTransform = g_camera->GetTransform();
 		CameraUtils::CalculateView(g_camera, g_camTransform);
 		Debug::AllocateResources();
+
+		auto components = g_World->GetComponentTypesByEntity(g_camera->Id.Entity);
+		for (auto component : components)
+			DWN_CORE_INFO("Component {0}", component);
+
 	}
 
 	vec3 tempTarget = vec3(0, 0, -1);

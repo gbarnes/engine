@@ -16,6 +16,26 @@ namespace Dawn
 		BaseComponentTable &operator=(const BaseComponentTable &) = default;
 		BaseComponentTable(BaseComponentTable &&) = default;
 		BaseComponentTable &operator=(BaseComponentTable &&) = default;
+
+		void SetTypeName(std::string InName) {
+			TypeName = InName;
+		}
+
+		std::string GetTypeName() {
+			return TypeName;
+		}
+
+		virtual bool ComponentForEntityExists(const EntityId& InId) {
+			return false;
+		}
+
+		virtual void ReleaseComponents()
+		{
+
+		}
+
+	private:
+		std::string TypeName;
 	};
 
 	template<typename T>
@@ -26,7 +46,7 @@ namespace Dawn
 
 	public:
 		
-		ComponentId Add(EntityId& InEntity, T& InComponent)
+		ComponentId Add(EntityId& InEntity, T* InComponent)
 		{
 			if (CurrentId == Components.max_size() - 1)
 				return INVALID_HANDLE;
@@ -37,10 +57,10 @@ namespace Dawn
 			id.Generation += 1;
 			id.Entity = InEntity;
 
-			Component<T>* baseComponent = static_cast<Component<T>*>(&InComponent);
+			Component<T>* baseComponent = static_cast<Component<T>*>(InComponent);
 			baseComponent->Id = id;
 
-			Components[CurrentId] = std::move(InComponent);
+			Components[CurrentId] = InComponent;
 			EntityToComponent[InEntity.Index] = CurrentId;
 			
 			u32 TempId = CurrentId;
@@ -59,6 +79,13 @@ namespace Dawn
 				return nullptr;
 
 			ComponentRawId rawid = it->second;
+
+			if (Components[InEntity.Index] != nullptr) 
+			{
+				delete Components[InEntity.Index];
+				Components[InEntity.Index] = nullptr;
+			}
+
 			EntityToComponent.erase(InEntity.Index);
 
 			ComponentId& id = ComponentIds[rawid];
@@ -78,7 +105,7 @@ namespace Dawn
 			if (!id.IsValid)
 				return nullptr;
 
-			return &Components[id.Index];
+			return Components[id.Index];
 		}
 
 		T* GetById(const ComponentId& InId)
@@ -93,14 +120,43 @@ namespace Dawn
 				return nullptr;
 			}
 
-			return &Components[InId.Index];
+			return Components[InId.Index];
 		}
+
+		bool ComponentForEntityExists(const EntityId& InId) 
+		{
+			auto it = EntityToComponent.find(InId.Index);
+			return (it != EntityToComponent.end());
+		}
+
+		std::vector<T*> GetComponents()
+		{
+			// this might be very slow...
+			std::vector<T*> components;
+
+			for (auto component : Components) {
+				if (component == nullptr)
+					continue;
+				components.emplace_back(component);
+			}
+
+			return components;
+		}
+
+		void ReleaseComponents()
+		{
+			for (auto component : Components) {
+				delete component;
+				component = nullptr;
+			}
+		}
+
 	protected:
 		u32 TotalCount = 0;
 		u32 CurrentId = 0;
 		// mapping one entityid to one component id means that we only can have one component of this type per entity!
 		std::map<EntityRawId, ComponentRawId> EntityToComponent; 
 		std::array<ComponentId, MAX_NUM_OF_COMPONENTS> ComponentIds; 
-		std::array<T, MAX_NUM_OF_COMPONENTS> Components;
+		std::array<T*, MAX_NUM_OF_COMPONENTS> Components;
 	};
 }

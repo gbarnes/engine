@@ -25,16 +25,23 @@ namespace Dawn
 		}
 
 		template <typename T>
-		void AddTable(std::unique_ptr<ComponentTable<T>>&& InManager)
+		void AddTable(std::string&& InTypeName, std::unique_ptr<ComponentTable<T>>&& InTable)
 		{
 			int index = Component<T>::GetTableIndex();
+			
+			InTable.get()->SetTypeName(InTypeName);
 
 			if(!ComponentTables[index])
-				ComponentTables[index] = std::move(InManager);
+				ComponentTables[index] = std::move(InTable);
 		}
 
 		template<typename T>
-		ComponentId AddComponent(EntityId& InEntity, T& InComponent)
+		T* MakeComponent() {
+			return new T;
+		}
+
+		template<typename T>
+		ComponentId AddComponent(EntityId& InEntity, T* InComponent)
 		{
 			ComponentTable<T>* table = GetTable<T>();
 			return table->Add(InEntity, InComponent);
@@ -54,10 +61,24 @@ namespace Dawn
 			return table->GetById(InComponent);
 		}
 
+		template<typename T>
+		std::vector<T*> GetComponentsByType()
+		{
+			ComponentTable<T>* table = GetTable<T>();
+			return table->GetComponents();
+		}
+
+		std::vector<std::string> GetComponentTypesByEntity(EntityId& InEntity);
+
 		Camera* CreateCamera(std::string& InName, vec3 InPosition, float InAspectRatio,
 			float InNearZ, float InFarZ, float InFoV, vec4 InClearColor);
 
 		Camera* GetCamera(u32 InId);
+
+		void Shutdown()
+		{
+		
+		}
 
 	private:
 		std::vector<EntityId> CameraEntities;
