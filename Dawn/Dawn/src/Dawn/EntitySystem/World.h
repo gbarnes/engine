@@ -24,6 +24,19 @@ namespace Dawn
 			return RefPtr<World>(Locator::Get<World>("World"));
 		}
 
+	public:
+		std::vector<std::string> GetComponentTypesByEntity(EntityId& InEntity);
+		
+		Camera* CreateCamera(std::string& InName, vec3 InPosition, float InAspectRatio,
+			float InNearZ, float InFarZ, float InFoV, vec4 InClearColor);
+		
+		Camera* GetCamera(u32 InId);
+
+		inline EntityId CreateEntity(const std::string &InName) const;
+
+		void Shutdown();
+
+	public:
 		template <typename T>
 		void AddTable(std::string&& InTypeName, std::unique_ptr<ComponentTable<T>>&& InTable)
 		{
@@ -39,6 +52,7 @@ namespace Dawn
 		T* MakeComponent() {
 			return new T;
 		}
+
 
 		template<typename T>
 		ComponentId AddComponent(EntityId& InEntity, T* InComponent)
@@ -68,17 +82,6 @@ namespace Dawn
 			return table->GetComponents();
 		}
 
-		std::vector<std::string> GetComponentTypesByEntity(EntityId& InEntity);
-
-		Camera* CreateCamera(std::string& InName, vec3 InPosition, float InAspectRatio,
-			float InNearZ, float InFarZ, float InFoV, vec4 InClearColor);
-
-		Camera* GetCamera(u32 InId);
-
-		void Shutdown()
-		{
-		
-		}
 
 	private:
 		std::vector<EntityId> CameraEntities;
@@ -97,4 +100,8 @@ namespace Dawn
 	};
 
 
+	inline RefPtr<World> GetWorld()
+	{
+		return World::Get();
+	}
 }

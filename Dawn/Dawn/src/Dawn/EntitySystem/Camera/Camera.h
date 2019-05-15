@@ -54,7 +54,7 @@ namespace Dawn
 	//
 	static Camera* GetCamera(u32 i)
 	{
-		auto world = World::Get();
+		auto world = GetWorld();
 		return world->GetCamera(i);
 	};
 
@@ -64,7 +64,7 @@ namespace Dawn
 	static Camera* CreateCamera(std::string&& InName, vec3 InPosition, float InAspectRatio,
 		float InNearZ, float InFarZ, float InFoV, vec4 InClearColor)
 	{
-		auto world = World::Get();
+		auto world = GetWorld();
 		return world->CreateCamera(InName, InPosition, InAspectRatio, InNearZ, InFarZ, InFoV, InClearColor);
 	};
 

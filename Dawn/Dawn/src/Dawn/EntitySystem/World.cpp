@@ -17,6 +17,11 @@ namespace Dawn
 		Locator::Remove(WorldLocatorId);
 	}
 
+	void World::Shutdown()
+	{
+
+	}
+
 	//
 	// This function creates a camera entity that is then moved into 
 	// a list to save the entity id.
@@ -24,7 +29,7 @@ namespace Dawn
 	Camera* World::CreateCamera(std::string& InName, vec3 InPosition, float InAspectRatio,
 		float InNearZ, float InFarZ, float InFoV, vec4 InClearColor)
 	{
-		EntityId e = EntityTable::Create(InName);
+		EntityId e = CreateEntity(InName);
 		if (!e.IsValid)
 			return nullptr;
 
@@ -60,6 +65,15 @@ namespace Dawn
 			return nullptr;
 
 		return this->GetComponentByEntity<Camera>(e);
+	}
+
+	//
+	// Creates a new Entity with the given name and returns it's 
+	// entity handle.
+	//
+	inline EntityId World::CreateEntity(const std::string &InName) const
+	{
+		return EntityTable::Create(InName);
 	}
 
 	//

@@ -16,7 +16,7 @@ namespace Dawn
 		template <typename T>
 		static T* Get(std::string&& InId)
 		{
-			static_assert(std::is_base_of<EObject, T>::value, "T must derive from CEObject");
+			static_assert(std::is_base_of<EObject, T>::value, "T must derive from EObject");
 			
 			EObject* object = Instances[InId];
 			if (object == nullptr)

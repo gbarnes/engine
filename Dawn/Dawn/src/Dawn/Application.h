@@ -40,7 +40,7 @@ namespace Dawn
 
 	protected:
 		std::unique_ptr<GfxGDI> GDI;
-		World World;
+		std::unique_ptr<World> World;
 		std::unique_ptr<Window> Window;
 		ResourceSystem ResourceSystem;
 		AppSettings Settings;

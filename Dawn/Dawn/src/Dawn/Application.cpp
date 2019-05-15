@@ -129,9 +129,9 @@ namespace Dawn
 		RenderResourceHelper::LoadCommonShaders();
 
 		// Boot up World!
-		World.AddRef();
-		World.AddTable("Transform", std::make_unique<ComponentTable<Transform>>());
-		World.AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
+		World = std::make_unique<Dawn::World>();
+		World->AddTable("Transform", std::make_unique<ComponentTable<Transform>>());
+		World->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
 		
 		g_Camera = CreateCamera("Cam0",
 									vec3(0, 3, 10), 
