@@ -1,6 +1,7 @@
 #pragma once
 #include <inc_common.h>
 #include <inc_core.h>
+#include "../SceneGraph.h"
 #include "../Component.h"
 
 namespace Dawn
@@ -20,6 +21,11 @@ namespace Dawn
 		vec3 Position = vec3(0);
 		vec3 Scale = vec3(1);
 		quat Rotation = quat(0, 0, 0, 1);
+
+	private:
+		SceneNodeId SceneId;
+
+		friend class SceneGraph;
 	};
 
 #define MAKE_TRANSFORM_PSR(pos, scale, rot) Transform(pos, scale,  rot)
