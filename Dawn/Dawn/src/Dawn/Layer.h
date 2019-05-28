@@ -12,8 +12,7 @@ namespace Dawn
 		~Layer();
 
 		virtual void Setup() = 0;
-		virtual void Update() = 0;
-		virtual void Render() = 0;
+		virtual void Process() = 0;
 		virtual void Free() = 0;
 	};
 }

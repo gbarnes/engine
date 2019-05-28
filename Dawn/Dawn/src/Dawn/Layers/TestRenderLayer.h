@@ -13,6 +13,7 @@ namespace Dawn
 		void Setup();
 		void Update();
 		void Render();
+		void Process();
 		void Free();
 
 	private:

@@ -1,6 +1,6 @@
 #pragma once
-#include <inc_common.h>
-#include <inc_core.h>
+#include "inc_common.h"
+#include "inc_core.h"
 #include "../SceneGraph.h"
 #include "../Component.h"
 

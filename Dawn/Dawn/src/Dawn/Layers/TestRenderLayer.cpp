@@ -192,6 +192,12 @@ namespace Dawn
 
 	}
 
+	void TestRenderLayer::Process()
+	{
+		Update();
+		Render();
+	}
+
 	void TestRenderLayer::Free()
 	{
 		glDeleteVertexArrays(1, &usedMesh->GDI_VAOId);

@@ -6,6 +6,7 @@
 #include "inc_common.h"
 #include "Layers/ImGuiLayer.h"
 #include "Layers/TestRenderLayer.h"
+#include "Layers/WorldSimulateLayer.h"
 #include "ResourceSystem/ResourceSystem.h"
 #include "ResourceSystem/ResourceLoaders.h"
 #include "debug_draw.h"
@@ -17,13 +18,19 @@
 #include "EntitySystem/ComponentTable.h"
 #include "EntitySystem/Transform/Transform.h"
 #include "EntitySystem/Camera/Camera.h"
+#include "EntitySystem/PhysicsWorld.h"
+#include "EntitySystem/RigidBody/RigidbodySystem.h"
+
 #define USE_OPENGL_GFX
 #include "Core/GDI/inc_gfx.h"
+
 
 namespace Dawn
 {
 	SEventHandle g_MouseMovedEvtHandle, g_MousePressedHandle, g_MouseReleasedHandle;
 	uint64_t Application::FrameCount = 0;
+
+
 
 	Application::Application(AppSettings& InSettings)
 	{
@@ -97,6 +104,14 @@ namespace Dawn
 			return;
 		}
 
+		Physics = std::make_unique<PhysicsWorld>();
+		if(!Physics->Initialize())
+		{
+			DWN_CORE_ERROR("Couldn't initialize physx: {0} !\n", PX_PHYSICS_VERSION);
+			system("pause");
+			return;
+		}
+
 		{
 			Load();
 			SetupLayers();
@@ -115,6 +130,7 @@ namespace Dawn
 		}
 
 		ClearLayers();
+		Physics->Shutdown();
 		GDI->Shutdown();
 		JobSystem::Shutdown();
 		ResourceSystem.Shutdown();
@@ -132,6 +148,7 @@ namespace Dawn
 		World = std::make_unique<Dawn::World>();
 		World->AddTable("Transform", std::make_unique<ComponentTable<Transform>>());
 		World->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
+		World->AddSystem(std::make_unique<RigidbodySystem>());
 		
 		g_Camera = CreateCamera("Cam0",
 									vec3(0, 3, 10), 
@@ -169,10 +186,10 @@ namespace Dawn
 		glClearColor(g_Camera->ClearColor[0], g_Camera->ClearColor[1], g_Camera->ClearColor[2], g_Camera->ClearColor[3]);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
+
 		for (Layer* layer : Layers)
 		{
-			layer->Update();
-			layer->Render();
+			layer->Process();
 		}
 
 		GDI->Present();
@@ -185,6 +202,7 @@ namespace Dawn
 
 		this->PushLayer(new ImGuiLayer(Window->GetHwnd()));
 		this->PushLayer(new TestRenderLayer());
+		this->PushLayer(new WorldSimulateLayer());
 
 		for (Layer* layer : Layers)
 			layer->Setup();

@@ -15,6 +15,7 @@ namespace Dawn
 	class GfxGDI;
 	class Event;
 	class ResourceSystem;
+	class PhysicsWorld;
 
 	class DAWN_API Application : public EObject
 	{
@@ -42,6 +43,9 @@ namespace Dawn
 		std::unique_ptr<GfxGDI> GDI;
 		std::unique_ptr<World> World;
 		std::unique_ptr<Window> Window;
+		std::unique_ptr<PhysicsWorld> Physics;
+
+		physx::PxFoundation* Physx;
 		ResourceSystem ResourceSystem;
 		AppSettings Settings;
 		Timer Clock;

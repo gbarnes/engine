@@ -31,6 +31,12 @@ namespace Dawn
 		ImGuiWrapper::Render();
 	}
 
+	void ImGuiLayer::Process()
+	{
+		Update();
+		Render();
+	}
+
 	void ImGuiLayer::Free()
 	{
 		ImGuiWrapper::Shutdown();

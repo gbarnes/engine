@@ -4,11 +4,14 @@
 #include "Component.h"
 #include "ComponentTable.h"
 #include "Entity.h"
+#include "System.h"
+
 
 namespace Dawn
 {
 #define WorldLocatorId std::string("World")
 #define MAX_NUM_OF_COMPONENT_TYPES 48
+#define MAX_NUM_OF_SYSTEM_TYPES 48
 
 	class BaseComponentTable;
 	struct Camera;
@@ -81,12 +84,48 @@ namespace Dawn
 			ComponentTable<T>* table = GetTable<T>();
 			return table->GetComponents();
 		}
+		
+		template<typename T, typename V>
+		std::map<T*, V*> GetComponentSets()
+		{
+			std::map<T*, V*> map;
 
+			auto componentsPrimaries = GetComponentsByType<T>();
+			for (auto left : componentsPrimaries)
+			{
+				V* right = GetComponentByEntity<V>(left->Id.Entity);
+				if(left)
+					map.insert(std::make_pair(left, right));
+			}
+
+			return map;
+		}
+
+		template<typename T>
+		T* GetSystemByType(Type* InType)
+		{
+			auto it = SystemTable.find(InType->GetName());
+			if (it == SystemTable.end())
+				return nullptr;
+
+			return static_cast<T*>(it->second.get());
+		}
+
+		void AddSystem(std::unique_ptr<ISystem> InSystem)
+		{
+			auto type = InSystem->AccessType();
+			auto it = SystemTable.find(type->GetName());
+			if (it != SystemTable.end())
+				return;
+
+			SystemTable.insert(std::make_pair(type->GetName(), std::move(InSystem)));
+		}
 
 	private:
 		std::vector<EntityId> CameraEntities;
 		std::array<std::unique_ptr<BaseComponentTable>, MAX_NUM_OF_COMPONENT_TYPES> ComponentTables;
-		
+		std::map<std::string, std::unique_ptr<ISystem>> SystemTable;
+
 		template<typename T>
 		ComponentTable<T>* GetTable()
 		{

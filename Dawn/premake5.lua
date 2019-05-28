@@ -9,6 +9,7 @@ workspace "Dawn"
 	}
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+physicsdir = "Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/"
 
 include "Dawn/vendor/imgui"
 include "Dawn/vendor/DirectXTex"
@@ -43,8 +44,10 @@ project "Dawn"
 		"Dawn/vendor/assimp/include/",
 		"Dawn/vendor/glad/glad/",
 		"Dawn/vendor/pugixml/src/",
-		"%{prj.name}/src/Dawn/"
-
+		"%{prj.name}/src/Dawn/",
+		"Dawn/vendor/physx/physx/include/",
+		"Dawn/vendor/physx/physx/include/**",
+		"Dawn/vendor/physx/pxshared/include/"
 	}
 	
 	links 
@@ -54,10 +57,23 @@ project "Dawn"
 		"Brofiler",
 		"glad",
 		"pugixml",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysX_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCommon_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXFoundation_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCooking_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXExtensions_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXPvdSDK_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXTask_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXVehicle_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCharacterKinematic_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevelDynamics_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevelAABB_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/FastXml_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevel_static_64.lib",
 		"Dawn/vendor/assimp/lib/x64/assimp-vc140-mt.lib"
 	}
 	
-	libdirs { "Dawn/vendor/assimp/lib/x64/*" }
+	libdirs { "Dawn/vendor/assimp/lib/x64/*", "Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/*"  }
 
 	filter "system:windows"
 		cppdialect "C++17"
@@ -69,11 +85,17 @@ project "Dawn"
 			"DWN_PLATFORM_WINDOWS",
 			"DAWN_BUILD_DLL"
 		}
+		
 
 		postbuildcommands 
 		{
 			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox"),
-			("{COPY} vendor/assimp/bin/x64 ../bin/" .. outputdir .. "/Sandbox")
+			("{COPY} vendor/assimp/bin/x64 ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysX_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCommon_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXFoundation_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCooking_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXGPU_64.dll ../bin/" .. outputdir .. "/Sandbox")
 		}
 
 	filter "configurations:Debug" 
@@ -142,11 +164,27 @@ project "Sandbox"
 		"Dawn/vendor/brofiler/src/",
 		"Dawn/vendor/assimp/include/",
 		"Dawn/vendor/glm/",
-		"Dawn/vendor/pugixml/src/"
+		"Dawn/vendor/pugixml/src/",
+		"Dawn/vendor/physx/physx/include/",
+		"Dawn/vendor/physx/physx/include/**",
+		"Dawn/vendor/physx/pxshared/include/"
 	}
 	
 	links 
 	{
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysX_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCommon_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXFoundation_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCooking_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXExtensions_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXPvdSDK_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXTask_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXVehicle_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCharacterKinematic_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevelDynamics_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevelAABB_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/FastXml_static_64.lib",
+		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevel_static_64.lib",
 		"Dawn"
 	}
 

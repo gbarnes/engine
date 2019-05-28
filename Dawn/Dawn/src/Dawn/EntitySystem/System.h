@@ -3,27 +3,32 @@
 #include "inc_common.h"
 #include "inc_core.h"
 #include "Transform/Transform.h"
-#include "World.h"
 
 namespace Dawn
 {
-	template<typename T>
-	class System
+	class World;
+
+	class ISystem
 	{
 	public:
+		~ISystem() = default;
+
+		virtual Type* AccessType() const = 0;
 		virtual void Update(World* InWorld) = 0;
 	};
 
-	class Transform;
-	class MovementSystem : System<MovementSystem>
+	/*class MovementSystem : public ISystem
 	{
-		void Update(World* InWorld) override
+		REGISTER_TYPE(MovementSystem)
+	public:
+
+		Type* AccessType() const override
 		{
-			auto transforms = InWorld->GetComponentsByType<Transform>();
-			for (auto transform : transforms)
-			{
-				//auto modelmatrix = Mat4() * transform->Position * transform->Rotation * transform->Scale;
-			}
+			return MovementSystem::GetType();
 		}
-	};
+
+		// Geerbt über ISystem
+		virtual void Update(Dawn::World * InWorld) override;
+	};*/
+
 }
