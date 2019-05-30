@@ -1,10 +1,10 @@
-#include "GfxOpenglGDI.h"
+#include "GLGraphicsDevice.h"
 #include "inc_core.h"
 //#ifdef USE_OPENGL_GFX
 
 namespace Dawn
 {
-	bool GfxOpenglGDI::Init(const AppSettings& InSettings)
+	bool GLGraphicsDevice::Init(const AppSettings& InSettings)
 	{
 		PIXELFORMATDESCRIPTOR pfd;
 		int format;
@@ -65,12 +65,12 @@ namespace Dawn
 		return true;
 	}
 
-	void GfxOpenglGDI::Present()
+	void GLGraphicsDevice::Present()
 	{
 		SwapBuffers(hDC);
 	}
 
-	void GfxOpenglGDI::Shutdown()
+	void GLGraphicsDevice::Shutdown()
 	{
 		wglMakeCurrent(NULL, NULL);
 		wglDeleteContext(hRC);

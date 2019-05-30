@@ -6,7 +6,7 @@
 
 namespace Dawn
 {
-	class DAWN_API GfxOpenglGDI : public GfxGDI
+	class DAWN_API GLGraphicsDevice : public GfxGDI
 	{
 	public:
 		bool Init(const AppSettings& InSettings);

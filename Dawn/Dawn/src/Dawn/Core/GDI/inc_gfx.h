@@ -7,7 +7,7 @@
 #include "GfxGDI.h"
 
 //#ifdef USE_OPENGL_GFX
-#include "OpenGL/GfxOpenglGDI.h"
+#include "OpenGL/GLGraphicsDevice.h"
 //#endif
 
 namespace Dawn
@@ -15,7 +15,7 @@ namespace Dawn
 	static std::unique_ptr<GfxGDI> CreateGDI()
 	{
 //#ifdef USE_OPENGL_GFX
-		return std::make_unique<GfxOpenglGDI>();
+		return std::make_unique<GLGraphicsDevice>();
 //#endif
 	}
 }

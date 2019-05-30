@@ -40,7 +40,8 @@ namespace Dawn
 	struct DAWN_API Material
 	{
 		FileHandle HandleToFile;
-		u32 Id;
+		MaterialHandle Id;
+		ShaderHandle ShaderId;
 	};
 
 	struct DAWN_API Mesh
