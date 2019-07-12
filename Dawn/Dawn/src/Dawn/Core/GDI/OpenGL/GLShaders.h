@@ -4,15 +4,15 @@
 
 namespace Dawn
 {
-	class GLVertexShader : public GfxFragShader
+	class OpenGLVertexShader : public GfxVertexShader
 	{
 	private:
-		u32 ResourceId;
+		u32 InternalId;
 	};
 
-	class GLFragShader : public GfxFragShader
+	class OpenGLFragShader : public GfxFragShader
 	{
 	private:
-		u32 ResourceId;
+		u32 InternalId;
 	};
 }

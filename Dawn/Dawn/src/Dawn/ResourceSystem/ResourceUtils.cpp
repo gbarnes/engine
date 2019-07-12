@@ -1,6 +1,7 @@
 #include "ResourceUtils.h"
 #include "ResourceSystem.h"
 #include "Resources.h"
+#include "Core/GDI/GfxResource.h"
 #include <glad.h>
 
 
@@ -8,6 +9,14 @@ namespace Dawn
 {
 	void CopyMeshesToGPU(Mesh** InMesh, u32 InNum )
 	{
+		GfxBufferLayout layout = {
+			{GfxShaderDataType::Float4, "aPos"},
+			{GfxShaderDataType::Float2, "aUV0"},
+			{GfxShaderDataType::Float2, "aUV1"}
+		};
+
+		
+
 		for (u32 i = 0; i < InNum; ++i)
 		{
 			Mesh* mesh = InMesh[i];

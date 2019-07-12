@@ -78,5 +78,38 @@ namespace Dawn
 
 		DWN_CORE_INFO("OpenGL GDI shutdown!");
 	}
+
+
+	GfxResId GLGraphicsDevice::CreateVertexBuffer(std::shared_ptr<GfxVertexBuffer>* OutBuffer)
+	{
+		GfxResId Id;
+		Id.IsValid = true;
+		Id.Index = VertexBuffers.size();
+		
+		VertexBuffers.emplace_back(std::make_shared<GLVertexBuffer>());
+		OutBuffer = &(std::shared_ptr<GfxVertexBuffer>)VertexBuffers[Id.Index];
+
+		return Id;
+	}
+
+
+	GfxResId GLGraphicsDevice::CreateIndexBuffer(std::shared_ptr<GfxIndexBuffer>* OutBuffer)
+	{
+		GfxResId Id;
+		Id.IsValid = true;
+		Id.Index = IndexBuffers.size();
+
+		IndexBuffers.emplace_back(std::make_shared<GLIndexBuffer>());
+		OutBuffer = &(std::shared_ptr<GfxIndexBuffer>)IndexBuffers[Id.Index];
+
+		return Id;
+	}
+
+	GfxResId GLGraphicsDevice::CreateVertexArray(GfxVertexArray* OutBuffer)
+	{
+		GfxResId Id;
+		return Id;
+	}
+
 }
 //#endif

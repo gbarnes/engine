@@ -215,7 +215,7 @@ namespace Dawn
 
 	void Application::PopLayer(Layer* InLayer)
 	{
-		auto it = std::find(this->Layers.begin(), this->Layers.end(), InLayer);
+		auto it = std::find(begin(), end(), InLayer);
 		if (it != Layers.end())
 		{
 			Layers.erase(it);
