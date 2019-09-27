@@ -8,6 +8,7 @@
 #include "EntitySystem/Camera/Camera.h"
 #include "EntitySystem/Transform/Transform.h"
 #include "Rendering/RenderDebugInterface.h"
+#include "Core/GDI/GfxGDI.h"
 
 namespace Dawn
 {
@@ -30,8 +31,6 @@ namespace Dawn
 			if (handle.IsValid)
 			{
 				usedMesh = ResourceTable::GetMesh(handle);
-				auto meshPtr = usedMesh.get();
-				CopyMeshesToGPU({ &meshPtr }, 1);
 			}
 		}
 
@@ -40,7 +39,13 @@ namespace Dawn
 		{
 			diffuseTexture = ResourceTable::GetImage(imageId);
 			auto imagePtr = diffuseTexture.get();
-			CopyImagesToGPU({ &imagePtr }, 1, { GL_REPEAT, GL_REPEAT }, { GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR });
+			imagePtr->TextureId = GfxGDI::Get()->CreateTexture(imagePtr->Pixels, 
+				imagePtr->Width, 
+				imagePtr->Height, 
+				imagePtr->ChannelsPerPixel, 
+				{ GL_REPEAT, GL_REPEAT }, { GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR }, true, nullptr);
+
+			//CopyImagesToGPU({ &imagePtr }, 1, { GL_REPEAT, GL_REPEAT }, { GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR });
 		}
 
 		g_World = World::Get();
@@ -50,9 +55,9 @@ namespace Dawn
 		CameraUtils::CalculateView(g_camera, g_camTransform);
 		Debug::AllocateResources();
 
-		auto components = g_World->GetComponentTypesByEntity(g_camera->Id.Entity);
-		for (auto component : components)
-			DWN_CORE_INFO("Component {0}", component);
+		//auto components = g_World->GetComponentTypesByEntity(g_camera->Id.Entity);
+		//for (auto component : components)
+		//	DWN_CORE_INFO("Component {0}", component);
 
 	}
 
@@ -141,7 +146,7 @@ namespace Dawn
 		// render transform cross
 		{
 			// Z Axis
-			Ray r = { vec3(0,0,0), vec3(0,0,1) };
+		/*	Ray r = { vec3(0,0,0), vec3(0,0,1) };
 			vec4 color = { 0, 0, 1, 1 };
 			Debug::DrawRay(g_camera, r, 1.0f, color);
 			// Y Axis
@@ -152,7 +157,7 @@ namespace Dawn
 			// Y Axis
 			r = { vec3(0,0,0), vec3(1,0,0) };
 			color = { 1, 0, 0, 1 };
-			Debug::DrawRay(g_camera, r, 1.0f, color);
+			Debug::DrawRay(g_camera, r, 1.0f, color);*/
 		}
 	}
 
@@ -160,36 +165,41 @@ namespace Dawn
 	{
 		BROFILER_CATEGORY("RenderLayer_Render", Brofiler::Color::AliceBlue);
 
-		//if (!RenderResourceHelper::CommonShaders.ID_Debug.IsValid)
-		//	return;
+		if (usedMesh == nullptr)
+			return;
+
+		if (!CommonShaderHandles::Debug.IsValid)
+			return;
 		
 		auto shader = ResourceTable::GetShader(CommonShaderHandles::Debug);
-		glUseProgram(shader->GDI_ShaderId);
+		assert(shader != nullptr);
 
-		glActiveTexture(GL_TEXTURE0);
+		auto shaderRes = shader->GetResource();
+		if (shaderRes)
+		{
+			shaderRes->Bind();
 
-		glUniform1i(glGetUniformLocation(shader->GDI_ShaderId, "ourTexture"), 0);
-		glBindTexture(GL_TEXTURE_2D, diffuseTexture->GDI_TextureId);
+			glActiveTexture(GL_TEXTURE0);
 
-		// set pojection
-		glUniformMatrix4fv(glGetUniformLocation(shader->GDI_ShaderId, "model"), 1, GL_FALSE, &Model[0][0]);
+			shaderRes->SetInt("ourTexture", 0);
 
-		// set pojection
-		glUniformMatrix4fv(glGetUniformLocation(shader->GDI_ShaderId, "view"), 1, GL_FALSE, &g_camera->GetView()[0][0]);
+			diffuseTexture->GetResource()->Bind();
+			//glBindTexture(GL_TEXTURE_2D, diffuseTexture->GDI_TextureId);
 
-		// set pojection
-		glUniformMatrix4fv(glGetUniformLocation(shader->GDI_ShaderId, "projection"), 1, GL_FALSE, &g_camera->GetProjection()[0][0]);
+			// set pojection
+			shaderRes->SetMat4("model", Model);
+			shaderRes->SetMat4("view", g_camera->GetView());
+			shaderRes->SetMat4("projection", g_camera->GetProjection());
+			
+			GfxGDI::Get()->DrawIndexed(usedMesh->VertexArray);
 
-		glBindVertexArray(usedMesh->GDI_VAOId);
-		glDrawElements(GL_TRIANGLES, usedMesh->NumIndices, GL_UNSIGNED_SHORT, 0);
-		glBindVertexArray(0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glUseProgram(0);
+			diffuseTexture->GetResource()->Unbind();
 
-		vec3 pos(0, 0, 0);
+			shaderRes->Unbind();
+		}
+
 		// refactor this!
-		Debug::Quad(pos, g_camera);
-
+		Debug::Quad(vec3(0,0,0), g_camera);
 	}
 
 	void TestRenderLayer::Process()
@@ -200,7 +210,7 @@ namespace Dawn
 
 	void TestRenderLayer::Free()
 	{
-		glDeleteVertexArrays(1, &usedMesh->GDI_VAOId);
+		//glDeleteVertexArrays(1, &usedMesh->GDI_VAOId);
 
 		/*diffuseTexture->TextureView.Reset();
 		diffuseTexture.reset();

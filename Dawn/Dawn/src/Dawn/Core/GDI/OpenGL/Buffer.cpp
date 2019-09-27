@@ -1,4 +1,5 @@
 #include "Buffer.h"
+#include "../GfxGDI.h"
 #include <glad.h>
 
 namespace Dawn
@@ -22,19 +23,32 @@ namespace Dawn
 		return 0;
 	}
 
+	GLVertexBuffer::GLVertexBuffer(float* Vertices, u32 Size, GfxResId InId)
+		: GfxVertexBuffer(InId)
+	{
+		glCreateBuffers(1, &RendererId);
+		glBindBuffer(GL_ARRAY_BUFFER, RendererId);
+		glBufferData(GL_ARRAY_BUFFER, Size, Vertices, GL_STATIC_DRAW);
+	}
+
 	GLVertexBuffer::~GLVertexBuffer()
 	{
 		glDeleteBuffers(1, &RendererId);
 	}
 
-	void GLIndexBuffer::Bind()
+	void GLVertexBuffer::Bind()
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, RendererId);
 	}
 
-	void GLIndexBuffer::Unbind()
+	void GLVertexBuffer::Unbind()
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+
+	void GLVertexBuffer::SetLayout(GfxBufferLayout& InLayout)
+	{
+		Layout = InLayout;
 	}
 
 	void GLVertexBuffer::Reset(const GfxBufferLayout& InLayout, float* InData, u32 InSize)
@@ -46,7 +60,7 @@ namespace Dawn
 
 		Bind();
 
-		glBufferData(GL_ARRAY_BUFFER, sizeof(InData) * InSize, &InData[0], GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, InSize, InData, GL_STATIC_DRAW);
 
 		Unbind();
 	}
@@ -57,9 +71,13 @@ namespace Dawn
 	}
 
 
-	GLIndexBuffer::GLIndexBuffer(GfxResId InId)
+	GLIndexBuffer::GLIndexBuffer(u16* InData, u32 InSize, GfxResId InId)
 		: GfxIndexBuffer(InId)
 	{
+		this->Size = InSize;
+		glCreateBuffers(1, &RendererId);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, RendererId);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, InSize * sizeof(u16), InData, GL_STATIC_DRAW);
 	}
 
 	GLIndexBuffer::~GLIndexBuffer()
@@ -79,9 +97,11 @@ namespace Dawn
 
 	void GLIndexBuffer::Reset(u16* InData, u32 InSize)
 	{
-		glDeleteBuffers(1, &RendererId);
+		//glDeleteBuffers(1, &RendererId);
 		glGenBuffers(1, &RendererId);
 		
+		this->Size = InSize;
+
 		Bind();
 
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, InSize * sizeof(u16), &InData[0], GL_STATIC_DRAW);
@@ -92,7 +112,8 @@ namespace Dawn
 	GLVertexArray::GLVertexArray(GfxResId InId) 
 		: GfxVertexArray(InId)
 	{
-		glGenVertexArrays(1, &RendererId);
+		glCreateVertexArrays(1, &RendererId);
+		//glObjectLabel(GL_VERTEX_ARRAY, RendererId, -1, "Generated Vertex Array from DAWN Engine!");
 	}
 
 	GLVertexArray::~GLVertexArray()
@@ -111,40 +132,43 @@ namespace Dawn
 		glBindVertexArray(0);
 	}
 
-	void GLVertexArray::AttachVertexBuffer(const std::shared_ptr<GfxVertexBuffer>& InBuffer)
+	void GLVertexArray::AttachVertexBuffer(GfxVertexBuffer* InBuffer)
 	{
 		Bind();
 
 		InBuffer->Bind();
 
-		uint32_t index = 0;
 		const auto& layout = InBuffer->GetLayout();
 		for (const auto& element : layout)
 		{
-			glEnableVertexAttribArray(index);
-			glVertexAttribPointer(index,
+			glEnableVertexAttribArray(VertexBufferIndex);
+			glVertexAttribPointer(VertexBufferIndex,
 				element.GetComponentCount(),
 				ShaderDataTypeToOpenGLBaseType(element.Type),
 				element.Normalized ? GL_TRUE : GL_FALSE,
 				layout.GetStride(),
-				(const void*)element.Offset);
-			index++;
+				(const void*)(intptr_t)element.Offset);
+			VertexBufferIndex++;
 		}
 
-		this->Vertices.emplace_back(InBuffer);
-
-		InBuffer->Unbind();
+		this->Vertices.emplace_back(InBuffer->GetId());
 	}
 
-	void GLVertexArray::SetIndexBuffer(const std::shared_ptr<GfxIndexBuffer>& InBuffer)
+	void GLVertexArray::SetIndexBuffer(GfxIndexBuffer* InBuffer)
 	{
-
 		Bind();
 		InBuffer->Bind();
 
-		this->Indices = InBuffer;
+		this->Indices = InBuffer->GetId();
+	}
 
-		InBuffer->Unbind();
-		Unbind();
+	u32 GLVertexArray::GetIndexBufferSize()
+	{
+		return GfxGDI::Get()->GetIndexBuffer(this->Indices)->GetSize();
+	}
+
+	void GLVertexArray::SetName(std::string Name)
+	{
+		
 	}
 }

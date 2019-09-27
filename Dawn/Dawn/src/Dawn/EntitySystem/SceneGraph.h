@@ -13,7 +13,7 @@ namespace Dawn
 		ComponentId TransformComponent;
 		SceneNodeId Id;
 		SceneNodeId Parent;
-		std::vector<SceneNode> Children;
+		std::vector<SceneNodeId> Children;
 	};
 
 #define MAX_NUM_SCENE_NODES 8096

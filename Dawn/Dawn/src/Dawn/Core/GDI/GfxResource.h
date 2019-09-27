@@ -1,9 +1,9 @@
 #pragma once
 #include "inc_common.h"
+#include "inc_gfx_types.h"
 
 namespace Dawn
 {
-	typedef GenericHandle GfxResId;
 
 	class GfxResource
 	{
@@ -11,6 +11,11 @@ namespace Dawn
 		GfxResource(GfxResId InId)
 			: Id(InId)
 		{
+		}
+
+		GfxResId GetId() const
+		{
+			return Id;
 		}
 
 	protected:
@@ -118,7 +123,7 @@ namespace Dawn
 		uint32_t m_Stride = 0;
 	};
 
-	class GfxVertexBuffer : GfxResource
+	class GfxVertexBuffer : public GfxResource
 	{
 	public:
 		GfxVertexBuffer(GfxResId InId)
@@ -129,10 +134,11 @@ namespace Dawn
 		virtual void Bind() = 0;
 		virtual void Unbind() = 0;
 		virtual void Reset(const GfxBufferLayout& InLayout, float* InData, u32 InSize) = 0;
+		virtual void SetLayout(GfxBufferLayout& Layout) = 0;
 		virtual const GfxBufferLayout& GetLayout() const = 0;
 	};
 
-	class GfxIndexBuffer : GfxResource
+	class GfxIndexBuffer : public GfxResource
 	{
 	public:
 		GfxIndexBuffer(GfxResId InId)
@@ -143,9 +149,17 @@ namespace Dawn
 		virtual void Bind() = 0;
 		virtual void Unbind() = 0;
 		virtual void Reset(u16* InData, u32 InSize) = 0;
+
+		inline u32 GetSize() const
+		{
+			return Size;
+		}
+
+	protected:
+		u32 Size;
 	};
 
-	class GfxVertexArray : GfxResource
+	class GfxVertexArray : public GfxResource
 	{
 	public:
 		GfxVertexArray(GfxResId InId)
@@ -155,8 +169,60 @@ namespace Dawn
 
 		virtual void Bind() = 0;
 		virtual void Unbind() = 0;
-		virtual void AttachVertexBuffer(const std::shared_ptr<GfxVertexBuffer>& InBuffer) = 0;
-		virtual void SetIndexBuffer(const std::shared_ptr<GfxIndexBuffer>& InBuffer) = 0;
+		virtual void AttachVertexBuffer(GfxVertexBuffer* InBuffer) = 0;
+		virtual void SetIndexBuffer(GfxIndexBuffer* InBuffer) = 0;
+
+		virtual void SetName(std::string Name) = 0;
 	};
 
+	class GfxTexture : public GfxResource
+	{
+	public:
+		GfxTexture(GfxResId InId) : GfxResource(InId) {};
+		virtual ~GfxTexture() = default;
+
+		virtual void Bind() = 0;
+		virtual void Unbind() = 0;
+
+		inline const GfxResId GetId() const {
+			return Id;
+		}
+	};
+
+	enum GfxShaderType
+	{
+		ST_Pixel,
+		ST_Vertex,
+		ST_Compute
+	};
+
+	class GfxShader : public GfxResource
+	{
+	public:
+		GfxShader(GfxResId InId) : GfxResource(InId) {};
+		virtual ~GfxShader() = default;
+
+		virtual bool AttachSource(GfxShaderType InType, const char* InShaderCode) = 0;
+		virtual void Bind() = 0;
+		virtual void Unbind() = 0;
+
+		inline const GfxResId GetId() const {
+			return Id;
+		}
+
+	public:
+		virtual void SetInt(const std::string& Name, i32 Value) = 0;
+		virtual void SetFloat(const std::string& Name, float Value) = 0;
+		virtual void SetVec2(const std::string& Name, const vec2& Value) = 0;
+		virtual void SetVec3(const std::string& Name, const vec3& Value) = 0;
+		virtual void SetVec4(const std::string& Name, const vec4& Value) = 0;
+		virtual void SetMat4(const std::string& Name, const mat4& Value) = 0;
+	};
+
+
+	typedef std::shared_ptr<GfxTexture> GfxTexturePtr;
+	typedef std::shared_ptr<GfxShader> GfxShaderPtr;
+	typedef std::shared_ptr<GfxVertexBuffer> GfxVertexBufferPtr;
+	typedef std::shared_ptr<GfxIndexBuffer> GfxIndexBufferPtr;
+	typedef std::shared_ptr<GfxVertexArray> GfxVertexArrayPtr;
 }

@@ -7,51 +7,6 @@
 
 namespace Dawn
 {
-	void CopyMeshesToGPU(Mesh** InMesh, u32 InNum )
-	{
-		GfxBufferLayout layout = {
-			{GfxShaderDataType::Float4, "aPos"},
-			{GfxShaderDataType::Float2, "aUV0"},
-			{GfxShaderDataType::Float2, "aUV1"}
-		};
-
-		
-
-		for (u32 i = 0; i < InNum; ++i)
-		{
-			Mesh* mesh = InMesh[i];
-
-			if (mesh->NumIndices > 0 && mesh->NumVertices > 0)
-			{
-				u128 sizeOfVertex = sizeof(VertexPosUV);
-
-				glGenVertexArrays(1, &mesh->GDI_VAOId);
-				glGenBuffers(1, &mesh->GDI_VBOId);
-				glGenBuffers(1, &mesh->GDI_EBOId);
-
-				glBindVertexArray(mesh->GDI_VAOId);
-				glBindBuffer(GL_ARRAY_BUFFER, mesh->GDI_VBOId);
-				glBufferData(GL_ARRAY_BUFFER, mesh->NumVertices * sizeOfVertex, &mesh->Vertices[0], GL_STATIC_DRAW);
-
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GDI_EBOId);
-				glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->Indices.size() * sizeof(u16),
-					&mesh->Indices[0], GL_STATIC_DRAW);
-
-				// vertex positions
-				glEnableVertexAttribArray(0);
-				glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeOfVertex, (void*)0);
-				// vertex texture coords0
-				glEnableVertexAttribArray(1);
-				glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeOfVertex, (void*)offsetof(VertexPosUV, UV0));
-				// vertex texture coords1
-				glEnableVertexAttribArray(2);
-				glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeOfVertex, (void*)offsetof(VertexPosUV, UV1));
-
-				glBindVertexArray(0);
-			}
-		}
-	}
-
 	void CopyImagesToGPU(Image** InImage, u32 InNum, const GfxWrapDesc& InWrap, const GfxFilterDesc& InFilter, bool InGenerateMipMaps)
 	{
 		for (u32 i = 0; i < InNum; ++i)

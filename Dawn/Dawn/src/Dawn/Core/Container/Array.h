@@ -92,12 +92,11 @@ namespace Dawn
 		}
 
 	public:
-		T& operator[](u32 Index)
+		T operator[](u32 Index)
 		{
 			assert(Index < this->Size);
-			return *(this->Values + Index);
+			return this->Values[Index];
 		}
-
 	protected:
 		// 
 		void Resize() 

@@ -133,8 +133,8 @@ void SafeDelete(T*& a)
 //template <size_t N1, size_t N2>
 struct DAWN_API GenericHandle
 {
-	u32 Index;
-	u32 Generation;
+	u32 Index = 0;
+	u32 Generation = 0;
 	bool IsValid = false;
 };
 
@@ -151,6 +151,7 @@ struct DAWN_API AppSettings
 	u32 ColorBits = 32;
 	u32 DepthBits = 32;
 	u32 AlphaBits = 8;
+	bool ShowGDIDebug = false;
 };
 
 inline void ThrowIfFailed(HRESULT hr)

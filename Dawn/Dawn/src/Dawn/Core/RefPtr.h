@@ -58,6 +58,11 @@ namespace Dawn
 			return Object;
 		}
 
+		bool IsValid()
+		{
+			return Object != nullptr;
+		}
+
 	public:
 		//Some overloaded operators to facilitate dealing with an RCPtr 
 		//as a conventional C pointer.

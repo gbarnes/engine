@@ -17,6 +17,7 @@
 #include "glm.hpp"
 #include "pugixml.hpp"
 
+#include "Application.h"
 #include "Core/GDI/inc_gfx.h"
 #include "Core/Loading/File.h"
 
@@ -55,8 +56,22 @@ namespace Dawn
 			Mesh* mesh = new Mesh();
 			mesh->Id = Id;
 			mesh->FileId = InMetaData->Id;
-			
+
 			const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
+
+			GfxBufferLayout MeshLayout
+			(
+				{ 
+					{ GfxShaderDataType::Float3, "aPos" },
+					{ GfxShaderDataType::Float2, "aUV0" },
+					{ GfxShaderDataType::Float2, "aUV1" }
+				}
+			);
+
+			GfxVertexArray* VertexArray = nullptr;
+			auto VertexArrayId = GfxGDI::Get()->CreateVertexArray(&VertexArray);
+			
+			std::vector<u16> IndexData;
 
 			for (u32 i = 0; i < scene->mNumMeshes; i++) 
 			{
@@ -65,34 +80,53 @@ namespace Dawn
 				submesh.Name = aiMesh->mName.C_Str();
 				submesh.NumOfIndices = aiMesh->mNumFaces * 3;
 
-				for (unsigned int i = 0; i < aiMesh->mNumVertices; i++) 
+				u32 componentCount = 7;
+				float* verts = new float[aiMesh->mNumVertices * componentCount]; 
+				int x = -1;
+				for (unsigned int i = 0; i < aiMesh->mNumVertices; i++)
 				{
 					const aiVector3D* pos = &(aiMesh->mVertices[i]);
 					const aiVector3D* normal = aiMesh->HasNormals() ? &(aiMesh->mNormals[i]) : &Zero3D;
 					const aiVector3D* texCoord0 = aiMesh->HasTextureCoords(0) ? &(aiMesh->mTextureCoords[0][i]) : &Zero3D;
-					const aiVector3D* texCoord1 = aiMesh->HasTextureCoords(1) ? &(aiMesh->mTextureCoords[0][i]) : &Zero3D;
+					const aiVector3D* texCoord1 = aiMesh->HasTextureCoords(1) ? &(aiMesh->mTextureCoords[1][i]) : &Zero3D;
 
-					VertexPosUV vertex = {};
-					vertex.Position = vec3(pos->x, pos->y, pos->z);
-					vertex.UV0 = vec2(texCoord0->x, texCoord0->y);
-					vertex.UV1 = vec2(texCoord1->x, texCoord1->y);
-					mesh->Vertices.push_back(vertex);
+					verts[++x] = pos->x;
+					verts[++x] = pos->y;
+					verts[++x] = pos->z;
+					verts[++x] = texCoord0->x;
+					verts[++x] = texCoord0->y;
+					verts[++x] = texCoord1->x;
+					verts[++x] = texCoord1->y;
 				}
+				
+				 
+				GfxVertexBuffer* Buffer;
+				GfxGDI::Get()->CreateVertexBuffer(verts, aiMesh->mNumVertices * componentCount * sizeof(float), &Buffer);
+				Buffer->SetLayout(MeshLayout);
+				VertexArray->AttachVertexBuffer(Buffer);
+
+				delete[] verts;
 
 				for (unsigned int i = 0; i < aiMesh->mNumFaces; i++) 
 				{
 					const aiFace& Face = aiMesh->mFaces[i];
 					assert(Face.mNumIndices == 3);
-					mesh->Indices.push_back(Face.mIndices[0]);
-					mesh->Indices.push_back(Face.mIndices[1]);
-					mesh->Indices.push_back(Face.mIndices[2]);
+					IndexData.push_back(Face.mIndices[0]);
+					IndexData.push_back(Face.mIndices[1]);
+					IndexData.push_back(Face.mIndices[2]);
 				}
 
-				submesh.StartIndex = (u32)std::max((i32)mesh->Indices.size() - 1, 0);
+				submesh.StartIndex = (u32)std::max((i32)IndexData.size() - 1, 0);
 				mesh->Submeshes.push_back(submesh);
-				mesh->NumVertices += aiMesh->mNumVertices;
-				mesh->NumIndices += aiMesh->mNumFaces * 3;
+				mesh->NumVertices += (u32)aiMesh->mNumVertices;
+				mesh->NumIndices += submesh.NumOfIndices;
 			}
+
+			GfxIndexBuffer* IndexBuffer;
+			GfxGDI::Get()->CreateIndexBuffer(&IndexData[0], mesh->NumIndices, &IndexBuffer);
+			VertexArray->SetIndexBuffer(IndexBuffer);
+
+			mesh->VertexArray = VertexArrayId;
 
 			if (!ResourceTable::TrackResource(ResourceType_StaticMesh, mesh))
 			{
@@ -131,15 +165,16 @@ namespace Dawn
 			return INVALID_HANDLE;
 		}
 
-
 		Shader* shader = new Shader();
 		shader->FileId = InMetaData->Id;
 		shader->Id = {};
 		shader->Id.Index = (u32)ResourceTable::ResourceCount(ResourceType_Shader);
 		shader->Id.IsValid = true;
 		shader->Id.Generation = 0;
-		shader->GDI_ShaderId = glCreateProgram();
-		
+
+		GfxShader* ResourceShader;
+		shader->ResourceId = GfxGDI::Get()->CreateShader(&ResourceShader);
+
 		std::vector<u32> shadersToDelete;
 		for (auto step : doc.child("shader").children())
 		{
@@ -147,35 +182,8 @@ namespace Dawn
 			bool isPixelShader = (typeAttr == "ps");
 			
 			auto shaderBuffer = step.text().as_string();
-			auto shaderId = glCreateShader(isPixelShader ? GL_FRAGMENT_SHADER : GL_VERTEX_SHADER); // refactor this into GDI layer!
-			shadersToDelete.emplace_back(shaderId);
-
-			glShaderSource(shaderId, 1, &shaderBuffer, NULL);
-			glCompileShader(shaderId);
-
-			int  success;
-			char infoLog[512];
-			glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
-			if (!success)
-			{
-				glGetShaderInfoLog(shaderId, 512, NULL, infoLog);
-				DWN_CORE_ERROR("ERROR::SHADER::COMPILATION_FAILED {0} \n", std::string(infoLog));
-
-				for (auto shaderToDelete : shadersToDelete)
-					glDeleteShader(shaderToDelete);
-
-				return INVALID_HANDLE;
-			}
-			else
-			{
-				glAttachShader(shader->GDI_ShaderId, shaderId);
-			}
+			ResourceShader->AttachSource(isPixelShader ? GfxShaderType::ST_Pixel : GfxShaderType::ST_Vertex, shaderBuffer);
 		}
-
-		glLinkProgram(shader->GDI_ShaderId);
-
-		for (auto shaderToDelete : shadersToDelete)
-			glDeleteShader(shaderToDelete);
 
 		if (!ResourceTable::TrackResource(ResourceType_Shader, shader))
 		{
@@ -211,6 +219,7 @@ namespace Dawn
 			image->Id.IsValid = true;
 			image->Id.Generation = 0;
 
+			
 			if (!ResourceTable::TrackResource(ResourceType_Image, image))
 			{
 				stbi_image_free(data);

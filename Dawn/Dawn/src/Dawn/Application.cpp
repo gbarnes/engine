@@ -89,8 +89,8 @@ namespace Dawn
 		}
 		Settings.Hwnd = Window->GetHwnd();
 
-		GDI = CreateGDI();
-		if (!GDI->Init(Settings))
+		GfxGDI::Create();
+		if (!GfxGDI::Get()->Init(Settings))
 		{
 			DWN_CORE_ERROR("Couldn't initialize GDI!\n");
 			system("pause");
@@ -131,7 +131,7 @@ namespace Dawn
 
 		ClearLayers();
 		Physics->Shutdown();
-		GDI->Shutdown();
+		GfxGDI::Get()->Shutdown();
 		JobSystem::Shutdown();
 		ResourceSystem.Shutdown();
 
@@ -192,7 +192,7 @@ namespace Dawn
 			layer->Process();
 		}
 
-		GDI->Present();
+		GfxGDI::Get()->Present();
 		Input::Reset();
 	}
 

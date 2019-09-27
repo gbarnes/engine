@@ -6,6 +6,8 @@
 
 namespace Dawn
 {
+	typedef GenericHandle GfxResId;
+
 	struct DAWN_API VertexPos
 	{
 		vec3 Position;

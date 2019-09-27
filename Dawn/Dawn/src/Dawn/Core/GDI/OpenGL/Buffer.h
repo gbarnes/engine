@@ -7,15 +7,18 @@ namespace Dawn
 	class GLVertexBuffer : public GfxVertexBuffer
 	{
 	public:
-		GLVertexBuffer(GfxResId InId)
-			: GfxVertexBuffer(InId) {};
+
+		GLVertexBuffer()
+			: GfxVertexBuffer(GfxResId()) {};
+
+		GLVertexBuffer(float* Vertices, u32 Size, GfxResId InId);
 		virtual ~GLVertexBuffer();
 
 		virtual void Bind() override;
 		virtual void Unbind() override;
 		virtual void Reset(const GfxBufferLayout& InLayout, float* InData, u32 InSize) override;
 		virtual const GfxBufferLayout& GetLayout() const override;
-
+		virtual void SetLayout(GfxBufferLayout& InLayout) override;
 	protected:
 		GfxBufferLayout Layout;
 		u32 RendererId;
@@ -24,7 +27,10 @@ namespace Dawn
 	class GLIndexBuffer : public GfxIndexBuffer
 	{
 	public:
-		GLIndexBuffer(GfxResId InId);
+		GLIndexBuffer()
+			: GfxIndexBuffer(GfxResId()) {};
+
+		GLIndexBuffer(u16* InData, u32 InSize, GfxResId InId);
 		virtual ~GLIndexBuffer();
 
 		virtual void Bind() override;
@@ -38,17 +44,31 @@ namespace Dawn
 	class GLVertexArray : public GfxVertexArray
 	{
 	public:
-		GLVertexArray(GfxResId InId);
+		GLVertexArray()
+			: GLVertexArray(GfxResId()) {};
+
+		GLVertexArray( GfxResId InId);
+
+		~GLVertexArray();
 
 		virtual void Bind() override;
 		virtual void Unbind() override;
-		void AttachVertexBuffer(const std::shared_ptr<GfxVertexBuffer>& InBuffer) override;
-		void SetIndexBuffer(const std::shared_ptr<GfxIndexBuffer>& InBuffer) override;
+		void AttachVertexBuffer(GfxVertexBuffer* InBuffer) override;
+		void SetIndexBuffer(GfxIndexBuffer* InBuffer) override;
+		void SetName(std::string Name) override;
+
+		u32 GetInternalId() const
+		{
+			return RendererId;
+		}
+
+		u32 GetIndexBufferSize();
+
 
 	private:
+		u32 VertexBufferIndex = 0;
 		u32 RendererId;
-		std::vector<std::shared_ptr<GfxVertexBuffer>> Vertices;
-		std::shared_ptr<GfxIndexBuffer> Indices;
+		std::vector<GfxResId> Vertices;
+		GfxResId Indices;
 	};
-
 }

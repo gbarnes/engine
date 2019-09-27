@@ -1,7 +1,7 @@
 #pragma once
 #include "inc_common.h"
 #include "inc_core.h"
-#include "Core/GDI/inc_gfx_types.h"
+#include "Core/GDI/inc_gfx.h"
 
 namespace Dawn
 {
@@ -25,7 +25,7 @@ namespace Dawn
 
 	struct DAWN_API Submesh
 	{
-		std::string Name;
+		const char* Name;
 		u128 NumOfIndices;
 		u32 StartIndex;
 	};
@@ -34,7 +34,12 @@ namespace Dawn
 	{
 		ShaderHandle Id;
 		FileHandle FileId;
-		u32 GDI_ShaderId;
+		GfxResId ResourceId;
+
+		GfxShader* GetResource()
+		{
+			return GfxGDI::Get()->GetShader(ResourceId);
+		}
 	};
 
 	struct DAWN_API Material
@@ -48,13 +53,16 @@ namespace Dawn
 	{
 		MeshHandle Id;
 		FileHandle FileId;
-		std::vector<VertexPosUV> Vertices;
-		std::vector<u16> Indices;
+		GfxResId VertexArray;
 		std::vector<Submesh> Submeshes;
 		std::vector<MaterialHandle> Materials;
 		u32 NumIndices;
 		u32 NumVertices;
-		u32 GDI_VBOId, GDI_VAOId, GDI_EBOId; // Refactor this later on!
+
+		GfxVertexArray* GetResource()
+		{
+			return GfxGDI::Get()->GetVertexArray(VertexArray);
+		}
 	};
 
 	struct DAWN_API AnimatedMesh : public Mesh
@@ -70,5 +78,11 @@ namespace Dawn
 		u32 Height;
 		u16 ChannelsPerPixel;
 		u32 GDI_TextureId;
+		GfxResId TextureId;
+
+		GfxTexture* GetResource()
+		{
+			return GfxGDI::Get()->GetTexture(TextureId);
+		}
 	};
 }
