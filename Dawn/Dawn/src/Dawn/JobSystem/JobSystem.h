@@ -40,7 +40,8 @@ CJobSystem::Initialize();
 	*/
 
 
-
+// THIS JOB SYSTEM IS BASED ON THE SAMPLES PROVIDED BY THE MOLECULAR MUSING 
+// BLOG WHICH CAN BE SEEN AT https://blog.molecular-matters.com/2015/08/24/job-system-2-0-lock-free-work-stealing-part-1-basics/
 
 // Has to be power of two! Because of binary operation in allocate!
 #define MAX_JOB_COUNT 4096 
