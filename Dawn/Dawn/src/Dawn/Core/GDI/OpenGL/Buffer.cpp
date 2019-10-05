@@ -51,13 +51,8 @@ namespace Dawn
 		Layout = InLayout;
 	}
 
-	void GLVertexBuffer::Reset(const GfxBufferLayout& InLayout, float* InData, u32 InSize)
+	void GLVertexBuffer::Reset(float* InData, u32 InSize)
 	{
-		Layout = InLayout;
-
-		glDeleteBuffers(1, &RendererId);
-		glGenBuffers(1, &RendererId);
-
 		Bind();
 
 		glBufferData(GL_ARRAY_BUFFER, InSize, InData, GL_STATIC_DRAW);
@@ -71,13 +66,13 @@ namespace Dawn
 	}
 
 
-	GLIndexBuffer::GLIndexBuffer(u16* InData, u32 InSize, GfxResId InId)
+	GLIndexBuffer::GLIndexBuffer(u32* InData, u32 InSize, GfxResId InId)
 		: GfxIndexBuffer(InId)
 	{
 		this->Size = InSize;
 		glCreateBuffers(1, &RendererId);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, RendererId);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, InSize * sizeof(u16), InData, GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, InSize * sizeof(u32), InData, GL_STATIC_DRAW);
 	}
 
 	GLIndexBuffer::~GLIndexBuffer()
@@ -95,16 +90,13 @@ namespace Dawn
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
-	void GLIndexBuffer::Reset(u16* InData, u32 InSize)
+	void GLIndexBuffer::Reset(u32* InData, u32 InSize)
 	{
-		//glDeleteBuffers(1, &RendererId);
-		glGenBuffers(1, &RendererId);
-		
 		this->Size = InSize;
 
 		Bind();
 
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, InSize * sizeof(u16), &InData[0], GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, InSize * sizeof(u32), InData, GL_STATIC_DRAW);
 
 		Unbind();
 	}
@@ -164,11 +156,22 @@ namespace Dawn
 
 	u32 GLVertexArray::GetIndexBufferSize()
 	{
-		return GfxGDI::Get()->GetIndexBuffer(this->Indices)->GetSize();
+		return GetIndexBuffer()->GetSize();
 	}
 
 	void GLVertexArray::SetName(std::string Name)
 	{
 		
+	}
+
+	GfxVertexBuffer* GLVertexArray::GetVertexBuffer(u32 InIndex)
+	{
+		auto Id = this->Vertices[InIndex];
+		return GfxGDI::Get()->GetVertexBuffer(Id);
+	}
+
+	GfxIndexBuffer* GLVertexArray::GetIndexBuffer()
+	{
+		return GfxGDI::Get()->GetIndexBuffer(this->Indices);
 	}
 }

@@ -4,6 +4,7 @@
 //-----------------------------------------------------------------------------
 #include "JobQueue.h"
 #include <Windows.h>
+#include <iostream>
 
 
 #define COMPILER_BARRIER _ReadWriteBarrier()
@@ -11,7 +12,6 @@
 
 namespace Dawn
 {
-
 	JobQueue::JobQueue()
 	{
 		Bottom = 0;
@@ -22,25 +22,20 @@ namespace Dawn
 	{
 		long b = Bottom;
 		Jobs[b & MASK] = InJob;
-		COMPILER_BARRIER;
 		Bottom = b + 1;
 	}
 
 	Job* JobQueue::Steal(void)
 	{
 		long t = Top;
-
-		COMPILER_BARRIER;
-
 		long b = Bottom;
+
 		if (t < b)
 		{
 			// non-empty queue
 			Job* Job = Jobs[t & MASK];
 
-			// TODO (gb): take a look again at the source material 
-			// in order to check why the access violation happens with a lot of tasks
-			if (_InterlockedCompareExchange(&Top, t + 1, t) != t)
+			if (!Top.compare_exchange_strong(t, t + 1))
 			{
 				// a concurrent steal or pop operation removed an element from the deque in the meantime.
 				return nullptr;
@@ -59,14 +54,12 @@ namespace Dawn
 	Job* JobQueue::Pop(void)
 	{
 		long b = Bottom - 1;
-		_InterlockedExchange(&Bottom, b);
 		Bottom = b;
-
-		MEMORY_BARRIER;
 
 		long t = Top;
 		if (t <= b)
 		{
+			std::cout << "Found a job to process!" << std::endl;
 			// non-empty queue
 			Job* job = Jobs[b & MASK];
 			if (t != b)
@@ -76,7 +69,7 @@ namespace Dawn
 			}
 
 			// this is the last item in the queue
-			if (_InterlockedCompareExchange(&Top, t + 1, t) != t)
+			if (!Top.compare_exchange_strong(t, t + 1))
 			{
 				// failed race against steal operation
 				job = nullptr;

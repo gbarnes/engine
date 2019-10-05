@@ -19,7 +19,7 @@ namespace Dawn
 
 	private:
 		Job* Jobs[NUMBER_OF_JOBS];
-		long Top;
-		long Bottom;
+		std::atomic<long> Top;
+		std::atomic<long> Bottom;
 	};
 }

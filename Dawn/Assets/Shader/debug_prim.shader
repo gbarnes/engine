@@ -18,11 +18,11 @@ void main()
 
 out vec4 FragColor;
 
-uniform vec4 myColor;
+uniform vec4 color;
 
 void main()
 {
-	FragColor = myColor;
+	FragColor = color;
 }]]>
 	</step>
 </shader>

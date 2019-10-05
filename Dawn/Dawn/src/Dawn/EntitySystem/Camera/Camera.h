@@ -24,6 +24,8 @@ namespace Dawn
 		float NearZ = 0.1f;
 		float FarZ = 100.0f;
 		float AspectRatio = 0;
+		u32 Width = 800;
+		u32 Height = 600;
 
 		vec4 ClearColor = { 0.4f, 0.6f, 0.9f, 1.0f };
 		vec3 WorldUp = {0.0f,1.0f,0.0f};
@@ -45,8 +47,8 @@ namespace Dawn
 		}
 
 	private:
-		mat4 Projection;
-		mat4 View;
+		mat4 Projection = mat4(1);
+		mat4 View = mat4(1);
 	};
 
 	//
@@ -61,35 +63,29 @@ namespace Dawn
 	//
 	// Helper function to create a new camera at the world!
 	//
-	static Camera* CreateCamera(std::string&& InName, vec3 InPosition, float InAspectRatio,
-		float InNearZ, float InFarZ, float InFoV, vec4 InClearColor)
+	static Camera* CreateCamera(std::string&& InName, u32 Width, u32 Height,
+		float InNearZ, float InFarZ, float InFoV, vec4 InClearColor, 
+		const vec3& InPosition = vec3(0), const quat& InOrientation = quat())
 	{
 		auto world = GetWorld();
-		return world->CreateCamera(InName, InPosition, InAspectRatio, InNearZ, InFarZ, InFoV, InClearColor);
+		return world->CreateCamera(InName, Width, Height, InNearZ, InFarZ, InFoV, InClearColor, InPosition, InOrientation);
 	};
 
 	class CameraUtils
 	{
 	public:
-		//
-		// Takes care of casting the quaternion rotation to a rotation matrix
-		//
-		static mat4 CalculateOrientation(Transform* InTransform)
-		{
-			if (InTransform == nullptr)
-				return mat4(1.0f);
-
-			return glm::mat4_cast(InTransform->Rotation);
-		}
+		
 
 		//
 		// Calculates the view matrix from the given orientation and translation matrix
 		//
 		static const mat4& CalculateView(Camera* InCamera, Transform* InTransform)
 		{
-			InCamera->View = CalculateOrientation(InTransform) * glm::translate(glm::mat4(1.0f), -InTransform->Position);
+			InCamera->View = glm::mat4_cast(glm::conjugate(InTransform->Rotation));
+			InCamera->View = glm::translate(InCamera->View, -InTransform->Position);
 			return InCamera->View;
 		}
+
 
 		//
 		// Calculates the perspective matrix for the given camera.
@@ -100,6 +96,14 @@ namespace Dawn
 			return InCamera->Projection;
 		}
 
+		//
+		// Calculates the orthographic matrix for the given camera.
+		//
+		static const mat4& CalculateOthographic(Camera* InCamera)
+		{
+			InCamera->Projection = glm::ortho(0.0f, (float)InCamera->Width, (float)InCamera->Height, 0.0f, InCamera->NearZ, InCamera->FarZ);
+			return InCamera->Projection;
+		}
 
 		const vec3 WorldToScreenPoint(Camera* InCamera, const vec3& InPoint) const
 		{

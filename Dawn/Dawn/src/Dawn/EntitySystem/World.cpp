@@ -26,8 +26,9 @@ namespace Dawn
 	// This function creates a camera entity that is then moved into 
 	// a list to save the entity id.
 	//
-	Camera* World::CreateCamera(std::string& InName, vec3 InPosition, float InAspectRatio,
-		float InNearZ, float InFarZ, float InFoV, vec4 InClearColor)
+	Camera* World::CreateCamera(std::string& InName, u32 Width, u32 Height,
+		float InNearZ, float InFarZ, float InFoV, vec4 InClearColor, 
+		const vec3& InPosition, const quat& InOrientation)
 	{
 		EntityId e = CreateEntity(InName);
 		if (!e.IsValid)
@@ -35,12 +36,14 @@ namespace Dawn
 
 		Transform* t = this->MakeComponent<Transform>();
 		t->Position = InPosition;
-		t->Rotation = quat(1, 0, 0, 0);
+		t->Rotation = InOrientation;
 		t->Scale = vec3(1, 1, 1);
 		AddComponent<Transform>(e, t);
 
 		Camera* c = this->MakeComponent<Camera>();
-		c->AspectRatio = InAspectRatio;
+		c->AspectRatio = (float)Width / (float)Height;
+		c->Height = Height;
+		c->Width = Width;
 		c->NearZ = InNearZ;
 		c->FarZ = InFarZ;
 		c->FieldOfView = InFoV;
@@ -52,7 +55,7 @@ namespace Dawn
 			return nullptr;
 
 		CameraEntities.emplace_back(e);
-		return GetComponentById<Camera>(componentId);
+		return c;
 	}
 
 	//

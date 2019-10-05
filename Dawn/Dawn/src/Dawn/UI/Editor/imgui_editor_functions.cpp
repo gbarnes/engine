@@ -104,7 +104,9 @@ namespace Dawn
 			for (auto transform : transforms)
 			{
 				auto entity = transform->GetEntity();
-				if (ImGui::Button(entity->Name.c_str(), ImVec2(ImGui::CalcItemWidth(), 10)))
+
+				ImGui::Text(entity->Name.c_str());
+				if (ImGui::IsItemClicked())
 				{
 					g_ShowPropertyWindow = true;
 					g_SelectedEntity = const_cast<Entity*>(entity);

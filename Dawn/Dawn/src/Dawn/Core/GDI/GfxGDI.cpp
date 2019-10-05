@@ -33,4 +33,9 @@ namespace Dawn
 	{
 		this->VertexArrayPool.Free(Id);
 	}
+
+	void GfxGDI::SetClearColor(const vec4& InColor)
+	{
+		this->ClearColor = InColor;
+	}
 }

@@ -3,13 +3,30 @@
 
 namespace Dawn
 {
+	std::vector<std::shared_ptr<Model>> ResourceTable::Models;
 	std::vector<std::shared_ptr<Mesh>> ResourceTable::Meshes;
 	std::vector<std::shared_ptr<Material>> ResourceTable::Materials;
 	std::vector<std::shared_ptr<Shader>> ResourceTable::Shaders;
 	std::vector<std::shared_ptr<Image>> ResourceTable::Images;
 
+	std::shared_ptr<Model> ResourceTable::GetModel(ModelHandle InHandle)
+	{
+		if (Models.size() == 0)
+			return std::make_shared<Model>();
+
+		u32 index = InHandle.Index;
+		if (Models.size() < index)
+			return nullptr;
+
+		return Models[index];
+	}
+
+
 	std::shared_ptr<Mesh> ResourceTable::GetMesh(MeshHandle InHandle)
 	{
+		if (Meshes.size() == 0)
+			return std::make_shared<Mesh>();
+
 		u32 index = InHandle.Index;
 		if (Meshes.size() < index)
 			return nullptr;
@@ -19,6 +36,9 @@ namespace Dawn
 
 	std::shared_ptr<Shader> ResourceTable::GetShader(const ShaderHandle& InHandle)
 	{
+		if (Shaders.size() == 0)
+			return std::make_shared<Shader>();
+
 		u32 index = InHandle.Index;
 		if (Shaders.size() < index)
 			return nullptr;
@@ -28,6 +48,9 @@ namespace Dawn
 
 	std::shared_ptr<Image> ResourceTable::GetImage(ImageHandle InHandle)
 	{
+		if (Images.size() == 0)
+			return std::make_shared<Image>();
+
 		u32 index = InHandle.Index;
 		if (Images.size() < index)
 			return nullptr;
@@ -37,7 +60,9 @@ namespace Dawn
 
 	void ResourceTable::Shutdown()
 	{
+
 		Meshes.clear();
+		Models.clear();
 		Images.clear();
 		Meshes.clear();
 		Shaders.clear();
@@ -45,6 +70,11 @@ namespace Dawn
 
 	bool ResourceTable::TrackResource(ResourceType InType, void* InResource)
 	{
+		if (InType == ResourceType_Model) {
+			auto modelPtr = std::shared_ptr<Model>(static_cast<Model*>(InResource));
+			Models.emplace_back(modelPtr);
+			return true;
+		}
 		
 		if (InType == ResourceType_StaticMesh) {
 			auto meshPtr = std::shared_ptr<Mesh>(static_cast<Mesh*>(InResource));
@@ -74,13 +104,13 @@ namespace Dawn
 
 		// This is a pretty bad solution for something like this and I don't like it
 		// at all lets try to find a simpler solution later on, Gavin Barnes, 03/22/19
-		if (InType == ResourceType_StaticMesh) {
+		if (InType == ResourceType_Model) {
 
-			auto begin = Meshes.begin();
-			auto end = Meshes.end();
+			auto begin = Models.begin();
+			auto end = Models.end();
 
 			auto it = std::find_if(begin, end,
-				[InResource](std::shared_ptr<Mesh> n) -> bool {return n->FileId == InResource; });
+				[InResource](std::shared_ptr<Model> n) -> bool {return n->FileId == InResource; });
 
 			if (it != end)
 				Id = it->get()->Id;
@@ -114,6 +144,8 @@ namespace Dawn
 
 	u128 ResourceTable::ResourceCount(const ResourceType InType)
 	{
+		if (InType == ResourceType_Model)
+			return Models.size();
 		if (InType == ResourceType_StaticMesh)
 			return Meshes.size();
 		if (InType == ResourceType_Image)

@@ -133,7 +133,7 @@ namespace Dawn
 
 		virtual void Bind() = 0;
 		virtual void Unbind() = 0;
-		virtual void Reset(const GfxBufferLayout& InLayout, float* InData, u32 InSize) = 0;
+		virtual void Reset(float* InData, u32 InSize) = 0;
 		virtual void SetLayout(GfxBufferLayout& Layout) = 0;
 		virtual const GfxBufferLayout& GetLayout() const = 0;
 	};
@@ -148,7 +148,7 @@ namespace Dawn
 
 		virtual void Bind() = 0;
 		virtual void Unbind() = 0;
-		virtual void Reset(u16* InData, u32 InSize) = 0;
+		virtual void Reset(u32* InData, u32 InSize) = 0;
 
 		inline u32 GetSize() const
 		{
@@ -171,7 +171,8 @@ namespace Dawn
 		virtual void Unbind() = 0;
 		virtual void AttachVertexBuffer(GfxVertexBuffer* InBuffer) = 0;
 		virtual void SetIndexBuffer(GfxIndexBuffer* InBuffer) = 0;
-
+		virtual GfxVertexBuffer* GetVertexBuffer(u32 InIndex) = 0;
+		virtual GfxIndexBuffer* GetIndexBuffer() = 0;
 		virtual void SetName(std::string Name) = 0;
 	};
 

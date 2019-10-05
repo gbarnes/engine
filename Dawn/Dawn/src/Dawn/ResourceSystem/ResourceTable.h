@@ -12,12 +12,14 @@ namespace Dawn
 		static GenericHandle LookUpResource(ResourceType InType, FileHandle InResource);
 
 		// specialized methods to receive resources of specific types.
-
+		static std::shared_ptr<Model> GetModel(ModelHandle InHandle);
 		static std::shared_ptr<Mesh> GetMesh(MeshHandle InHandle);
 		static std::shared_ptr<Shader> GetShader(const ShaderHandle& InHandle);
 		static std::shared_ptr<Image> GetImage(ImageHandle InHandle);
 		static void Shutdown();
 	private:
+		//static std::map<ResourceType, ResourceStorage<Model>>
+		static std::vector<std::shared_ptr<Model>> Models;
 		static std::vector<std::shared_ptr<Mesh>> Meshes;
 		static std::vector<std::shared_ptr<Material>> Materials;
 		static std::vector<std::shared_ptr<Shader>> Shaders;

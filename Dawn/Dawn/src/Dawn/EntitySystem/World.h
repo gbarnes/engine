@@ -30,8 +30,9 @@ namespace Dawn
 	public:
 		std::vector<std::string> GetComponentTypesByEntity(EntityId& InEntity);
 		
-		Camera* CreateCamera(std::string& InName, vec3 InPosition, float InAspectRatio,
-			float InNearZ, float InFarZ, float InFoV, vec4 InClearColor);
+		Camera* CreateCamera(std::string& InName, u32 Width, u32 Height,
+			float InNearZ, float InFarZ, float InFoV, vec4 InClearColor, 
+			const vec3& InPosition = vec3(0), const quat& InOrientation = quat());
 		
 		Camera* GetCamera(u32 InId);
 

@@ -48,12 +48,6 @@ CJobSystem::Initialize();
 
 namespace Dawn
 {
-	//-----------------------------------------------------------------------------
-	// Main Class Declarations
-	//-----------------------------------------------------------------------------
-	//-----------------------------------------------------------------------------
-	//  
-	//-----------------------------------------------------------------------------
 	class JobSystem
 	{
 	public:
@@ -66,15 +60,14 @@ namespace Dawn
 		static Job* CreateJobAsChild(Job* InParent, JobFunction InFunction);
 		static void AddContinuation(Job* InAncestor, Job* InContinuation);
 		static void Run(Job* InJob);
-		static Job* GetJobX();
+		static Job* ReturnJob();
 		static void Wait(const Job* InJob);
 		static void Execute(Job* InJob);
-		static void ShutdownWorkerThread(unsigned int InThreadIndex);
 
+		static bool HasJobCompleted(const Job* InJob);
 	private:
 		static std::vector<std::thread> WorkerThreads;
-		static JobQueue* WorkerThreadQueues;
-		static std::vector<bool> IsThreadActive;
+		static JobQueue WorkerThreadQueues[8];
 		static thread_local Job JobAllocator[NUMBER_OF_JOBS];
 		static thread_local unsigned int AllocatedJobs;
 
@@ -84,6 +77,5 @@ namespace Dawn
 		static EResult SpawnWorkerThreads();
 		static void Finish(Job* InJob);
 		static Job* Allocate();
-		static bool HasJobCompleted(const Job* InJob);
 	};
 }

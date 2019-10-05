@@ -35,7 +35,6 @@ project "Dawn"
 	includedirs
 	{
 		"Dawn/vendor/spdlog/include/",
-		"Dawn/vendor/tinyobjloader/include/",
 		"Dawn/vendor/stb/include/",
 		"Dawn/vendor/imgui/",
 		"Dawn/vendor/glm/",
@@ -156,7 +155,6 @@ project "Sandbox"
 	includedirs
 	{
 		"Dawn/vendor/spdlog/include/",
-		"Dawn/vendor/tinyobjloader/include/",
 		"Dawn/vendor/stb/include/",
 		"Dawn/src",
 		"Dawn/vendor/DirectXTex/",

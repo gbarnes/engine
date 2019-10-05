@@ -30,8 +30,6 @@ namespace Dawn
 	SEventHandle g_MouseMovedEvtHandle, g_MousePressedHandle, g_MouseReleasedHandle;
 	uint64_t Application::FrameCount = 0;
 
-
-
 	Application::Application(AppSettings& InSettings)
 	{
 		this->Settings = InSettings;
@@ -47,7 +45,7 @@ namespace Dawn
 	void Application::Run()
 	{
 		// Resource System initialization
-		if (!ResourceSystem.Initialize("E:/Git/engine/Dawn/Assets/", { ".obj", ".jpg", ".png", ".shader", ".PNG" }))
+		if (!ResourceSystem.Initialize("E:/Git/engine/Dawn/Assets/", { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx" }))
 		{
 			DWN_CORE_ERROR("Couldn't initialize resource system");
 			system("pause");
@@ -55,7 +53,7 @@ namespace Dawn
 		}
 
 		ResourceSystem.AddRef();
-		ResourceSystem.RegisterLoader(ResourceType_StaticMesh, BIND_FS_LOADER(Dawn::RS_LoadStaticMeshWithAssimp));
+		ResourceSystem.RegisterLoader(ResourceType_Model, BIND_FS_LOADER(Dawn::RS_LoadModel));
 		ResourceSystem.RegisterLoader(ResourceType_Shader, BIND_FS_LOADER(Dawn::RS_LoadShader));
 		ResourceSystem.RegisterLoader(ResourceType_Image, BIND_FS_LOADER(Dawn::RS_LoadImage));
 
@@ -104,6 +102,7 @@ namespace Dawn
 			return;
 		}
 
+
 		Physics = std::make_unique<PhysicsWorld>();
 		if(!Physics->Initialize())
 		{
@@ -132,13 +131,14 @@ namespace Dawn
 		ClearLayers();
 		Physics->Shutdown();
 		GfxGDI::Get()->Shutdown();
-		JobSystem::Shutdown();
 		ResourceSystem.Shutdown();
+		JobSystem::Shutdown();
 
 		DWN_CORE_INFO("Core Context shutdown.");
 	}
 
 	Camera* g_Camera;
+	
 
 	void Application::Load()
 	{
@@ -150,14 +150,28 @@ namespace Dawn
 		World->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
 		World->AddSystem(std::make_unique<RigidbodySystem>());
 		
-		g_Camera = CreateCamera("Cam0",
-									vec3(0, 3, 10), 
-									(float)Settings.Width / (float)Settings.Height, 
-									0.1f, 100.0f, 65.0f, 
-									vec4(0.4f, 0.6f, 0.9f, 1.0f)
+		g_Camera = CreateCamera("Cam0", 
+									Settings.Width, 
+									Settings.Height, 
+									0.1f, 10000.0f, 65.0f, 
+									vec4(0.4f, 0.6f, 0.9f, 1.0f),
+									vec3(0, 3, 10)
 								  );
 		
 		CameraUtils::CalculatePerspective(g_Camera);
+
+		auto Cam1 = CreateCamera("Cam1",
+					Settings.Width,
+					Settings.Height,
+					0.0f, 10000.0f, 65.0f,
+					vec4(0.4f, 0.6f, 0.9f, 1.0f),
+					vec3(0, 0, 0),
+					quat(1, 0, 0, 0)
+				);
+
+		CameraUtils::CalculateOthographic(Cam1);
+
+		GfxImmediatePrimitives::Get()->AllocateBuffers();
 	}
 
 	void Application::Tick()
@@ -167,32 +181,21 @@ namespace Dawn
 			return;
 
 		++Application::FrameCount;
-
+		
 		Clock.Tick();
 
-		/*if (Input::IsMouseButtonPressed(MouseBtn_Left))
-		{
-			vec2 pos = Input::GetMousePosition();
-			DWN_CORE_INFO("Mouse btn pressed at position: {0} {1}", pos.x, pos.y);
-		}
+		auto GDI = GfxGDI::Get();
 
-		if (Input::IsKeyPressed(KeyCode_A))
-		{
-			DWN_CORE_INFO("Key a is pressed!");
-		}*/
-
-		glEnable(GL_DEPTH_TEST);
-		glViewport(0, 0, Settings.Width, Settings.Height);
-		glClearColor(g_Camera->ClearColor[0], g_Camera->ClearColor[1], g_Camera->ClearColor[2], g_Camera->ClearColor[3]);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
+		GDI->SetViewport(0, 0, Settings.Width, Settings.Height);
+		GDI->SetClearColor(g_Camera->ClearColor);
+		GDI->Clear();
 
 		for (Layer* layer : Layers)
 		{
 			layer->Process();
 		}
 
-		GfxGDI::Get()->Present();
+		GDI->Present();
 		Input::Reset();
 	}
 

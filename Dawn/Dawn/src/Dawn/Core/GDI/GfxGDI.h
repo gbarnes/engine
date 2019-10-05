@@ -48,7 +48,7 @@ namespace Dawn
 
 		GfxResourceBundle<T>* Request()
 		{
-			if (Resources.size() > FreeId.Index)
+			/*if (Resources.size() > FreeId.Index)
 			{
 				auto& Bundle = Resources[FreeId.Index];
 				if (!Bundle.IsValid()) 
@@ -56,7 +56,7 @@ namespace Dawn
 					Bundle.Id.Generation++;
 					return &Bundle;
 				}
-			}
+			}*/
 
 			GfxResourceBundle<T> Bundle;
 			Bundle.Id.Index = (u32)(Resources.size() - 1);
@@ -117,6 +117,9 @@ namespace Dawn
 		std::vector<GfxResourceBundle<T>> Resources;
 	};
 
+
+	class GfxImmediatePrimitives;
+
 	class DAWN_API GfxGDI
 	{
 	public:
@@ -133,48 +136,50 @@ namespace Dawn
 		virtual void Shutdown() = 0;
 
 	public:
-		virtual void DrawIndexed(GfxResId VertexArrayId) = 0;
+		virtual void DrawIndexed(GfxResId InVertexArrayId) = 0;
+		void SetClearColor(const vec4& InColor);
+		virtual void SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom) = 0;
 
-
+		virtual void Clear() = 0;
 
 	public:
-		virtual GfxResId CreateVertexBuffer(float* Vertices, u32 Size, GfxVertexBuffer** OutBuffer) = 0;
-		virtual GfxResId CreateIndexBuffer(u16* Indices, u32 Size, GfxIndexBuffer** OutBuffer) = 0;
+		virtual GfxResId CreateVertexBuffer(float* InVertices, u32 InSize, GfxVertexBuffer** OutBuffer) = 0;
+		virtual GfxResId CreateIndexBuffer(u32* InIndices, u32 InSize, GfxIndexBuffer** OutBuffer) = 0;
 		virtual GfxResId CreateVertexArray(GfxVertexArray** OutBuffer) = 0;
 		virtual GfxResId CreateShader(GfxShader** OutShader) = 0;
-		virtual GfxResId CreateTexture(u8* Data, u32 Width, u32 Height, u16 ChannelsPerPixel, GfxWrapDesc Wrap,
-			GfxFilterDesc Filter, bool GenerateMipMaps, GfxTexture** OutTexture) = 0;
+		virtual GfxResId CreateTexture(u8* InData, u32 InWidth, u32 InHeight, u16 InChannelsPerPixel, GfxWrapDesc InWrap,
+			GfxFilterDesc InFilter, bool InGenerateMipMaps, GfxTexture** OutTexture) = 0;
 
 
-		inline GfxVertexBuffer* GetVertexBuffer(GfxResId Id)
+		inline GfxVertexBuffer* GetVertexBuffer(GfxResId InId)
 		{
-			return VertexBufferPool.Get(Id);
+			return VertexBufferPool.Get(InId);
 		}
 
-		inline GfxIndexBuffer* GetIndexBuffer(GfxResId Id)
+		inline GfxIndexBuffer* GetIndexBuffer(GfxResId InId)
 		{
-			return IndexBufferPool.Get(Id);
+			return IndexBufferPool.Get(InId);
 		}
 
-		inline GfxVertexArray* GetVertexArray(GfxResId Id)
+		inline GfxVertexArray* GetVertexArray(GfxResId InId)
 		{
-			return VertexArrayPool.Get(Id);
+			return VertexArrayPool.Get(InId);
 		}
 
-		inline GfxShader* GetShader(GfxResId Id)
+		inline GfxShader* GetShader(GfxResId InId)
 		{
-			return ShaderPool.Get(Id);
+			return ShaderPool.Get(InId);
 		}
 
-		inline GfxTexture* GetTexture(GfxResId Id)
+		inline GfxTexture* GetTexture(GfxResId InId)
 		{
-			return TexturePool.Get(Id);
+			return TexturePool.Get(InId);
 		}
 
-		void ReturnVertexBuffer(GfxResId Id);
-		void ReturnIndexBuffer(GfxResId Id);
-		void ReturnVertexArray(GfxResId Id);
-		void ReturnShader(GfxResId Id);
+		void ReturnVertexBuffer(GfxResId InId);
+		void ReturnIndexBuffer(GfxResId InId);
+		void ReturnVertexArray(GfxResId InId);
+		void ReturnShader(GfxResId InId);
 
 	protected:
 		GfxResourcePool<GfxVertexBuffer> VertexBufferPool;
@@ -183,6 +188,7 @@ namespace Dawn
 		GfxResourcePool<GfxShader> ShaderPool;
 		GfxResourcePool<GfxTexture> TexturePool;
 
+		vec4 ClearColor = vec4(1, 0, 0, 1);
 	private:
 		static GfxGDI* Instance;
 	};

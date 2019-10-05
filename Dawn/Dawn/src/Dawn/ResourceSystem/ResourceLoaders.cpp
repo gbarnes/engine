@@ -3,8 +3,6 @@
 #include "ResourceUtils.h"
 #include <unordered_set>
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include <tinyobjloader.h>
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG 
 #include <stb_image.h>
@@ -24,12 +22,105 @@
 
 namespace Dawn
 {
+
+	void RS_ProcessMeshNode(Model* InModel, aiNode* InNode, const aiScene* InScene)
+	{
+		const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
+		auto GDI = GfxGDI::Get();
+
+		for (u32 i = 0; i < InNode->mNumMeshes; ++i)
+		{
+			const aiMesh* aiMesh = InScene->mMeshes[InNode->mMeshes[i]];
+
+			Mesh* mesh = new Mesh();
+			mesh->Id.Index = (u32)ResourceTable::ResourceCount(ResourceType_StaticMesh);
+			mesh->Id.Generation = 0;
+			mesh->Id.IsValid = true;
+
+			mesh->Name = aiMesh->mName.C_Str();
+			mesh->NumIndices = aiMesh->mNumFaces * 3;
+			mesh->NumVertices = aiMesh->mNumVertices;
+			
+
+			std::vector<float> VertexData;
+			for (u32 y = 0; y < aiMesh->mNumVertices; ++y)
+			{
+				const aiVector3D* pos = &(aiMesh->mVertices[y]);
+				const aiVector3D* normal = aiMesh->HasNormals() ? &(aiMesh->mNormals[y]) : &Zero3D;
+				const aiVector3D* texCoord0 = aiMesh->HasTextureCoords(0) ? &(aiMesh->mTextureCoords[0][y]) : &Zero3D;
+				const aiVector3D* texCoord1 = aiMesh->HasTextureCoords(1) ? &(aiMesh->mTextureCoords[1][y]) : &Zero3D;
+
+				VertexData.push_back(pos->x);
+				VertexData.push_back(pos->y);
+				VertexData.push_back(pos->z);
+				VertexData.push_back(normal->x);
+				VertexData.push_back(normal->y);
+				VertexData.push_back(normal->z);
+				VertexData.push_back(texCoord0->x);
+				VertexData.push_back(texCoord0->y);
+				VertexData.push_back(texCoord1->x);
+				VertexData.push_back(texCoord1->y);
+			}
+
+			std::vector<u32> IndexData;
+			for (u32 u = 0; u < aiMesh->mNumFaces; ++u)
+			{
+				const aiFace& Face = aiMesh->mFaces[u];
+				assert(Face.mNumIndices == 3);
+				IndexData.push_back(Face.mIndices[0]);
+				IndexData.push_back(Face.mIndices[1]);
+				IndexData.push_back(Face.mIndices[2]);
+			}
+
+			GfxBufferLayout MeshLayout
+			(
+				{
+					{ GfxShaderDataType::Float3, "position" },
+					{ GfxShaderDataType::Float3, "normal" },
+					{ GfxShaderDataType::Float2, "uv0" },
+					{ GfxShaderDataType::Float2, "uv1" }
+				}
+			);
+
+			// Buffer Setup
+			GfxVertexArray* VertexArray = nullptr;
+			auto VertexArrayId = GDI->CreateVertexArray(&VertexArray);
+
+			GfxVertexBuffer* VertexBuffer;
+			GDI->CreateVertexBuffer(&VertexData[0], VertexData.size() * sizeof(float), &VertexBuffer);
+			VertexBuffer->SetLayout(MeshLayout);
+			VertexArray->AttachVertexBuffer(VertexBuffer);
+
+			GfxIndexBuffer* IndexBuffer;
+			GDI->CreateIndexBuffer(&IndexData[0], IndexData.size(), &IndexBuffer);
+			VertexArray->SetIndexBuffer(IndexBuffer);
+
+			mesh->VertexArrayId = VertexArrayId;
+
+			if (!ResourceTable::TrackResource(ResourceType_StaticMesh, mesh))
+			{
+				GDI->ReturnIndexBuffer(IndexBuffer->GetId());
+				GDI->ReturnVertexBuffer(VertexBuffer->GetId());
+				GDI->ReturnVertexArray(VertexArray->GetId());
+				delete mesh;
+				continue;
+			}
+
+			InModel->Meshes.push_back(mesh->Id);
+		}
+
+		for (u32 i = 0; i < InNode->mNumChildren; ++i)
+		{
+			RS_ProcessMeshNode(InModel, InNode->mChildren[i], InScene);
+		}
+	}
+
 	//
 	// Loads a mesh with the assimp lib.
 	//
-	MeshHandle RS_LoadStaticMeshWithAssimp(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InMetaData)
+	ModelHandle RS_LoadModel(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InMetaData)
 	{
-		MeshHandle Id = ResourceTable::LookUpResource(InMetaData->Type, InMetaData->Id);
+		ModelHandle Id = ResourceTable::LookUpResource(InMetaData->Type, InMetaData->Id);
 		if (Id.IsValid)
 			return Id;
 
@@ -37,112 +128,33 @@ namespace Dawn
 		Assimp::Importer Importer;
 
 		const aiScene* scene = Importer.ReadFile(combinedPath.c_str(),
-			aiProcess_Triangulate | aiProcess_GenSmoothNormals | 
-			 aiProcess_JoinIdenticalVertices
+			aiProcess_Triangulate | aiProcess_GenNormals  | aiProcessPreset_TargetRealtime_MaxQuality
 		);
 
-		if (scene)
+		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{
-			// setup mesh handle
-			{
-				u32 meshIndex = (u32)ResourceTable::ResourceCount(ResourceType_StaticMesh);
-				Id.Index = meshIndex;
-				Id.IsValid = true;
-				Id.Generation = 0;
-			}
-
-			// Implement more error checks - gbarnes, 03/26/19
-
-			Mesh* mesh = new Mesh();
-			mesh->Id = Id;
-			mesh->FileId = InMetaData->Id;
-
-			const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
-
-			GfxBufferLayout MeshLayout
-			(
-				{ 
-					{ GfxShaderDataType::Float3, "aPos" },
-					{ GfxShaderDataType::Float2, "aUV0" },
-					{ GfxShaderDataType::Float2, "aUV1" }
-				}
-			);
-
-			GfxVertexArray* VertexArray = nullptr;
-			auto VertexArrayId = GfxGDI::Get()->CreateVertexArray(&VertexArray);
-			
-			std::vector<u16> IndexData;
-
-			for (u32 i = 0; i < scene->mNumMeshes; i++) 
-			{
-				const aiMesh* aiMesh = scene->mMeshes[i];
-				Submesh submesh = {};
-				submesh.Name = aiMesh->mName.C_Str();
-				submesh.NumOfIndices = aiMesh->mNumFaces * 3;
-
-				u32 componentCount = 7;
-				float* verts = new float[aiMesh->mNumVertices * componentCount]; 
-				int x = -1;
-				for (unsigned int i = 0; i < aiMesh->mNumVertices; i++)
-				{
-					const aiVector3D* pos = &(aiMesh->mVertices[i]);
-					const aiVector3D* normal = aiMesh->HasNormals() ? &(aiMesh->mNormals[i]) : &Zero3D;
-					const aiVector3D* texCoord0 = aiMesh->HasTextureCoords(0) ? &(aiMesh->mTextureCoords[0][i]) : &Zero3D;
-					const aiVector3D* texCoord1 = aiMesh->HasTextureCoords(1) ? &(aiMesh->mTextureCoords[1][i]) : &Zero3D;
-
-					verts[++x] = pos->x;
-					verts[++x] = pos->y;
-					verts[++x] = pos->z;
-					verts[++x] = texCoord0->x;
-					verts[++x] = texCoord0->y;
-					verts[++x] = texCoord1->x;
-					verts[++x] = texCoord1->y;
-				}
-				
-				 
-				GfxVertexBuffer* Buffer;
-				GfxGDI::Get()->CreateVertexBuffer(verts, aiMesh->mNumVertices * componentCount * sizeof(float), &Buffer);
-				Buffer->SetLayout(MeshLayout);
-				VertexArray->AttachVertexBuffer(Buffer);
-
-				delete[] verts;
-
-				for (unsigned int i = 0; i < aiMesh->mNumFaces; i++) 
-				{
-					const aiFace& Face = aiMesh->mFaces[i];
-					assert(Face.mNumIndices == 3);
-					IndexData.push_back(Face.mIndices[0]);
-					IndexData.push_back(Face.mIndices[1]);
-					IndexData.push_back(Face.mIndices[2]);
-				}
-
-				submesh.StartIndex = (u32)std::max((i32)IndexData.size() - 1, 0);
-				mesh->Submeshes.push_back(submesh);
-				mesh->NumVertices += (u32)aiMesh->mNumVertices;
-				mesh->NumIndices += submesh.NumOfIndices;
-			}
-
-			GfxIndexBuffer* IndexBuffer;
-			GfxGDI::Get()->CreateIndexBuffer(&IndexData[0], mesh->NumIndices, &IndexBuffer);
-			VertexArray->SetIndexBuffer(IndexBuffer);
-
-			mesh->VertexArray = VertexArrayId;
-
-			if (!ResourceTable::TrackResource(ResourceType_StaticMesh, mesh))
-			{
-				delete mesh;
-				return INVALID_HANDLE;
-			}
-
-			return Id;
-		}
-		else 
-		{
-			DWN_CORE_WARN("Error parsing '{0}': '{0}'", InMetaData->Name, Importer.GetErrorString());
+			DWN_CORE_ERROR("Assimp Load error {0}", Importer.GetErrorString());
+			return INVALID_HANDLE;
 		}
 
+		Model* model = new Model();
+		model->Id.Index = (u32)ResourceTable::ResourceCount(ResourceType_Model);
+		model->Id.IsValid = true;
+		model->Id.Generation = 0;
+		model->FileId = InMetaData->Id;
 
-		return INVALID_HANDLE;
+		RS_ProcessMeshNode(model, scene->mRootNode, scene);
+		
+		if (!ResourceTable::TrackResource(ResourceType_Model, model))
+		{
+			delete model;
+			return INVALID_HANDLE;
+		}
+		
+		Id.IsValid = true;
+		Id.Generation = 0;
+
+		return Id;
 	}
 
 	ShaderHandle RS_LoadShader(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InMetaData)

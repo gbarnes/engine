@@ -10,10 +10,12 @@ namespace Dawn
 	typedef GenericHandle ShaderHandle;
 	typedef GenericHandle GfxResourceViewHandle;
 	typedef GenericHandle ImageHandle;
+	typedef GenericHandle ModelHandle;
 
 	enum ResourceType
 	{
 		ResourceType_None,
+		ResourceType_Model,
 		ResourceType_Shader,
 		ResourceType_Material,
 		ResourceType_StaticMesh,
@@ -23,11 +25,20 @@ namespace Dawn
 		ResourceType_Count
 	};
 
-	struct DAWN_API Submesh
+
+	struct DAWN_API Mesh
 	{
+		MeshHandle Id;
 		const char* Name;
-		u128 NumOfIndices;
-		u32 StartIndex;
+		GfxResId VertexArrayId;
+		u32 NumIndices;
+		u32 NumVertices;
+		std::vector<MaterialHandle> Materials;
+
+		GfxVertexArray* GetGfxResource()
+		{
+			return GfxGDI::Get()->GetVertexArray(VertexArrayId);
+		}
 	};
 
 	struct DAWN_API Shader
@@ -49,24 +60,23 @@ namespace Dawn
 		ShaderHandle ShaderId;
 	};
 
-	struct DAWN_API Mesh
+	struct DAWN_API Model
 	{
-		MeshHandle Id;
+		ModelHandle Id;
 		FileHandle FileId;
-		GfxResId VertexArray;
-		std::vector<Submesh> Submeshes;
+		std::vector<MeshHandle> Meshes;
 		std::vector<MaterialHandle> Materials;
-		u32 NumIndices;
-		u32 NumVertices;
 
-		GfxVertexArray* GetResource()
+		/*std::shared_ptr<Mesh> GetMesh(u32 Index)
 		{
-			return GfxGDI::Get()->GetVertexArray(VertexArray);
-		}
-	};
+			auto id = Meshes[Index];
+			return ResourceTable::GetMesh(id);
+		}*/
 
-	struct DAWN_API AnimatedMesh : public Mesh
-	{
+		/*std::shared_ptr<Material> GetMaterial(u32 Index)
+		{
+			return ResourceTable::GetMaterial(Materials[Index]);
+		}*/
 	};
 
 	struct DAWN_API Image
@@ -77,7 +87,6 @@ namespace Dawn
 		u32 Width;
 		u32 Height;
 		u16 ChannelsPerPixel;
-		u32 GDI_TextureId;
 		GfxResId TextureId;
 
 		GfxTexture* GetResource()

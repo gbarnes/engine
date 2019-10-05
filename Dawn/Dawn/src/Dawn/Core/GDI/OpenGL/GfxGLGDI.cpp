@@ -2,6 +2,7 @@
 #include "inc_core.h"
 #include "GLShaders.h"
 #include "GLTexture.h"
+#include "GLImmediatePrimitives.h"
 //#ifdef USE_OPENGL_GFX
 
 namespace Dawn
@@ -84,6 +85,8 @@ namespace Dawn
 		}
 
 		DWN_CORE_INFO("OpenGL ({0}.{1}) GDI initialized!", GLVersion.major, GLVersion.minor);
+		
+		glEnable(GL_DEPTH_TEST);
 
 		return true;
 	}
@@ -95,6 +98,8 @@ namespace Dawn
 
 	void GfxGLGDI::Shutdown()
 	{
+		GfxImmediatePrimitives::Clear();
+
 		this->VertexArrayPool.Clear();
 		this->VertexBufferPool.Clear();
 		this->IndexBufferPool.Clear();
@@ -113,9 +118,20 @@ namespace Dawn
 		if (vertexArray)
 		{
 			vertexArray->Bind();
-			glDrawElements(GL_TRIANGLES, vertexArray->GetIndexBufferSize(), GL_UNSIGNED_SHORT, 0);
+			glDrawElements(GL_TRIANGLES, vertexArray->GetIndexBufferSize(), GL_UNSIGNED_INT, 0);
 			vertexArray->Unbind();
 		}
+	}
+
+	void GfxGLGDI::Clear()
+	{
+		glClearColor(ClearColor.r, ClearColor.g, ClearColor.b, ClearColor.a);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
+
+	void GfxGLGDI::SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom)
+	{
+		glViewport(InLeft, InTop, InRight, InBottom);
 	}
 
 	/*void GfxGLGDI::DrawLine(u32 First, u32 Count)
@@ -136,7 +152,7 @@ namespace Dawn
 	}
 
 
-	GfxResId GfxGLGDI::CreateIndexBuffer(u16* Indices, u32 Size, GfxIndexBuffer** OutBuffer)
+	GfxResId GfxGLGDI::CreateIndexBuffer(u32* Indices, u32 Size, GfxIndexBuffer** OutBuffer)
 	{
 		IndexBufferBundle* Bundle = IndexBufferPool.Request();
 		Bundle->Element = new GLIndexBuffer(Indices, Size, Bundle->GetId());

@@ -12,12 +12,11 @@ namespace Dawn
 {
 	static ResourceType GetResourceTypeFromExtension(std::string InExtension)
 	{
-		
 		if (InExtension == ".obj")
-			return ResourceType_StaticMesh;
+			return ResourceType_Model;
 
 		if (InExtension == ".fbx")
-			return ResourceType_AnimatedMesh;
+			return ResourceType_Model;
 
 		if (InExtension == ".jpg" || InExtension == ".png" || InExtension == ".bmp" || InExtension == ".PNG")
 			return ResourceType_Image;
