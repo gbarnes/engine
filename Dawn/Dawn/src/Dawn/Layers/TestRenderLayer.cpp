@@ -171,6 +171,8 @@ namespace Dawn
 		auto shaderRes = shader->GetResource();
 		if (shaderRes)
 		{
+			auto GDI = GfxGDI::Get();
+
 			shaderRes->Bind();
 
 			// set pojection
@@ -178,7 +180,8 @@ namespace Dawn
 			shaderRes->SetMat4("view", g_camera->GetView());
 			shaderRes->SetMat4("projection", g_camera->GetProjection());
 			
-			glActiveTexture(GL_TEXTURE0);
+			GDI->ActivateTextureSlot(0);
+	
 			shaderRes->SetInt("ourTexture", 0);
 
 			for (MeshHandle id : usedModel->Meshes)
@@ -187,8 +190,7 @@ namespace Dawn
 
 				auto mesh = ResourceTable::GetMesh(id);
 				if(mesh)
-					GfxGDI::Get()->DrawIndexed(mesh->VertexArrayId);
-
+					GDI->DrawIndexed(mesh->VertexArrayId);
 
 				diffuseTexture->GetResource()->Unbind();
 			}
@@ -197,9 +199,11 @@ namespace Dawn
 			shaderRes->Unbind();
 		}
 
+		GfxImmediatePrimitives::Get()->SetCamera(g_camera);
+		DrawGrid(vec3(0,0,0), vec3(1000, 1000, 1000));
 
-		DrawGrid(vec3(0,0,0), vec3(1000, 1000, 1000), g_camera);
-		DrawAxis(g_camera1, vec3(100, g_camera->Height - 100.0f, -100), vec3(75), g_camera->GetTransform()->Rotation);
+		GfxImmediatePrimitives::Get()->SetCamera(g_camera1);
+		DrawAxis(vec3(100, g_camera->Height - 100.0f, -100), vec3(75), g_camera->GetTransform()->Rotation);
 	}
 
 	void TestRenderLayer::Process()

@@ -71,6 +71,7 @@ namespace Dawn
 								Settings.AlphaBits);
 
 		this->Window->OnWindowPaint = std::bind(&Application::Tick, this); 
+		this->Window->OnWindowResize = std::bind(&Application::Resize, this, std::placeholders::_1, std::placeholders::_2);
 
 		if (Result != EResult_OK)
 		{
@@ -172,6 +173,25 @@ namespace Dawn
 		CameraUtils::CalculateOthographic(Cam1);
 
 		GfxImmediatePrimitives::Get()->AllocateBuffers();
+	}
+
+	void Application::Resize(int width, int height)
+	{
+		g_Camera->Width = width;
+		g_Camera->Height = height;
+		g_Camera->AspectRatio = (float)width / (float)height;
+		CameraUtils::CalculatePerspective(g_Camera);
+
+		auto cam = GetWorld()->GetCamera(1);
+		cam->Width = width;
+		cam->Height = height;
+		cam->AspectRatio = (float)width / (float)height;
+		CameraUtils::CalculateOthographic(cam);
+
+		Settings.Width = width;
+		Settings.Height = height;
+
+		DWN_CORE_INFO("Resizing Window to {0}x{1}!", width, height);
 	}
 
 	void Application::Tick()

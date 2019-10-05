@@ -54,6 +54,8 @@ namespace Dawn
 		virtual void Tick();
 		virtual void Load();
 
+		virtual void Resize(int width, int height);
+
 		void PushLayer(Layer* InLayer);
 		void PopLayer(Layer* InLayer);
 		void ClearLayers();

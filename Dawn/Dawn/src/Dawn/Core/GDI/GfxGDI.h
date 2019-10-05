@@ -136,6 +136,7 @@ namespace Dawn
 		virtual void Shutdown() = 0;
 
 	public:
+		virtual void ActivateTextureSlot(u32 InIndex) = 0;
 		virtual void DrawIndexed(GfxResId InVertexArrayId) = 0;
 		void SetClearColor(const vec4& InColor);
 		virtual void SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom) = 0;

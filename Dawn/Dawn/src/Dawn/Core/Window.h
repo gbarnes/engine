@@ -14,6 +14,7 @@ namespace Dawn
 	public:
 		std::function<void()> OnWindowPaint;
 		std::function<void()> OnWindowProcHook;
+		std::function<void(int, int)> OnWindowResize;
 
 		Window();
 		~Window(void);

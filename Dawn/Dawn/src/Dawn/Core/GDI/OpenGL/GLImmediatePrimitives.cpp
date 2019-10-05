@@ -51,7 +51,7 @@ namespace Dawn
 
 	}
 
-	void GLImmediatePrimitives::Line(Camera* InCamera, const vec3& InStart, const vec3& InEnd, const vec4& InColor, const mat4& InTransformation)
+	void GLImmediatePrimitives::Line(const vec3& InStart, const vec3& InEnd, const vec4& InColor, const mat4& InTransformation)
 	{
 		glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 		glEnable(GL_LINE_SMOOTH);
@@ -59,8 +59,8 @@ namespace Dawn
 		PrimitiveShader->Bind();
 		// set pojection
 		PrimitiveShader->SetMat4("model", InTransformation);
-		PrimitiveShader->SetMat4("view", InCamera->GetView());
-		PrimitiveShader->SetMat4("projection", InCamera->GetProjection());
+		PrimitiveShader->SetMat4("view", Camera->GetView());
+		PrimitiveShader->SetMat4("projection", Camera->GetProjection());
 		PrimitiveShader->SetVec4("myColor", InColor);
 
 		auto vertexArray = GfxGDI::Get()->GetVertexArray(RayVertexArrayId);
@@ -84,7 +84,7 @@ namespace Dawn
 		glDisable(GL_LINE_SMOOTH);
 	}
 
-	void GLImmediatePrimitives::Axis(Camera* InCamera, const vec3& InPosition, const vec3& InScale, const quat& InOrientation)
+	void GLImmediatePrimitives::Axis(const vec3& InPosition, const vec3& InScale, const quat& InOrientation)
 	{
 		mat4 transformation = glm::translate(mat4(1), InPosition) * glm::mat4_cast(InOrientation) * glm::scale(mat4(1), InScale);
 
@@ -94,8 +94,8 @@ namespace Dawn
 		PrimitiveShader->Bind();
 
 		PrimitiveShader->SetMat4("model", transformation);
-		PrimitiveShader->SetMat4("view", InCamera->GetView());
-		PrimitiveShader->SetMat4("projection", InCamera->GetProjection());
+		PrimitiveShader->SetMat4("view", Camera->GetView());
+		PrimitiveShader->SetMat4("projection", Camera->GetProjection());
 		
 
 		auto vertexArray = GfxGDI::Get()->GetVertexArray(RayVertexArrayId);
@@ -157,7 +157,7 @@ namespace Dawn
 		glDisable(GL_LINE_SMOOTH);
 	}
 	
-	void GLImmediatePrimitives::Grid(const vec3& InPosition, const vec3& InScale, Camera* InCamera)
+	void GLImmediatePrimitives::Grid(const vec3& InPosition, const vec3& InScale)
 	{
 		mat4 trans(1);
 		trans = glm::translate(trans, InPosition) *
@@ -177,8 +177,8 @@ namespace Dawn
 
 		// set pojection
 		GridShader->SetMat4("model", trans);
-		GridShader->SetMat4("view", InCamera->GetView());
-		GridShader->SetMat4("projection", InCamera->GetProjection());
+		GridShader->SetMat4("view", Camera->GetView());
+		GridShader->SetMat4("projection", Camera->GetProjection());
 		GfxGDI::Get()->DrawIndexed(GridVertexArrayId);
 
 		if (GridTexture)
@@ -193,7 +193,7 @@ namespace Dawn
 
 	}
 
-	void GLImmediatePrimitives::DrawRay(Camera* InCamera, const Ray& InRay, float InLength, const vec4& InColor, const mat4& model)
+	void GLImmediatePrimitives::DrawRay(const Ray& InRay, float InLength, const vec4& InColor, const mat4& model)
 	{
 
 	}

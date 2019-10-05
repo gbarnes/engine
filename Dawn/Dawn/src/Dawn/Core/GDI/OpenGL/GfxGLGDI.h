@@ -14,6 +14,7 @@ namespace Dawn
 		void Present();
 		void Shutdown();
 	public:
+		void ActivateTextureSlot(u32 InIndex) override;
 		void DrawIndexed(GfxResId VertexArrayId) override;
 		void Clear() override;
 		void SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom) override;

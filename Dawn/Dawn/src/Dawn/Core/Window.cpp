@@ -119,6 +119,9 @@ namespace Dawn
 	//
 	void Window::ToggleFullscreen()
 	{
+		u32 NewWidth = 0;
+		u32 NewHeight = 0;
+
 		IsFullscreen = !IsFullscreen;
 		if (IsFullscreen) // Switching to fullscreen.
 		{
@@ -146,6 +149,9 @@ namespace Dawn
 				monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
 				SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
+			NewWidth = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
+			NewHeight = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
+
 			::ShowWindow(HWnd, SW_MAXIMIZE);
 		}
 		else
@@ -160,8 +166,14 @@ namespace Dawn
 				WindowRect.bottom - WindowRect.top,
 				SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
+			NewWidth = WindowRect.right - WindowRect.left;
+			NewHeight = WindowRect.bottom - WindowRect.top;
+
 			::ShowWindow(HWnd, SW_NORMAL);
 		}
+
+		if (OnWindowResize != nullptr)
+			OnWindowResize(NewWidth, NewHeight);
 	}
 
 
@@ -207,6 +219,14 @@ namespace Dawn
 
 			int width = clientRect.right - clientRect.left;
 			int height = clientRect.bottom - clientRect.top;
+
+			Window* window = (Window*)GetProp(hwnd, L"Window");
+			if (NULL != window)
+			{
+				if (window->OnWindowResize != nullptr)
+					window->OnWindowResize(width, height);
+			}
+
 			// TODO resize method here!
 			//ImGuiWrapper::Resize(); //DO we really need this?! 
 			break;

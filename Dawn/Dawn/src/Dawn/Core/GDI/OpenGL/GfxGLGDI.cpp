@@ -134,6 +134,11 @@ namespace Dawn
 		glViewport(InLeft, InTop, InRight, InBottom);
 	}
 
+	void GfxGLGDI::ActivateTextureSlot(u32 InIndex)
+	{
+		glActiveTexture(GL_TEXTURE0 + InIndex);
+	}
+
 	/*void GfxGLGDI::DrawLine(u32 First, u32 Count)
 	{
 		glDrawArrays(GL_LINE_STRIP, First, Count);
