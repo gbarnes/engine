@@ -26,9 +26,11 @@ namespace Dawn
 		static ShaderHandle Grid;
 	};
 
+	class ResourceSystem;
+
 	namespace RenderResourceHelper
 	{
-		void LoadCommonShaders();
+		void LoadCommonShaders(ResourceSystem* InResourceSystem);
 		void CreateCommonPipelineStates();
 	}
 }

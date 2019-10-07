@@ -4,9 +4,8 @@
 
 namespace Dawn
 {
-	Transform* Entity::GetTransform()
+	Transform* Entity::GetTransform(World* InWorld)
 	{
-		auto world = World::Get();
-		return world->GetComponentByEntity<Transform>(Id);
+		return InWorld->GetComponentByEntity<Transform>(Id);
 	}
 }

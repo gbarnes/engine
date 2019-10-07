@@ -32,16 +32,11 @@ namespace Dawn
 	#define BIND_FS_LOADER(x) std::bind(&x, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
 
 	
-	class DAWN_API ResourceSystem : public EObject
+	class DAWN_API ResourceSystem
 	{
 	public:
 		ResourceSystem();
 		~ResourceSystem();
-
-		inline static RefPtr<ResourceSystem> Get()
-		{
-			return RefPtr<ResourceSystem>(Locator::Get<ResourceSystem>(ResourceSystemId));
-		}
 
 		bool Initialize(std::string InPath, std::vector<std::string> InFilter);
 		void Shutdown();
@@ -62,7 +57,5 @@ namespace Dawn
 	
 		bool IsValidFilter(std::string& InExtension);
 	};
-
-	typedef RefPtr<ResourceSystem> FileSystemPtr;
 
 }

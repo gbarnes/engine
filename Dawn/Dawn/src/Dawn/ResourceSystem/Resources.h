@@ -34,11 +34,6 @@ namespace Dawn
 		u32 NumIndices;
 		u32 NumVertices;
 		std::vector<MaterialHandle> Materials;
-
-		GfxVertexArray* GetGfxResource()
-		{
-			return GfxGDI::Get()->GetVertexArray(VertexArrayId);
-		}
 	};
 
 	struct DAWN_API Shader
@@ -46,11 +41,6 @@ namespace Dawn
 		ShaderHandle Id;
 		FileHandle FileId;
 		GfxResId ResourceId;
-
-		GfxShader* GetResource()
-		{
-			return GfxGDI::Get()->GetShader(ResourceId);
-		}
 	};
 
 	struct DAWN_API Material
@@ -58,6 +48,14 @@ namespace Dawn
 		FileHandle HandleToFile;
 		MaterialHandle Id;
 		ShaderHandle ShaderId;
+
+		// todo: make this more generic but for now we will store all the data we need in
+		// this material instead of having a more flexible system depending on the material. 
+
+		vec4 DiffuseColor;
+		vec4 SpecularColor;
+		vec4 AmbientColor;
+		float Shinieness;
 	};
 
 	struct DAWN_API Model
@@ -66,17 +64,6 @@ namespace Dawn
 		FileHandle FileId;
 		std::vector<MeshHandle> Meshes;
 		std::vector<MaterialHandle> Materials;
-
-		/*std::shared_ptr<Mesh> GetMesh(u32 Index)
-		{
-			auto id = Meshes[Index];
-			return ResourceTable::GetMesh(id);
-		}*/
-
-		/*std::shared_ptr<Material> GetMaterial(u32 Index)
-		{
-			return ResourceTable::GetMaterial(Materials[Index]);
-		}*/
 	};
 
 	struct DAWN_API Image
@@ -88,10 +75,5 @@ namespace Dawn
 		u32 Height;
 		u16 ChannelsPerPixel;
 		GfxResId TextureId;
-
-		GfxTexture* GetResource()
-		{
-			return GfxGDI::Get()->GetTexture(TextureId);
-		}
 	};
 }

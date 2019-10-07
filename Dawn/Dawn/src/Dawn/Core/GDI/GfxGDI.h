@@ -2,6 +2,7 @@
 #include "inc_common.h"
 #include "Core/Logging/Log.h"
 #include "GfxResource.h"
+#include "GfxImmediatePrimitives.h"
 
 namespace Dawn
 {
@@ -48,7 +49,7 @@ namespace Dawn
 
 		GfxResourceBundle<T>* Request()
 		{
-			/*if (Resources.size() > FreeId.Index)
+			if (Resources.size() > FreeId.Index)
 			{
 				auto& Bundle = Resources[FreeId.Index];
 				if (!Bundle.IsValid()) 
@@ -56,7 +57,7 @@ namespace Dawn
 					Bundle.Id.Generation++;
 					return &Bundle;
 				}
-			}*/
+			}
 
 			GfxResourceBundle<T> Bundle;
 			Bundle.Id.Index = (u32)(Resources.size() - 1);
@@ -117,17 +118,9 @@ namespace Dawn
 		std::vector<GfxResourceBundle<T>> Resources;
 	};
 
-
-	class GfxImmediatePrimitives;
-
-	class DAWN_API GfxGDI
+	class DAWN_API GfxGDI : public std::enable_shared_from_this<GfxGDI>
 	{
 	public:
-		inline static GfxGDI* Get()
-		{
-			return Instance;
-		}
-
 		static GfxGDI* Create();
 
 		virtual bool Init(const AppSettings& InSettings) = 0;
@@ -177,12 +170,18 @@ namespace Dawn
 			return TexturePool.Get(InId);
 		}
 
+		inline GfxImmediatePrimitives* GetPrimitiveHelper()
+		{
+			return Primitives.get();
+		}
+
 		void ReturnVertexBuffer(GfxResId InId);
 		void ReturnIndexBuffer(GfxResId InId);
 		void ReturnVertexArray(GfxResId InId);
 		void ReturnShader(GfxResId InId);
 
 	protected:
+		Unique<GfxImmediatePrimitives> Primitives;
 		GfxResourcePool<GfxVertexBuffer> VertexBufferPool;
 		GfxResourcePool<GfxIndexBuffer> IndexBufferPool;
 		GfxResourcePool<GfxVertexArray> VertexArrayPool;
@@ -190,7 +189,7 @@ namespace Dawn
 		GfxResourcePool<GfxTexture> TexturePool;
 
 		vec4 ClearColor = vec4(1, 0, 0, 1);
-	private:
-		static GfxGDI* Instance;
 	};
+
+	typedef std::shared_ptr<GfxGDI> GfxGDIPtr;
 }

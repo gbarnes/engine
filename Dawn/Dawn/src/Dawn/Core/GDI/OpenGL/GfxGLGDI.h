@@ -18,6 +18,7 @@ namespace Dawn
 		void DrawIndexed(GfxResId VertexArrayId) override;
 		void Clear() override;
 		void SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom) override;
+
 	public:
 		GfxResId CreateVertexBuffer(float* Vertices, u32 Size, GfxVertexBuffer** OutBuffer) override;
 		GfxResId CreateIndexBuffer(u32* Indices, u32 Size, GfxIndexBuffer** OutBuffer) override;
@@ -26,7 +27,7 @@ namespace Dawn
 		GfxResId CreateTexture(u8* Data, u32 Width, u32 Height, u16 ChannelsPerPixel, GfxWrapDesc Wrap,
 			GfxFilterDesc Filter, bool GenerateMipMaps, GfxTexture** OutTexture) override;
 
-	private:
+	protected:
 		HWND HwnD;
 		HDC hDC;
 		HGLRC hRC;

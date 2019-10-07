@@ -26,7 +26,7 @@ namespace Dawn
 	void RS_ProcessMeshNode(Model* InModel, aiNode* InNode, const aiScene* InScene)
 	{
 		const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
-		auto GDI = GfxGDI::Get();
+		auto GDI = g_Application->GetGDI();
 
 		for (u32 i = 0; i < InNode->mNumMeshes; ++i)
 		{
@@ -96,6 +96,16 @@ namespace Dawn
 			VertexArray->SetIndexBuffer(IndexBuffer);
 
 			mesh->VertexArrayId = VertexArrayId;
+
+			// Creating Material
+			if (InScene->HasMaterials())
+			{
+				auto aiMaterial = InScene->mMaterials[aiMesh->mMaterialIndex];
+				
+				aiColor4D diffuseColor = aiColor4D(1, 1, 1, 1);
+				aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_DIFFUSE, &diffuseColor);
+				DWN_CORE_INFO("diffuse color: {0}, {1}, {2}, {3}", diffuseColor.r, diffuseColor.g, diffuseColor.b, diffuseColor.a);
+			}
 
 			if (!ResourceTable::TrackResource(ResourceType_StaticMesh, mesh))
 			{
@@ -185,7 +195,7 @@ namespace Dawn
 		shader->Id.Generation = 0;
 
 		GfxShader* ResourceShader;
-		shader->ResourceId = GfxGDI::Get()->CreateShader(&ResourceShader);
+		shader->ResourceId = g_Application->GetGDI()->CreateShader(&ResourceShader);
 
 		std::vector<u32> shadersToDelete;
 		for (auto step : doc.child("shader").children())

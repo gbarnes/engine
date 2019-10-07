@@ -11,15 +11,11 @@ namespace Dawn
 	class WorldSimulateLayer : public Layer
 	{
 	public:
-		WorldSimulateLayer();
+		WorldSimulateLayer(Shared<Dawn::Application> InApplication);
 		~WorldSimulateLayer();
 
 		virtual void Setup();
 		virtual void Process();
 		virtual void Free();
-
-	private:
-		RefPtr<PhysicsWorld> Physics;
-		RefPtr<World> World;
 	};
 }

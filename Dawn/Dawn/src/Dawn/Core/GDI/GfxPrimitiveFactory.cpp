@@ -2,7 +2,7 @@
 
 namespace Dawn
 {
-	GfxVertexArray* GfxPrimitiveFactory::AllocateGrid()
+	GfxVertexArray* GfxPrimitiveFactory::AllocateGrid(GfxGDI* InGDI)
 	{
 		float GridVertices[4 * 5] = {
 		-0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
@@ -16,10 +16,8 @@ namespace Dawn
 			1, 2, 3   // second Triangle
 		};
 
-		auto GDI = GfxGDI::Get();
-
 		GfxVertexArray* GridArray;
-		GDI->CreateVertexArray(&GridArray);
+		InGDI->CreateVertexArray(&GridArray);
 
 		GfxBufferLayout Layout =
 		{
@@ -28,23 +26,22 @@ namespace Dawn
 		};
 
 		GfxVertexBuffer* VertexBuffer;
-		GDI->CreateVertexBuffer(GridVertices, sizeof(GridVertices), &VertexBuffer);
+		InGDI->CreateVertexBuffer(GridVertices, sizeof(GridVertices), &VertexBuffer);
 		VertexBuffer->SetLayout(Layout);
 		GridArray->AttachVertexBuffer(VertexBuffer);
 
 		GfxIndexBuffer* IndexBuffer;
-		GDI->CreateIndexBuffer(GridIndices, sizeof(GridIndices) / sizeof(u32), &IndexBuffer);
+		InGDI->CreateIndexBuffer(GridIndices, sizeof(GridIndices) / sizeof(u32), &IndexBuffer);
 
 		GridArray->SetIndexBuffer(IndexBuffer);
 
 		return GridArray;
 	}
 
-	GfxVertexArray* GfxPrimitiveFactory::AllocateLine()
+	GfxVertexArray* GfxPrimitiveFactory::AllocateLine(GfxGDI* InGDI)
 	{
-		auto GDI = GfxGDI::Get();
 		GfxVertexArray* LineArray;
-		GDI->CreateVertexArray(&LineArray);
+		InGDI->CreateVertexArray(&LineArray);
 
 		float LineVertices[2 * 3] = {
 			0, 0, 0, 
@@ -57,7 +54,7 @@ namespace Dawn
 		};
 
 		GfxVertexBuffer* VertexBuffer;
-		GDI->CreateVertexBuffer(LineVertices, sizeof(LineVertices), &VertexBuffer);
+		InGDI->CreateVertexBuffer(LineVertices, sizeof(LineVertices), &VertexBuffer);
 		VertexBuffer->SetLayout(Layout);
 		LineArray->AttachVertexBuffer(VertexBuffer);
 

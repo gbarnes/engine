@@ -30,10 +30,9 @@ namespace Dawn
 		vec4 ClearColor = { 0.4f, 0.6f, 0.9f, 1.0f };
 		vec3 WorldUp = {0.0f,1.0f,0.0f};
 
-		Transform* GetTransform()
+		Transform* GetTransform(World* InWorld)
 		{
-			auto world = World::Get();
-			return world->GetComponentByEntity<Transform>(this->Id.Entity);
+			return InWorld->GetComponentByEntity<Transform>(this->Id.Entity);
 		}
 
 		const mat4& GetProjection() const 
@@ -54,21 +53,19 @@ namespace Dawn
 	//
 	// Helper function to get a camera from the world!
 	//
-	static Camera* GetCamera(u32 i)
+	static Camera* GetCamera(World* InWorld, u32 i)
 	{
-		auto world = GetWorld();
-		return world->GetCamera(i);
+		return InWorld->GetCamera(i);
 	};
 
 	//
 	// Helper function to create a new camera at the world!
 	//
-	static Camera* CreateCamera(std::string&& InName, u32 Width, u32 Height,
+	static Camera* CreateCamera(World* InWorld, std::string&& InName, u32 Width, u32 Height,
 		float InNearZ, float InFarZ, float InFoV, vec4 InClearColor, 
 		const vec3& InPosition = vec3(0), const quat& InOrientation = quat())
 	{
-		auto world = GetWorld();
-		return world->CreateCamera(InName, Width, Height, InNearZ, InFarZ, InFoV, InClearColor, InPosition, InOrientation);
+		return InWorld->CreateCamera(InName, Width, Height, InNearZ, InFarZ, InFoV, InClearColor, InPosition, InOrientation);
 	};
 
 	class CameraUtils

@@ -24,40 +24,45 @@
 #define USE_OPENGL_GFX
 #include "Core/GDI/inc_gfx.h"
 
-
 namespace Dawn
 {
+	Shared<Application> g_Application = nullptr;
+
 	SEventHandle g_MouseMovedEvtHandle, g_MousePressedHandle, g_MouseReleasedHandle;
 	uint64_t Application::FrameCount = 0;
+
+	AppSettings* Application::GetSettings()
+	{
+		assert(g_Application != nullptr);
+		return &g_Application->Settings;
+	}
 
 	Application::Application(AppSettings& InSettings)
 	{
 		this->Settings = InSettings;
 		Window = std::make_unique<Dawn::Window>();
-		Locator::Add(AppLocatorId, this);
 	}
 
 	Application::~Application()
 	{
-		Locator::Remove(AppLocatorId);
 	}
 
 	void Application::Run()
 	{
+		ResourceSystem = std::make_shared<Dawn::ResourceSystem>();
 		// Resource System initialization
-		if (!ResourceSystem.Initialize("E:/Git/engine/Dawn/Assets/", { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx" }))
+		if (!ResourceSystem->Initialize("E:/Git/engine/Dawn/Assets/", { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx" }))
 		{
 			DWN_CORE_ERROR("Couldn't initialize resource system");
 			system("pause");
 			return;
 		}
 
-		ResourceSystem.AddRef();
-		ResourceSystem.RegisterLoader(ResourceType_Model, BIND_FS_LOADER(Dawn::RS_LoadModel));
-		ResourceSystem.RegisterLoader(ResourceType_Shader, BIND_FS_LOADER(Dawn::RS_LoadShader));
-		ResourceSystem.RegisterLoader(ResourceType_Image, BIND_FS_LOADER(Dawn::RS_LoadImage));
+		ResourceSystem->RegisterLoader(ResourceType_Model, BIND_FS_LOADER(Dawn::RS_LoadModel));
+		ResourceSystem->RegisterLoader(ResourceType_Shader, BIND_FS_LOADER(Dawn::RS_LoadShader));
+		ResourceSystem->RegisterLoader(ResourceType_Image, BIND_FS_LOADER(Dawn::RS_LoadImage));
 
-		if (!ResourceSystem.BuildDatabase())
+		if (!ResourceSystem->BuildDatabase())
 		{
 			DWN_CORE_ERROR("Couldn't build database for resource system");
 			system("pause");
@@ -88,8 +93,8 @@ namespace Dawn
 		}
 		Settings.Hwnd = Window->GetHwnd();
 
-		GfxGDI::Create();
-		if (!GfxGDI::Get()->Init(Settings))
+		this->GDI = GfxGDIPtr(GfxGDI::Create());
+		if (!this->GDI->Init(Settings))
 		{
 			DWN_CORE_ERROR("Couldn't initialize GDI!\n");
 			system("pause");
@@ -131,8 +136,8 @@ namespace Dawn
 
 		ClearLayers();
 		Physics->Shutdown();
-		GfxGDI::Get()->Shutdown();
-		ResourceSystem.Shutdown();
+		GDI->Shutdown();
+		ResourceSystem->Shutdown();
 		JobSystem::Shutdown();
 
 		DWN_CORE_INFO("Core Context shutdown.");
@@ -143,7 +148,7 @@ namespace Dawn
 
 	void Application::Load()
 	{
-		RenderResourceHelper::LoadCommonShaders();
+		RenderResourceHelper::LoadCommonShaders(ResourceSystem.get());
 
 		// Boot up World!
 		World = std::make_unique<Dawn::World>();
@@ -151,7 +156,8 @@ namespace Dawn
 		World->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
 		World->AddSystem(std::make_unique<RigidbodySystem>());
 		
-		g_Camera = CreateCamera("Cam0", 
+		g_Camera = CreateCamera(GetWorld().get(), 
+									"Cam0", 
 									Settings.Width, 
 									Settings.Height, 
 									0.1f, 10000.0f, 65.0f, 
@@ -161,7 +167,8 @@ namespace Dawn
 		
 		CameraUtils::CalculatePerspective(g_Camera);
 
-		auto Cam1 = CreateCamera("Cam1",
+		auto Cam1 = CreateCamera(GetWorld().get(), 
+					"Cam1",
 					Settings.Width,
 					Settings.Height,
 					0.0f, 10000.0f, 65.0f,
@@ -172,7 +179,16 @@ namespace Dawn
 
 		CameraUtils::CalculateOthographic(Cam1);
 
-		GfxImmediatePrimitives::Get()->AllocateBuffers();
+		auto Id = ResourceSystem->LoadFile("Textures/grid.png");
+		if (auto GridImage = ResourceTable::GetImage(Id))
+		{
+			GDI->GetPrimitiveHelper()->AllocateBuffers
+			(
+				GridImage.get(), 
+				ResourceTable::GetShader(CommonShaderHandles::DebugPrim).get(),
+				ResourceTable::GetShader(EditorShaderHandles::Grid).get()
+			);
+		}
 	}
 
 	void Application::Resize(int width, int height)
@@ -204,8 +220,6 @@ namespace Dawn
 		
 		Clock.Tick();
 
-		auto GDI = GfxGDI::Get();
-
 		GDI->SetViewport(0, 0, Settings.Width, Settings.Height);
 		GDI->SetClearColor(g_Camera->ClearColor);
 		GDI->Clear();
@@ -223,9 +237,9 @@ namespace Dawn
 	{
 		LayerInsertCount = Layers.begin();
 
-		this->PushLayer(new ImGuiLayer(Window->GetHwnd()));
-		this->PushLayer(new TestRenderLayer());
-		this->PushLayer(new WorldSimulateLayer());
+		this->PushLayer(new ImGuiLayer(this->shared_from_this(), Window->GetHwnd()));
+		this->PushLayer(new TestRenderLayer(this->shared_from_this()));
+		this->PushLayer(new WorldSimulateLayer(this->shared_from_this()));
 
 		for (Layer* layer : Layers)
 			layer->Setup();

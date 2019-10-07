@@ -3,13 +3,13 @@
 
 namespace Dawn
 {
-	std::vector<std::shared_ptr<Model>> ResourceTable::Models;
-	std::vector<std::shared_ptr<Mesh>> ResourceTable::Meshes;
-	std::vector<std::shared_ptr<Material>> ResourceTable::Materials;
-	std::vector<std::shared_ptr<Shader>> ResourceTable::Shaders;
-	std::vector<std::shared_ptr<Image>> ResourceTable::Images;
+	std::vector<Shared<Model>> ResourceTable::Models;
+	std::vector<Shared<Mesh>> ResourceTable::Meshes;
+	std::vector<Shared<Material>> ResourceTable::Materials;
+	std::vector<Shared<Shader>> ResourceTable::Shaders;
+	std::vector<Shared<Image>> ResourceTable::Images;
 
-	std::shared_ptr<Model> ResourceTable::GetModel(ModelHandle InHandle)
+	Shared<Model> ResourceTable::GetModel(ModelHandle InHandle)
 	{
 		if (Models.size() == 0)
 			return std::make_shared<Model>();
@@ -22,7 +22,7 @@ namespace Dawn
 	}
 
 
-	std::shared_ptr<Mesh> ResourceTable::GetMesh(MeshHandle InHandle)
+	Shared<Mesh> ResourceTable::GetMesh(MeshHandle InHandle)
 	{
 		if (Meshes.size() == 0)
 			return std::make_shared<Mesh>();
@@ -34,7 +34,7 @@ namespace Dawn
 		return Meshes[index];
 	}
 
-	std::shared_ptr<Shader> ResourceTable::GetShader(const ShaderHandle& InHandle)
+	Shared<Shader> ResourceTable::GetShader(const ShaderHandle& InHandle)
 	{
 		if (Shaders.size() == 0)
 			return std::make_shared<Shader>();
@@ -46,7 +46,7 @@ namespace Dawn
 		return Shaders[index];
 	}
 
-	std::shared_ptr<Image> ResourceTable::GetImage(ImageHandle InHandle)
+	Shared<Image> ResourceTable::GetImage(ImageHandle InHandle)
 	{
 		if (Images.size() == 0)
 			return std::make_shared<Image>();
@@ -71,25 +71,25 @@ namespace Dawn
 	bool ResourceTable::TrackResource(ResourceType InType, void* InResource)
 	{
 		if (InType == ResourceType_Model) {
-			auto modelPtr = std::shared_ptr<Model>(static_cast<Model*>(InResource));
+			auto modelPtr = Shared<Model>(static_cast<Model*>(InResource));
 			Models.emplace_back(modelPtr);
 			return true;
 		}
 		
 		if (InType == ResourceType_StaticMesh) {
-			auto meshPtr = std::shared_ptr<Mesh>(static_cast<Mesh*>(InResource));
+			auto meshPtr = Shared<Mesh>(static_cast<Mesh*>(InResource));
 			Meshes.emplace_back(meshPtr);
 			return true;
 		}
 
 		if (InType == ResourceType_Shader) {
-			auto shaderPtr = std::shared_ptr<Shader>(static_cast<Shader*>(InResource));
+			auto shaderPtr = Shared<Shader>(static_cast<Shader*>(InResource));
 			Shaders.emplace_back(shaderPtr);
 			return true;
 		}
 
 		if (InType == ResourceType_Image) {
-			auto imagePtr = std::shared_ptr<Image>(static_cast<Image*>(InResource));
+			auto imagePtr = Shared<Image>(static_cast<Image*>(InResource));
 			Images.emplace_back(imagePtr);
 			return true;
 		}
@@ -110,7 +110,7 @@ namespace Dawn
 			auto end = Models.end();
 
 			auto it = std::find_if(begin, end,
-				[InResource](std::shared_ptr<Model> n) -> bool {return n->FileId == InResource; });
+				[InResource](Shared<Model> n) -> bool {return n->FileId == InResource; });
 
 			if (it != end)
 				Id = it->get()->Id;
@@ -122,7 +122,7 @@ namespace Dawn
 			auto end = Shaders.end();
 
 			auto it = std::find_if(begin, end,
-				[InResource](std::shared_ptr<Shader> n) -> bool {return n->FileId == InResource; });
+				[InResource](Shared<Shader> n) -> bool {return n->FileId == InResource; });
 
 			if (it != end)
 				Id = it->get()->Id;
@@ -133,7 +133,7 @@ namespace Dawn
 			auto end = Images.end();
 
 			auto it = std::find_if(begin, end,
-				[InResource](std::shared_ptr<Image> n) -> bool {return n->FileId == InResource; });
+				[InResource](Shared<Image> n) -> bool {return n->FileId == InResource; });
 
 			if (it != end)
 				Id = it->get()->Id;

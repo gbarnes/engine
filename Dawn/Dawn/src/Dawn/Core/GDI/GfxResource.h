@@ -4,6 +4,7 @@
 
 namespace Dawn
 {
+	class GfxGDI;
 
 	class GfxResource
 	{
@@ -171,8 +172,8 @@ namespace Dawn
 		virtual void Unbind() = 0;
 		virtual void AttachVertexBuffer(GfxVertexBuffer* InBuffer) = 0;
 		virtual void SetIndexBuffer(GfxIndexBuffer* InBuffer) = 0;
-		virtual GfxVertexBuffer* GetVertexBuffer(u32 InIndex) = 0;
-		virtual GfxIndexBuffer* GetIndexBuffer() = 0;
+		virtual GfxVertexBuffer* GetVertexBuffer(GfxGDI* GDI, u32 InIndex) = 0;
+		virtual GfxIndexBuffer* GetIndexBuffer(GfxGDI* GDI) = 0;
 		virtual void SetName(std::string Name) = 0;
 	};
 

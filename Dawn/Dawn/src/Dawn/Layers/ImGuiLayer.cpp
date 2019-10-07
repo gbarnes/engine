@@ -2,12 +2,15 @@
 #include "Vendor/ImGui/ImGuiWrapper.h"
 #include "UI/Editor/imgui_editor_functions.h"
 #include "imgui.h"
+#include "Application.h"
 
 namespace Dawn
 {
-	ImGuiLayer::ImGuiLayer(HWND InWindowHandle)
-		: WindowHandle(InWindowHandle)
+
+	ImGuiLayer::ImGuiLayer(const Shared<Dawn::Application>& InApplication, HWND InWindowHandle)
+		: WindowHandle(InWindowHandle), Layer(InApplication)
 	{
+		this->Application = InApplication;
 	}
 
 	ImGuiLayer::~ImGuiLayer()

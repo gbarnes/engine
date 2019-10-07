@@ -10,6 +10,8 @@ namespace Dawn
 	class TestRenderLayer : public Layer
 	{
 	public:
+		TestRenderLayer(Shared<Dawn::Application> InApplication);
+
 		void Setup();
 		void Update();
 		void Render();

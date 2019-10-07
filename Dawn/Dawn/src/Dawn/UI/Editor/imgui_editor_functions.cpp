@@ -9,16 +9,17 @@
 #include "EntitySystem/Camera/Camera.h"
 #include "ResourceSystem/Resources.h"
 #include "ResourceSystem/ResourceSystem.h"
+#include "Application.h"
 
 namespace Dawn 
 {
-	ResourceSystem* g_ResourceSystem = nullptr;
+	Shared<ResourceSystem> g_ResourceSystem = nullptr;
 	std::vector<FileMetaData> g_MetaData;
 	bool g_showAssetBrowser = false;
 	void ShowAssetBrowserWindow()
 	{
 		if(g_ResourceSystem == nullptr)
-			g_ResourceSystem = ResourceSystem::Get();
+			g_ResourceSystem = g_Application->GetResourceSystem();
 
 		if(g_MetaData.size() == 0)
 			g_MetaData = g_ResourceSystem->GetAllMetaFiles();
@@ -79,7 +80,7 @@ namespace Dawn
 
 		ShowEntity(g_SelectedEntity);
 
-		auto world = World::Get();
+		auto world = g_Application->GetWorld();
 		auto components = world->GetComponentTypesByEntity(g_SelectedEntity->Id);
 		for (auto component : components)
 		{
@@ -95,7 +96,7 @@ namespace Dawn
 	bool g_ShowSceneWindow = false;
 	void ShowSceneWindow()
 	{
-		auto world = World::Get();
+		auto world = g_Application->GetWorld();
 		auto transforms = world->GetComponentsByType<Transform>();
 
 		ImGui::Begin("Scene", &g_ShowSceneWindow);

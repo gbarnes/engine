@@ -8,12 +8,10 @@ namespace Dawn
 
 	PhysicsWorld::PhysicsWorld()
 	{
-		Locator::Add(PhysicsWorldId, this);
 	}
 
 	PhysicsWorld::~PhysicsWorld()
 	{
-		Locator::Remove(PhysicsWorldId);
 	}
 
 	bool PhysicsWorld::Initialize()

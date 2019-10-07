@@ -154,24 +154,20 @@ namespace Dawn
 		this->Indices = InBuffer->GetId();
 	}
 
-	u32 GLVertexArray::GetIndexBufferSize()
-	{
-		return GetIndexBuffer()->GetSize();
-	}
 
 	void GLVertexArray::SetName(std::string Name)
 	{
 		
 	}
 
-	GfxVertexBuffer* GLVertexArray::GetVertexBuffer(u32 InIndex)
+	GfxVertexBuffer* GLVertexArray::GetVertexBuffer(GfxGDI* InGDI, u32 InIndex)
 	{
 		auto Id = this->Vertices[InIndex];
-		return GfxGDI::Get()->GetVertexBuffer(Id);
+		return InGDI->GetVertexBuffer(Id);
 	}
 
-	GfxIndexBuffer* GLVertexArray::GetIndexBuffer()
+	GfxIndexBuffer* GLVertexArray::GetIndexBuffer(GfxGDI* InGDI)
 	{
-		return GfxGDI::Get()->GetIndexBuffer(this->Indices);
+		return InGDI->GetIndexBuffer(this->Indices);
 	}
 }

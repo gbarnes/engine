@@ -30,12 +30,10 @@ namespace Dawn
 	ResourceSystem::ResourceSystem()
 		: WorkingSpace("")
 	{
-		Locator::Add(ResourceSystemId, this);
 	}
 
 	ResourceSystem::~ResourceSystem()
 	{
-		Locator::Remove(ResourceSystemId);
 	}
 
 	void ResourceSystem::Shutdown()

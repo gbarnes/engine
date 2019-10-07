@@ -2,8 +2,9 @@
 #include "../inc_gfx.h"
 #include "glad.h"
 #include "EntitySystem/Camera/Camera.h"
-#include "ResourceSystem/ResourceSystem.h"
+#include "ResourceSystem/Resources.h"
 #include "Rendering/RenderResourceHelper.h"
+#include "../GfxGDI.h"
 
 namespace Dawn
 {
@@ -12,38 +13,37 @@ namespace Dawn
 	GfxShader* PrimitiveShader;
 	GfxShader* GridShader;
 
-	void GLImmediatePrimitives::AllocateBuffers()
+	GLImmediatePrimitives::GLImmediatePrimitives(Shared<GfxGDI> InGDI)
+		: GfxImmediatePrimitives(InGDI)
 	{
-		auto GDI = GfxGDI::Get();
+	}
 
+	void GLImmediatePrimitives::AllocateBuffers(Image* InGridImage, Shader* InPrimitiveShader, Shader* InGridShader)
+	{
 		// Textured-Grid Allocation
 		{
-			GridVertexArrayId = GfxPrimitiveFactory::AllocateGrid()->GetId();
+			GridVertexArrayId = GfxPrimitiveFactory::AllocateGrid(GDI.get())->GetId();
 
-			auto rs = ResourceSystem::Get();
-			auto imageId = rs->LoadFile("Textures/grid.png");
-			if (imageId.IsValid)
+			if (InGridImage)
 			{
-				auto imageResource = ResourceTable::GetImage(imageId);
-				if (imageResource)
-				{
-					GDI->CreateTexture
-					(
-						imageResource->Pixels,
-						imageResource->Width,
-						imageResource->Height,
-						imageResource->ChannelsPerPixel,
-						{ GL_REPEAT, GL_REPEAT }, { GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR },
-						true,
-						&GridTexture
-					);
-				}
+				GDI->CreateTexture
+				(
+					InGridImage->Pixels,
+					InGridImage->Width,
+					InGridImage->Height,
+					InGridImage->ChannelsPerPixel,
+					{ GL_REPEAT, GL_REPEAT }, { GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR },
+					true,
+					&GridTexture
+				);
 			}
 		}
 
-		RayVertexArrayId = GfxPrimitiveFactory::AllocateLine()->GetId();
-		PrimitiveShader = ResourceTable::GetShader(CommonShaderHandles::DebugPrim)->GetResource();
-		GridShader = ResourceTable::GetShader(EditorShaderHandles::Grid)->GetResource();
+		RayVertexArrayId = GfxPrimitiveFactory::AllocateLine(GDI.get())->GetId();
+
+		// Note (gb): this might be better off passing as an argument, too!
+		PrimitiveShader = GDI->GetShader(InPrimitiveShader->ResourceId);
+		GridShader = GDI->GetShader(InGridShader->ResourceId);
 	}
 		
 	void GLImmediatePrimitives::Box()
@@ -63,7 +63,7 @@ namespace Dawn
 		PrimitiveShader->SetMat4("projection", Camera->GetProjection());
 		PrimitiveShader->SetVec4("myColor", InColor);
 
-		auto vertexArray = GfxGDI::Get()->GetVertexArray(RayVertexArrayId);
+		auto vertexArray = GDI->GetVertexArray(RayVertexArrayId);
 		if (vertexArray)
 		{
 			float vertices[] = {
@@ -71,7 +71,7 @@ namespace Dawn
 				InEnd.x, InEnd.y, InEnd.z
 			};
 
-			auto VertexBuffer = vertexArray->GetVertexBuffer(0);
+			auto VertexBuffer = vertexArray->GetVertexBuffer(GDI.get(), 0);
 			VertexBuffer->Reset(vertices, sizeof(vertices));
 			
 
@@ -98,7 +98,7 @@ namespace Dawn
 		PrimitiveShader->SetMat4("projection", Camera->GetProjection());
 		
 
-		auto vertexArray = GfxGDI::Get()->GetVertexArray(RayVertexArrayId);
+		auto vertexArray = GDI->GetVertexArray(RayVertexArrayId);
 		if (vertexArray)
 		{
 			// X Axis
@@ -110,7 +110,7 @@ namespace Dawn
 					1, 0, 0,
 				};
 
-				auto VertexBuffer = vertexArray->GetVertexBuffer(0);
+				auto VertexBuffer = vertexArray->GetVertexBuffer(GDI.get(), 0);
 				VertexBuffer->Reset(vertices, sizeof(vertices));
 
 				vertexArray->Bind();
@@ -127,7 +127,7 @@ namespace Dawn
 					0, 0, 1,
 				};
 
-				auto VertexBuffer = vertexArray->GetVertexBuffer(0);
+				auto VertexBuffer = vertexArray->GetVertexBuffer(GDI.get(), 0);
 				VertexBuffer->Reset(vertices, sizeof(vertices));
 
 				vertexArray->Bind();
@@ -144,7 +144,7 @@ namespace Dawn
 					0, 1, 0,
 				};
 
-				auto VertexBuffer = vertexArray->GetVertexBuffer(0);
+				auto VertexBuffer = vertexArray->GetVertexBuffer(GDI.get(), 0);
 				VertexBuffer->Reset(vertices, sizeof(vertices));
 
 				vertexArray->Bind();
@@ -179,7 +179,7 @@ namespace Dawn
 		GridShader->SetMat4("model", trans);
 		GridShader->SetMat4("view", Camera->GetView());
 		GridShader->SetMat4("projection", Camera->GetProjection());
-		GfxGDI::Get()->DrawIndexed(GridVertexArrayId);
+		GDI->DrawIndexed(GridVertexArrayId);
 
 		if (GridTexture)
 			GridTexture->Unbind();

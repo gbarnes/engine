@@ -5,6 +5,7 @@ namespace Dawn
 {
 	typedef GenericHandle EntityId;
 	struct Transform;
+	class World;
 
 	struct DAWN_API Entity
 	{
@@ -12,6 +13,6 @@ namespace Dawn
 		std::string Name;
 		bool PersistsThroughLoad = false;
 
-		Transform* GetTransform();
+		Transform* GetTransform(World* InWorld);
 	};
 }

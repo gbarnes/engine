@@ -5,11 +5,12 @@
 
 namespace Dawn
 {
+	class Application;
 
 	class ImGuiLayer : public Layer
 	{
 	public:
-		ImGuiLayer(HWND InWindowHandle);
+		ImGuiLayer(const Shared<Dawn::Application>& InApplication, HWND InWindowHandle);
 		~ImGuiLayer();
 		
 		void Setup();

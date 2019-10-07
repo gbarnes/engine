@@ -4,6 +4,8 @@
 
 namespace Dawn
 {
+	class GfxGDI;
+
 	class GLVertexBuffer : public GfxVertexBuffer
 	{
 	public:
@@ -57,16 +59,13 @@ namespace Dawn
 		void AttachVertexBuffer(GfxVertexBuffer* InBuffer) override;
 		void SetIndexBuffer(GfxIndexBuffer* InBuffer) override;
 		void SetName(std::string Name) override;
-		GfxVertexBuffer* GetVertexBuffer(u32 InIndex) override;
-		GfxIndexBuffer* GetIndexBuffer() override;
+		GfxVertexBuffer* GetVertexBuffer(GfxGDI* InGDI, u32 InIndex) override;
+		GfxIndexBuffer* GetIndexBuffer(GfxGDI* InGDI) override;
 
 		u32 GetInternalId() const
 		{
 			return RendererId;
 		}
-
-		u32 GetIndexBufferSize();
-
 
 	private:
 		u32 VertexBufferIndex = 0;

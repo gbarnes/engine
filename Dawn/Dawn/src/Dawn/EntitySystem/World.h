@@ -16,16 +16,11 @@ namespace Dawn
 	class BaseComponentTable;
 	struct Camera;
 
-	class DAWN_API World : public EObject
+	class DAWN_API World
 	{
 	public:
 		World();
 		~World();
-
-		inline static RefPtr<World> Get()
-		{
-			return RefPtr<World>(Locator::Get<World>("World"));
-		}
 
 	public:
 		std::vector<std::string> GetComponentTypesByEntity(EntityId& InEntity);
@@ -138,10 +133,4 @@ namespace Dawn
 			return static_cast<ComponentTable<T>*>(ComponentTables[index].get());
 		}
 	};
-
-
-	inline RefPtr<World> GetWorld()
-	{
-		return World::Get();
-	}
 }

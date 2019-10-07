@@ -11,12 +11,12 @@
 
 namespace Dawn
 {
-	std::shared_ptr<Shader> pixelShader;
-	std::shared_ptr<Shader> vertexShader;
-	std::shared_ptr<Model> usedModel;
-	std::shared_ptr<Image> diffuseTexture;
+	Shared<Shader> pixelShader;
+	Shared<Shader> vertexShader;
+	Shared<Model> usedModel;
+	Shared<Image> DiffuseImage;
 
-	RefPtr<World> g_World;
+	Shared<World> g_World;
 	Camera* g_camera;
 	Camera* g_camera1;
 	Transform* g_camTransform;
@@ -28,25 +28,32 @@ namespace Dawn
 	float pitch = 0.0f;
 	vec3 right = vec3(1.0f, 0.0f, 0.0f), forward = vec3(0.0f, 0.0f, -1.0f), up = vec3(0.0f, 1.0f, 0.0f);
 
+	TestRenderLayer::TestRenderLayer(Shared<Dawn::Application> InApplication)
+		: Layer(InApplication)
+	{
+
+	}
+
 	void TestRenderLayer::Setup()
 	{
-		auto GDI = GfxGDI::Get();
-		RefPtr<ResourceSystem> rs(ResourceSystem::Get());
+		auto GDI = Application->GetGDI();
+		auto World = Application->GetWorld();
+		auto RS = Application->GetResourceSystem();
 
 		// mesh loading
 		{
-			auto handle = rs->LoadFile("Model/spaceCraft1.fbx");
+			auto handle = RS->LoadFile("Model/spaceCraft1.fbx");
 			if (handle.IsValid)
 			{
 				usedModel = ResourceTable::GetModel(handle);
 			}
 		}
 
-		auto imageId = rs->LoadFile("Textures/crate0_diffuse.PNG");
+		auto imageId = RS->LoadFile("Textures/crate0_diffuse.PNG");
 		if (imageId.IsValid)
 		{
-			diffuseTexture = ResourceTable::GetImage(imageId);
-			auto imagePtr = diffuseTexture.get();
+			DiffuseImage = ResourceTable::GetImage(imageId);
+			auto imagePtr = DiffuseImage.get();
 
 			// note (gb): I'm not sure yet if the texture id should be connected to the image
 			imagePtr->TextureId = GDI->CreateTexture(imagePtr->Pixels,
@@ -58,14 +65,14 @@ namespace Dawn
 			//CopyImagesToGPU({ &imagePtr }, 1, { GL_REPEAT, GL_REPEAT }, { GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR });
 		}
 
-		g_World = World::Get();
+		g_World = World;
 
 		g_camera = g_World->GetCamera(0);
-		g_camTransform = g_camera->GetTransform();
+		g_camTransform = g_camera->GetTransform(World.get());
 		CameraUtils::CalculateView(g_camera, g_camTransform);
 
 		g_camera1 = g_World->GetCamera(1);
-		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform());
+		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(World.get()));
 	}
 
 	quat rotation;
@@ -148,62 +155,56 @@ namespace Dawn
 		TransformUtils::Rotate(g_camTransform, rot);
 
 		CameraUtils::CalculateView(g_camera, g_camTransform);
-		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform());
+		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(g_World.get()));
 	}
 
 	void TestRenderLayer::Render()
 	{
 		BROFILER_CATEGORY("RenderLayer_Render", Brofiler::Color::AliceBlue);
 
-		if (usedModel == nullptr)
-			return;
+		auto GDI = Application->GetGDI();
+		auto Primitives = GDI->GetPrimitiveHelper();
 
-		if (!CommonShaderHandles::Debug.IsValid)
-			return;
-
-		
-		//glCullFace(GL_BACK);
-		//glFrontFace(GL_CW);
-
-		auto shader = ResourceTable::GetShader(CommonShaderHandles::Debug);
-		assert(shader != nullptr);
-
-		auto shaderRes = shader->GetResource();
-		if (shaderRes)
+		if (usedModel != nullptr && CommonShaderHandles::Debug.IsValid)
 		{
-			auto GDI = GfxGDI::Get();
+			auto shader = ResourceTable::GetShader(CommonShaderHandles::Debug);
+			assert(shader != nullptr);
 
-			shaderRes->Bind();
-
-			// set pojection
-			shaderRes->SetMat4("model", Model);
-			shaderRes->SetMat4("view", g_camera->GetView());
-			shaderRes->SetMat4("projection", g_camera->GetProjection());
-			
-			GDI->ActivateTextureSlot(0);
-	
-			shaderRes->SetInt("ourTexture", 0);
-
-			for (MeshHandle id : usedModel->Meshes)
+			auto shaderRes = GDI->GetShader(shader->ResourceId);
+			if (shaderRes)
 			{
-				diffuseTexture->GetResource()->Bind();
+				shaderRes->Bind();
 
-				auto mesh = ResourceTable::GetMesh(id);
-				if(mesh)
-					GDI->DrawIndexed(mesh->VertexArrayId);
+				// set pojection
+				shaderRes->SetMat4("model", Model);
+				shaderRes->SetMat4("view", g_camera->GetView());
+				shaderRes->SetMat4("projection", g_camera->GetProjection());
 
-				diffuseTexture->GetResource()->Unbind();
+				GDI->ActivateTextureSlot(0);
+
+				shaderRes->SetInt("ourTexture", 0);
+
+				for (MeshHandle id : usedModel->Meshes)
+				{
+					auto DiffuseTexture = GDI->GetTexture(DiffuseImage->TextureId);
+					DiffuseTexture->Bind();
+
+					auto mesh = ResourceTable::GetMesh(id);
+					if (mesh)
+						GDI->DrawIndexed(mesh->VertexArrayId);
+
+					DiffuseTexture->Unbind();
+				}
+
+				shaderRes->Unbind();
 			}
-
-
-			shaderRes->Unbind();
 		}
 
-		GfxImmediatePrimitives::Get()->SetCamera(g_camera);
-		DrawGrid(vec3(0,0,0), vec3(1000, 1000, 1000));
+		Primitives->SetCamera(g_camera);
+		Primitives->Grid(vec3(0, 0, 0), vec3(1000, 1000, 1000));
 
-		GfxImmediatePrimitives::Get()->SetCamera(g_camera1);
-		DrawAxis(vec3(100, g_camera->Height - 100.0f, -100), vec3(75), g_camera->GetTransform()->Rotation);
+		Primitives->SetCamera(g_camera1);
+		Primitives->Axis(vec3(100, g_camera->Height - 100.0f, -100), vec3(75), g_camera->GetTransform(g_World.get())->Rotation);
 	}
 
 	void TestRenderLayer::Process()

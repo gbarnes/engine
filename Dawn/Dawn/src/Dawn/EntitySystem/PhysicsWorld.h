@@ -9,16 +9,12 @@ using namespace physx;
 
 namespace Dawn
 {
-	class DAWN_API PhysicsWorld : public EObject
+	class DAWN_API PhysicsWorld
 	{
 	public:
 		PhysicsWorld();
 		~PhysicsWorld();
 
-		inline static RefPtr<PhysicsWorld> Get()
-		{
-			return RefPtr<PhysicsWorld>(Locator::Get<PhysicsWorld>(PhysicsWorldId));
-		}
 	public:
 		bool Initialize();
 		void Shutdown();

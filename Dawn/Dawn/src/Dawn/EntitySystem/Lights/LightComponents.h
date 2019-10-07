@@ -33,7 +33,7 @@ namespace Dawn
 	class LightUtils
 	{
 	public:
-		static DirectionalLight*CreateDirectionalLight(vec3 InPosition, quat InOrientation, vec4 InColor);
+		static DirectionalLight* CreateDirectionalLight(World* InWorld, vec3 InPosition, quat InOrientation, vec4 InColor);
 		static PointLight* CreatePointLight(vec3 InPosition, vec4 InColor, float InRange);
 		static SpotLight* CreateSpotLight(vec3 InPosition, quat InOrientation, vec4 InColor, float InAngle, float InRange);
 	};

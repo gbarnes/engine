@@ -7,7 +7,7 @@ namespace Dawn
 	class GameplayLayer : public Layer
 	{
 	public:
-		GameplayLayer(HWND InWindowHandle);
+		GameplayLayer(const Shared<Dawn::Application>& InApplication, HWND InWindowHandle);
 		~GameplayLayer();
 
 		virtual void Setup();

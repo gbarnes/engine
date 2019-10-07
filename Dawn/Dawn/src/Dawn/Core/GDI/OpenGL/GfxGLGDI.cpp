@@ -88,6 +88,8 @@ namespace Dawn
 		
 		glEnable(GL_DEPTH_TEST);
 
+		Primitives = std::make_unique<GLImmediatePrimitives>(GLImmediatePrimitives(this->shared_from_this()));
+
 		return true;
 	}
 
@@ -98,8 +100,6 @@ namespace Dawn
 
 	void GfxGLGDI::Shutdown()
 	{
-		GfxImmediatePrimitives::Clear();
-
 		this->VertexArrayPool.Clear();
 		this->VertexBufferPool.Clear();
 		this->IndexBufferPool.Clear();
@@ -118,7 +118,7 @@ namespace Dawn
 		if (vertexArray)
 		{
 			vertexArray->Bind();
-			glDrawElements(GL_TRIANGLES, vertexArray->GetIndexBufferSize(), GL_UNSIGNED_INT, 0);
+			glDrawElements(GL_TRIANGLES, vertexArray->GetIndexBuffer(this)->GetSize(), GL_UNSIGNED_INT, 0);
 			vertexArray->Unbind();
 		}
 	}

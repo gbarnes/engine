@@ -11,42 +11,59 @@
 
 namespace Dawn
 {
-
 	class GfxGDI;
 	class Event;
 	class ResourceSystem;
 	class PhysicsWorld;
 
-	class DAWN_API Application : public EObject
+
+	class DAWN_API Application : public std::enable_shared_from_this<Application>
 	{
 	public:
 		Application(AppSettings& InSettings);
 		virtual ~Application();
 		void Run();
 
-		inline static RefPtr<Application> Get()
-		{
-			return RefPtr<Application>(Locator::Get<Application>(AppLocatorId));
-		}
-
-		inline static AppSettings* GetSettings()
-		{
-			return &Get()->Settings;
-		}
+		static AppSettings* GetSettings();
 
 		static uint64_t GetFrameCount()
 		{
 			return FrameCount;
 		}
 
+		Shared<GfxGDI> GetGDI()
+		{
+			return GDI;
+		}
+		
+		Shared<World> GetWorld()
+		{
+			return World;
+		}
+
+		Shared<PhysicsWorld> GetPhysics()
+		{
+			return Physics;
+		}
+
+		Shared<ResourceSystem> GetResourceSystem()
+		{
+			return ResourceSystem;
+		}
+
+		Window* GetWindow() const
+		{
+			return Window.get();
+		}
+
 	protected:
-		std::unique_ptr<GfxGDI> GDI;
-		std::unique_ptr<World> World;
-		std::unique_ptr<Window> Window;
-		std::unique_ptr<PhysicsWorld> Physics;
+		Shared<GfxGDI> GDI;
+		Shared<World> World;
+		Shared<ResourceSystem> ResourceSystem;
+		Shared<PhysicsWorld> Physics;
+		Unique<Window> Window;
 
 		physx::PxFoundation* Physx;
-		ResourceSystem ResourceSystem;
 		AppSettings Settings;
 		Timer Clock;
 
@@ -70,9 +87,9 @@ namespace Dawn
 		static uint64_t FrameCount;
 	};
 
-	typedef RefPtr<Application> ReferenceAppPtr;
-
 	Application* CreateApplication();
+
+	extern DAWN_API Shared<Application> g_Application;
 }
 
 

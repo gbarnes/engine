@@ -1,9 +1,11 @@
 #include "WorldSimulateLayer.h"
 #include "EntitySystem/RigidBody/RigidbodySystem.h"
+#include "Application.h"
 
 namespace Dawn
 {
-	WorldSimulateLayer::WorldSimulateLayer()
+	WorldSimulateLayer::WorldSimulateLayer(Shared<Dawn::Application> InApplication)
+		: Layer(InApplication)
 	{
 	}
 
@@ -13,16 +15,12 @@ namespace Dawn
 
 	void WorldSimulateLayer::Setup()
 	{
-		Physics = PhysicsWorld::Get();
-		Physics->AddRef();
-
-		World = World::Get();
-		World->AddRef();
 	}
 
 	void WorldSimulateLayer::Process()
 	{
-		auto scene = Physics->GetScene();
+		auto scene = Application->GetPhysics()->GetScene();
+		auto world = Application->GetWorld();
 		auto time = Timer::GetTime();
 
 		if (scene) 
@@ -30,16 +28,14 @@ namespace Dawn
 			scene->simulate(time.GetDeltaSeconds());
 			scene->fetchResults(true);
 		}
-
+		
 		// process rigidbodys
-		auto system = World->GetSystemByType<RigidbodySystem>(RigidbodySystem::GetType());
+		auto system = world->GetSystemByType<RigidbodySystem>(RigidbodySystem::GetType());
 		if(system)
-			system->Update(World.Get());
+			system->Update(world.get());
 	}
 
 	void WorldSimulateLayer::Free()
-	{
-		World->Release();
-		Physics->Release(); 	
+	{ 	
 	}
 }
