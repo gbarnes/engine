@@ -7,19 +7,23 @@
 #include "Rendering/RenderResourceHelper.h"
 #include "EntitySystem/Camera/Camera.h"
 #include "EntitySystem/Transform/Transform.h"
+#include "EntitySystem/Lights/LightComponents.h"
+#include "EntitySystem/Entity.h"
 #include "imgui.h"
 
 namespace Dawn
 {
-	Shared<Shader> pixelShader;
-	Shared<Shader> vertexShader;
-	Shared<Model> usedModel;
-	Shared<Image> DiffuseImage;
+	Shader* pixelShader;
+	Shader* vertexShader;
+	Model* usedModel;
+	Image* DiffuseImage;
 
 	Shared<World> g_World;
 	Camera* g_camera;
 	Camera* g_camera1;
 	Transform* g_camTransform;
+
+	EntityId DirectionalLightId;
 
 	vec3 tempTarget = vec3(0, 0, -1);
 	float lastX, lastY = 0.0f;
@@ -36,33 +40,24 @@ namespace Dawn
 
 	void TestRenderLayer::Setup()
 	{
-		auto GDI = Application->GetGDI();
-		auto World = Application->GetWorld();
-		auto RS = Application->GetResourceSystem();
+		const auto GDI = Application->GetGDI();
+		const auto World = Application->GetWorld();
+		const auto RS = Application->GetResourceSystem();
 
 		// mesh loading
 		{
 			auto handle = RS->LoadFile("Model/spaceCraft1.fbx");
 			if (handle.IsValid)
 			{
-				usedModel = ResourceTable::GetModel(handle);
+				usedModel = RS->FindModel(handle);
 			}
 		}
 
 		auto imageId = RS->LoadFile("Textures/crate0_diffuse.PNG");
 		if (imageId.IsValid)
 		{
-			DiffuseImage = ResourceTable::GetImage(imageId);
-			auto imagePtr = DiffuseImage.get();
-
-			// note (gb): I'm not sure yet if the texture id should be connected to the image
-			imagePtr->TextureId = GDI->CreateTexture(imagePtr->Pixels,
-				imagePtr->Width, 
-				imagePtr->Height, 
-				imagePtr->ChannelsPerPixel, 
-				{ GL_REPEAT, GL_REPEAT }, { GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR }, true, nullptr);
-
-			//CopyImagesToGPU({ &imagePtr }, 1, { GL_REPEAT, GL_REPEAT }, { GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR });
+			DiffuseImage = RS->FindImage(imageId);
+			auto imagePtr = DiffuseImage;
 		}
 
 		g_World = World;
@@ -73,6 +68,9 @@ namespace Dawn
 
 		g_camera1 = g_World->GetCamera(1);
 		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(World.get()));
+
+		auto Light = LightUtils::CreateDirectionalLight(World.get(), quat(), vec4(0.9, 0.9, 0.9, 1.0f));
+		DirectionalLightId = Light->Id.Entity;
 	}
 
 	quat rotation;
@@ -81,8 +79,8 @@ namespace Dawn
 	{
 		// This is pretty wasteful for performance since we get the camera and transform 
 		// each frame! 
-		auto time = static_cast<float>(Timer::GetTime().GetTotalSeconds());
-		auto timeDelta = static_cast<float>(Timer::GetTime().GetDeltaSeconds());
+		const auto time = static_cast<float>(Timer::GetTime().GetTotalSeconds());
+		const auto timeDelta = static_cast<float>(Timer::GetTime().GetDeltaSeconds());
 		float angle = time * 90.0f;
 		vec3 rotationAxis(0, 1, 0);
 		
@@ -162,41 +160,63 @@ namespace Dawn
 	{
 		BROFILER_CATEGORY("RenderLayer_Render", Brofiler::Color::AliceBlue);
 
-		auto GDI = Application->GetGDI();
-		auto Primitives = GDI->GetPrimitiveHelper();
+		const auto GDI = Application->GetGDI();
+		const auto World = Application->GetWorld();
+		const auto ResourceSystem = Application->GetResourceSystem();
+		const auto Primitives = GDI->GetPrimitiveHelper();
 
-		if (usedModel != nullptr && CommonShaderHandles::Debug.IsValid)
+		if (usedModel != nullptr && CommonShaderHandles::Standard.IsValid)
 		{
-			auto shader = ResourceTable::GetShader(CommonShaderHandles::Debug);
-			assert(shader != nullptr);
+			const auto ShaderResource = ResourceSystem->FindShader(CommonShaderHandles::Standard);
+			assert(ShaderResource != nullptr);
 
-			auto shaderRes = GDI->GetShader(shader->ResourceId);
-			if (shaderRes)
+			const auto Shader = GDI->GetShader(ShaderResource->ResourceId);
+			if (Shader)
 			{
-				shaderRes->Bind();
+				Shader->Bind();
 
 				// set pojection
-				shaderRes->SetMat4("model", Model);
-				shaderRes->SetMat4("view", g_camera->GetView());
-				shaderRes->SetMat4("projection", g_camera->GetProjection());
+				Shader->SetMat4("model", Model);
+				Shader->SetMat4("view", g_camera->GetView());
+				Shader->SetMat4("projection", g_camera->GetProjection());
 
-				GDI->ActivateTextureSlot(0);
 
-				shaderRes->SetInt("ourTexture", 0);
+				// Get the directional light
+				auto LightTransform = World->GetComponentByEntity<Transform>(DirectionalLightId);
+				auto Light = World->GetComponentByEntity<DirectionalLight>(DirectionalLightId);
+				
+				Shader->SetVec4("light.diffuse", Light->Color);
+				Shader->SetVec3("light.position", LightTransform->Position);
 
-				for (MeshHandle id : usedModel->Meshes)
+				//GDI->ActivateTextureSlot(0);
+
+				//Shader->SetInt("ourTexture", 0);
+
+				for (const auto &id : usedModel->Meshes)
 				{
-					auto DiffuseTexture = GDI->GetTexture(DiffuseImage->TextureId);
-					DiffuseTexture->Bind();
+					//auto DiffuseTexture = GDI->GetTexture(DiffuseImage->TextureId);
+					//DiffuseTexture->Bind();
 
-					auto mesh = ResourceTable::GetMesh(id);
-					if (mesh)
-						GDI->DrawIndexed(mesh->VertexArrayId);
+					const auto Mesh = ResourceSystem->FindMesh(id);
+					if (Mesh)
+					{
+						for (const auto& MaterialId : Mesh->Materials)
+						{
+							const auto Material = ResourceSystem->FindMaterial(MaterialId);
 
-					DiffuseTexture->Unbind();
+							Shader->SetVec4("material.diffuse", Material->DiffuseColor);
+							Shader->SetVec4("material.ambient", Material->AmbientColor);
+							Shader->SetVec4("material.specular", Material->SpecularColor);
+							Shader->SetFloat("material.shininess", 1.0f);
+						}
+						
+						GDI->DrawIndexed(Mesh->VertexArrayId);
+					}
+
+					//DiffuseTexture->Unbind();
 				}
 
-				shaderRes->Unbind();
+				Shader->Unbind();
 			}
 		}
 

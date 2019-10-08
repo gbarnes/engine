@@ -16,14 +16,15 @@ namespace Dawn
 
 	struct CommonShaderHandles
 	{
-		static ShaderHandle Phong;
-		static ShaderHandle Debug;
-		static ShaderHandle DebugPrim;
+		static ResourceId Standard;
+		static ResourceId Phong;
+		static ResourceId Debug;
+		static ResourceId DebugPrim;
 	};
 
 	struct EditorShaderHandles
 	{
-		static ShaderHandle Grid;
+		static ResourceId Grid;
 	};
 
 	class ResourceSystem;

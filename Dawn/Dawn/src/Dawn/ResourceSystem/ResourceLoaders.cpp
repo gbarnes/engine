@@ -23,23 +23,21 @@
 namespace Dawn
 {
 
-	void RS_ProcessMeshNode(Model* InModel, aiNode* InNode, const aiScene* InScene)
+	void RS_ProcessMeshNode(ResourceSystem* InResourceSystem, Model* InModel, aiNode* InNode, const aiScene* InScene)
 	{
 		const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
-		auto GDI = g_Application->GetGDI();
+		const auto GDI = g_Application->GetGDI();
 
 		for (u32 i = 0; i < InNode->mNumMeshes; ++i)
 		{
 			const aiMesh* aiMesh = InScene->mMeshes[InNode->mMeshes[i]];
 
-			Mesh* mesh = new Mesh();
-			mesh->Id.Index = (u32)ResourceTable::ResourceCount(ResourceType_StaticMesh);
-			mesh->Id.Generation = 0;
-			mesh->Id.IsValid = true;
+			Mesh* Mesh;
+			InResourceSystem->CreateMesh(&Mesh);
 
-			mesh->Name = aiMesh->mName.C_Str();
-			mesh->NumIndices = aiMesh->mNumFaces * 3;
-			mesh->NumVertices = aiMesh->mNumVertices;
+			Mesh->Name = aiMesh->mName.C_Str();
+			Mesh->NumIndices = aiMesh->mNumFaces * 3;
+			Mesh->NumVertices = aiMesh->mNumVertices;
 			
 
 			std::vector<float> VertexData;
@@ -95,42 +93,59 @@ namespace Dawn
 			GDI->CreateIndexBuffer(&IndexData[0], IndexData.size(), &IndexBuffer);
 			VertexArray->SetIndexBuffer(IndexBuffer);
 
-			mesh->VertexArrayId = VertexArrayId;
+			Mesh->VertexArrayId = VertexArrayId;
 
 			// Creating Material
 			if (InScene->HasMaterials())
 			{
-				auto aiMaterial = InScene->mMaterials[aiMesh->mMaterialIndex];
+				Material* Material;
+				InResourceSystem->CreateMaterial(&Material);
+
+				const auto aiMaterial = InScene->mMaterials[aiMesh->mMaterialIndex];
 				
+				// TODO (gb): add texture loading and path handling, asset conversion to a custom binary format etc.
+				/*u32 diffuseTextureCount = aiGetMaterialTextureCount(aiMaterial, aiTextureType_DIFFUSE);
+				DWN_CORE_INFO("Diffuse Texture count: {0}", diffuseTextureCount);
+
+				aiString path;
+				aiGetMaterialTexture(aiMaterial, aiTextureType_DIFFUSE, 0, &path);
+				DWN_CORE_INFO("Texture Path: {0}", path.C_Str());*/
+
+
 				aiColor4D diffuseColor = aiColor4D(1, 1, 1, 1);
 				aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_DIFFUSE, &diffuseColor);
-				DWN_CORE_INFO("diffuse color: {0}, {1}, {2}, {3}", diffuseColor.r, diffuseColor.g, diffuseColor.b, diffuseColor.a);
+				Material->DiffuseColor = vec4(diffuseColor.r, diffuseColor.g, diffuseColor.b, diffuseColor.a);
+
+				aiColor4D specularColor = aiColor4D(1, 1, 1, 1);
+				aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_SPECULAR, &specularColor);
+				Material->SpecularColor = vec4(specularColor.r, specularColor.g, specularColor.b, specularColor.a);
+
+				aiColor4D ambientColor = aiColor4D(1, 1, 1, 1);
+				aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_SPECULAR, &specularColor);
+				Material->AmbientColor = vec4(ambientColor.r, ambientColor.g, ambientColor.b, ambientColor.a);
+
+				float shinieness = 0;
+				aiGetMaterialFloat(aiMaterial, AI_MATKEY_SHININESS, &shinieness);
+				Material->Shinieness = shinieness;
+
+				Mesh->Materials.push_back(Material->Id);
 			}
 
-			if (!ResourceTable::TrackResource(ResourceType_StaticMesh, mesh))
-			{
-				GDI->ReturnIndexBuffer(IndexBuffer->GetId());
-				GDI->ReturnVertexBuffer(VertexBuffer->GetId());
-				GDI->ReturnVertexArray(VertexArray->GetId());
-				delete mesh;
-				continue;
-			}
-
-			InModel->Meshes.push_back(mesh->Id);
+			InModel->Meshes.push_back(Mesh->Id);
 		}
 
 		for (u32 i = 0; i < InNode->mNumChildren; ++i)
 		{
-			RS_ProcessMeshNode(InModel, InNode->mChildren[i], InScene);
+			RS_ProcessMeshNode(InResourceSystem, InModel, InNode->mChildren[i], InScene);
 		}
 	}
 
 	//
 	// Loads a mesh with the assimp lib.
 	//
-	ModelHandle RS_LoadModel(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InMetaData)
+	ResourceId RS_LoadModel(ResourceSystem* InResourceSystem, std::string& InWorkspacePath, FileMetaData* InMetaData)
 	{
-		ModelHandle Id = ResourceTable::LookUpResource(InMetaData->Type, InMetaData->Id);
+		ResourceId Id = InResourceSystem->FindResourceIdFromFileId(InMetaData->Id);
 		if (Id.IsValid)
 			return Id;
 
@@ -147,31 +162,20 @@ namespace Dawn
 			return INVALID_HANDLE;
 		}
 
-		Model* model = new Model();
-		model->Id.Index = (u32)ResourceTable::ResourceCount(ResourceType_Model);
-		model->Id.IsValid = true;
-		model->Id.Generation = 0;
+		Model* model;
+		Id = InResourceSystem->CreateModel(&model);
 		model->FileId = InMetaData->Id;
 
-		RS_ProcessMeshNode(model, scene->mRootNode, scene);
-		
-		if (!ResourceTable::TrackResource(ResourceType_Model, model))
-		{
-			delete model;
-			return INVALID_HANDLE;
-		}
-		
-		Id.IsValid = true;
-		Id.Generation = 0;
+		RS_ProcessMeshNode(InResourceSystem, model, scene->mRootNode, scene);
 
 		return Id;
 	}
 
-	ShaderHandle RS_LoadShader(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InMetaData)
+	ResourceId RS_LoadShader(ResourceSystem* InResourceSystem, std::string& InWorkspacePath, FileMetaData* InMetaData)
 	{
-		ShaderHandle existingHandle = ResourceTable::LookUpResource(InMetaData->Type, InMetaData->Id);
-		if (existingHandle.IsValid)
-			return existingHandle;
+		ResourceId Id = InResourceSystem->FindResourceIdFromFileId(InMetaData->Id);
+		if (Id.IsValid)
+			return Id;
 
 		std::string combinedPath = ToFullFilePath(InWorkspacePath, InMetaData);
 
@@ -187,12 +191,10 @@ namespace Dawn
 			return INVALID_HANDLE;
 		}
 
-		Shader* shader = new Shader();
+		Shader* shader;
+		InResourceSystem->CreateShader(&shader);
+
 		shader->FileId = InMetaData->Id;
-		shader->Id = {};
-		shader->Id.Index = (u32)ResourceTable::ResourceCount(ResourceType_Shader);
-		shader->Id.IsValid = true;
-		shader->Id.Generation = 0;
 
 		GfxShader* ResourceShader;
 		shader->ResourceId = g_Application->GetGDI()->CreateShader(&ResourceShader);
@@ -207,18 +209,14 @@ namespace Dawn
 			ResourceShader->AttachSource(isPixelShader ? GfxShaderType::ST_Pixel : GfxShaderType::ST_Vertex, shaderBuffer);
 		}
 
-		if (!ResourceTable::TrackResource(ResourceType_Shader, shader))
-		{
-			delete shader;
-			return INVALID_HANDLE;
-		}
-
 		return shader->Id;
 	}
 
-	ImageHandle RS_LoadImage(ResourceSystem* InFS, std::string& InWorkspacePath, FileMetaData* InFile)
+	ResourceId RS_LoadImage(ResourceSystem* InResourceSystem, std::string& InWorkspacePath, FileMetaData* InFile)
 	{
-		ImageHandle Id = ResourceTable::LookUpResource(InFile->Type, InFile->Id);
+		const auto GDI = g_Application->GetGDI();
+
+		ResourceId Id = InResourceSystem->FindResourceIdFromFileId(InFile->Id);
 		if (Id.IsValid)
 			return Id;
 
@@ -230,27 +228,32 @@ namespace Dawn
 		if (data != nullptr)
 		{
 			stbi__vertical_flip(data, x, y, n);
-			Image* image = new Image;
+			Image* image;
+			Id = InResourceSystem->CreateImage(&image);
+
 			image->FileId = InFile->Id;
 			image->Width = x;
 			image->Height = y;
 			image->ChannelsPerPixel = n;
-			image->Pixels = data;
 
-			image->Id.Index = (u32)ResourceTable::ResourceCount(ResourceType_Image);
-			image->Id.IsValid = true;
-			image->Id.Generation = 0;
-
+			// these settings will later be filled by meta files
+			// associated to the file
+			image->TextureId = GDI->CreateTexture
+			(
+				data, // raw pixel data
+				x, // width of the image
+				y, // height of the image
+				n, // channels per pixel
+				{ GL_REPEAT, GL_REPEAT }, // wrap settings 
+				{ GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR }, // filter settings
+				true, // generate mip maps?
+				nullptr // the output pointer to the created texture!
+			);
 			
-			if (!ResourceTable::TrackResource(ResourceType_Image, image))
-			{
-				stbi_image_free(data);
-				delete image;
-				return ImageHandle();
-			}
+			// hm is it good to release the data...
+			stbi_image_free(data);
 
-			//stbi_image_free(data);
-			return image->Id;
+			return Id;
 		}
 		else
 		{

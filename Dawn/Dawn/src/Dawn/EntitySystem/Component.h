@@ -1,6 +1,7 @@
 #pragma once
 #include "inc_common.h"
 #include "Entity.h"
+#include "EntityTable.h"
 
 namespace Dawn
 {
@@ -30,7 +31,7 @@ namespace Dawn
 
 		const Entity* GetEntity()
 		{
-			return EntityTable::Get(Id.Entity);
+			return Dawn::EntityTable::Get(Id.Entity);
 		}
 	};
 }

@@ -26,16 +26,7 @@ namespace Dawn
 
 			if (InGridImage)
 			{
-				GDI->CreateTexture
-				(
-					InGridImage->Pixels,
-					InGridImage->Width,
-					InGridImage->Height,
-					InGridImage->ChannelsPerPixel,
-					{ GL_REPEAT, GL_REPEAT }, { GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR },
-					true,
-					&GridTexture
-				);
+				GridTexture = GDI->GetTexture(InGridImage->TextureId);
 			}
 		}
 

@@ -49,18 +49,10 @@ namespace Dawn
 
 	void Application::Run()
 	{
-		ResourceSystem = std::make_shared<Dawn::ResourceSystem>();
-		// Resource System initialization
-		if (!ResourceSystem->Initialize("E:/Git/engine/Dawn/Assets/", { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx" }))
-		{
-			DWN_CORE_ERROR("Couldn't initialize resource system");
-			system("pause");
-			return;
-		}
-
-		ResourceSystem->RegisterLoader(ResourceType_Model, BIND_FS_LOADER(Dawn::RS_LoadModel));
-		ResourceSystem->RegisterLoader(ResourceType_Shader, BIND_FS_LOADER(Dawn::RS_LoadShader));
-		ResourceSystem->RegisterLoader(ResourceType_Image, BIND_FS_LOADER(Dawn::RS_LoadImage));
+		ResourceSystem = Dawn::ResourceSystem::Create("E:/Git/engine/Dawn/Assets/", { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx" });
+		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadModel), { ".obj", ".fbx" });
+		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadShader), { ".shader" });
+		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadImage), { ".jpg", ".png", ".PNG" });
 
 		if (!ResourceSystem->BuildDatabase())
 		{
@@ -93,7 +85,7 @@ namespace Dawn
 		}
 		Settings.Hwnd = Window->GetHwnd();
 
-		this->GDI = GfxGDIPtr(GfxGDI::Create());
+		this->GDI = std::shared_ptr<GfxGDI>(GfxGDI::Create());
 		if (!this->GDI->Init(Settings))
 		{
 			DWN_CORE_ERROR("Couldn't initialize GDI!\n");
@@ -180,13 +172,13 @@ namespace Dawn
 		CameraUtils::CalculateOthographic(Cam1);
 
 		auto Id = ResourceSystem->LoadFile("Textures/grid.png");
-		if (auto GridImage = ResourceTable::GetImage(Id))
+		if (auto GridImage = ResourceSystem->FindImage(Id))
 		{
 			GDI->GetPrimitiveHelper()->AllocateBuffers
 			(
-				GridImage.get(), 
-				ResourceTable::GetShader(CommonShaderHandles::DebugPrim).get(),
-				ResourceTable::GetShader(EditorShaderHandles::Grid).get()
+				GridImage, 
+				ResourceSystem->FindShader(CommonShaderHandles::DebugPrim),
+				ResourceSystem->FindShader(EditorShaderHandles::Grid)
 			);
 		}
 	}

@@ -27,8 +27,8 @@ namespace Dawn
 		return ResourceType_None;
 	}
 
-	ResourceSystem::ResourceSystem()
-		: WorkingSpace("")
+	ResourceSystem::ResourceSystem(std::string InPath, std::vector<std::string> InFilter)
+		: WorkingSpace(InPath), Filters(InFilter)
 	{
 	}
 
@@ -38,14 +38,6 @@ namespace Dawn
 
 	void ResourceSystem::Shutdown()
 	{
-		ResourceTable::Shutdown();
-	}
-
-	bool ResourceSystem::Initialize(std::string InPath, std::vector<std::string> InFilter)
-	{
-		this->WorkingSpace = InPath;
-		this->Filters = InFilter;
-		return true;
 	}
 
 	bool ResourceSystem::BuildDatabase()
@@ -80,8 +72,7 @@ namespace Dawn
 				metaData.Path = path;
 				metaData.Size = entry.file_size();
 				metaData.Ext = file.extension().string();
-				metaData.Type = GetResourceTypeFromExtension(metaData.Ext);
-				MetaDatabase.emplace(std::pair<FileHandle, FileMetaData>(metaData.Id, metaData));
+				MetaDatabase.emplace(std::pair<FileId, FileMetaData>(metaData.Id, metaData));
 
 				DWN_CORE_INFO("Added {0} ({1}) to file database...", metaData.Name, metaData.Id);
 			}
@@ -90,60 +81,66 @@ namespace Dawn
 		return true;
 	}
 
-	void ResourceSystem::RegisterLoader(ResourceType InType, FileLoadDelegate InDelegate)
+	void ResourceSystem::RegisterLoader(FileLoadDelegate InDelegate, const std::list<std::string> & InExtensions)
 	{
-		if (FileLoaders.find(InType) != FileLoaders.end())
+		for (const std::string& Extension : InExtensions)
 		{
-			DWN_CORE_ERROR("Loader with type {0} already registered.", InType);
-			return;
-		}
+			if (FileLoaders.find(Extension) != FileLoaders.end())
+			{
+				DWN_CORE_ERROR("Loader for extension {0} already registered.", Extension);
+				continue;
+			}
 
-		FileLoaders.emplace(std::pair<ResourceType, FileLoadDelegate>(InType, InDelegate));
+			FileLoaders.emplace(std::pair<std::string, FileLoadDelegate>(Extension, InDelegate));
+		}
 	}
 
-	FileMetaData* ResourceSystem::GetMetaDataFromHandle(FileHandle InHandle)
-	{
-		if (MetaDatabase.find(InHandle) == MetaDatabase.end()) {
-			return nullptr;
-		}
 
+	FileMetaData* ResourceSystem::GetMetaDataFromHandle(FileId InHandle)
+	{
 		return &MetaDatabase[InHandle];
 	}
 
-	GenericHandle ResourceSystem::LoadFile(std::string InFilename)
+	ResourceId ResourceSystem::LoadFile(std::string InFilename)
 	{
 		return LoadFile(CREATE_FILE_HANDLE(InFilename));
 	}
 
-	GenericHandle ResourceSystem::LoadFile(FileHandle InHandle)
+	ResourceId ResourceSystem::LoadFile(FileId InHandle)
 	{
 		FileMetaData* meta = GetMetaDataFromHandle(InHandle);
 		if (meta == nullptr) 
 		{
 			DWN_CORE_ERROR("File with handle {0} couldn't be found.", InHandle);
-			return GenericHandle();
+			return INVALID_HANDLE;
 		}
 
-		if (meta->Type == ResourceType_None)
-		{
-			DWN_CORE_ERROR("File-Type extension {0} not supported!", meta->Ext);
-			return GenericHandle();
-		}
-
-		auto it = FileLoaders.find(meta->Type);
+		auto it = FileLoaders.find(meta->Ext);
 		if (it == FileLoaders.end())
 		{
-			DWN_CORE_ERROR("There is no resource loader for type {0}!", meta->Type);
-			return GenericHandle();
+			DWN_CORE_ERROR("There is no resource loader for extension {0}!", meta->Ext);
+			return INVALID_HANDLE;
 		}
 
-		GenericHandle file = it->second(this, WorkingSpace, meta);
-		return file;
+		ResourceId Id = it->second(this, WorkingSpace, meta);
+
+		if(FileIdToResourceId.find(InHandle) == FileIdToResourceId.end())
+			this->FileIdToResourceId.emplace(std::pair<FileId, ResourceId>(InHandle, Id));
+
+		return Id;
 	}
 
 	bool ResourceSystem::IsValidFilter(std::string& InExtension)
 	{
 		return std::find(Filters.begin(), Filters.end(), InExtension) != Filters.end();
+	}
+	
+	ResourceId ResourceSystem::FindResourceIdFromFileId(FileId InFileId)
+	{
+		if (this->FileIdToResourceId.find(InFileId) == FileIdToResourceId.end())
+			return INVALID_HANDLE;
+
+		return FileIdToResourceId[InFileId];
 	}
 
 	std::vector<FileMetaData> ResourceSystem::GetAllMetaFiles()

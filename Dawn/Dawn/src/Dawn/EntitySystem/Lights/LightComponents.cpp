@@ -4,14 +4,14 @@
 
 namespace Dawn
 {
-	DirectionalLight* LightUtils::CreateDirectionalLight(World* InWorld, vec3 InPosition, quat InOrientation, vec4 InColor)
+	DirectionalLight* LightUtils::CreateDirectionalLight(World* InWorld, quat InOrientation, vec4 InColor)
 	{
 		EntityId e = InWorld->CreateEntity("Light");
 		if (!e.IsValid)
 			return nullptr;
 
 		Transform* t = InWorld->MakeComponent<Transform>();
-		t->Position = InPosition;
+		t->Position = vec3(0, 10, -10);
 		t->Rotation = InOrientation;
 		t->Scale = vec3(1, 1, 1);
 		InWorld->AddComponent<Transform>(e, t);

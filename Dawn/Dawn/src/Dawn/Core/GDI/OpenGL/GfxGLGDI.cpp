@@ -147,59 +147,59 @@ namespace Dawn
 
 	GfxResId GfxGLGDI::CreateVertexBuffer(float* Vertices, u32 Size, GfxVertexBuffer** OutBuffer)
 	{
-		VertexBufferBundle* Bundle = VertexBufferPool.Request();
-		Bundle->Element =new GLVertexBuffer(Vertices, Size, Bundle->GetId());
+		VertexBufferSlot* Slot = VertexBufferPool.Request();
+		Slot->Element =new GLVertexBuffer(Vertices, Size, Slot->GetId());
 
 		if (OutBuffer != nullptr)
-			*OutBuffer = Bundle->Element;
+			*OutBuffer = Slot->Element;
 
-		return Bundle->GetId();
+		return Slot->GetId();
 	}
 
 
 	GfxResId GfxGLGDI::CreateIndexBuffer(u32* Indices, u32 Size, GfxIndexBuffer** OutBuffer)
 	{
-		IndexBufferBundle* Bundle = IndexBufferPool.Request();
-		Bundle->Element = new GLIndexBuffer(Indices, Size, Bundle->GetId());
+		IndexBufferSlot* Slot = IndexBufferPool.Request();
+		Slot->Element = new GLIndexBuffer(Indices, Size, Slot->GetId());
 
 		if (OutBuffer != nullptr)
-			*OutBuffer = Bundle->Element;
+			*OutBuffer = Slot->Element;
 
-		return Bundle->GetId();
+		return Slot->GetId();
 	}
 
 	GfxResId GfxGLGDI::CreateVertexArray(GfxVertexArray** OutBuffer)
 	{
-		VertexArrayBundle* Bundle = VertexArrayPool.Request();
-		Bundle->Element = new GLVertexArray(Bundle->GetId());
+		VertexArraySlot* Slot = VertexArrayPool.Request();
+		Slot->Element = new GLVertexArray(Slot->GetId());
 		
 		if (OutBuffer != nullptr)
-			*OutBuffer = Bundle->Element;
+			*OutBuffer = Slot->Element;
 
-		return Bundle->GetId();
+		return Slot->GetId();
 	}
 
 	GfxResId GfxGLGDI::CreateShader(GfxShader** OutShader)
 	{
-		ShaderBundle* Bundle = ShaderPool.Request();
-		Bundle->Element = new GLShader(Bundle->GetId());
+		ShaderSlot* Slot = ShaderPool.Request();
+		Slot->Element = new GLShader(Slot->GetId());
 
 		if (OutShader != nullptr)
-			*OutShader = Bundle->Element;
+			*OutShader = Slot->Element;
 		
-		return Bundle->GetId();
+		return Slot->GetId();
 	}
 
 	GfxResId GfxGLGDI::CreateTexture(u8* Data, u32 Width, u32 Height, u16 ChannelsPerPixel, GfxWrapDesc Wrap,
 		GfxFilterDesc Filter, bool GenerateMipMaps, GfxTexture** OutTexture)
 	{
-		TextureBundle* Bundle = TexturePool.Request();
-		Bundle->Element = new GLTexture(Bundle->GetId(), Data, Width, Height, ChannelsPerPixel, Wrap, Filter, GenerateMipMaps);
+		TextureSlot* Slot = TexturePool.Request();
+		Slot->Element = new GLTexture(Slot->GetId(), Data, Width, Height, ChannelsPerPixel, Wrap, Filter, GenerateMipMaps);
 
 		if(OutTexture != nullptr)
-			*OutTexture = Bundle->Element;
+			*OutTexture = Slot->Element;
 
-		return Bundle->GetId();
+		return Slot->GetId();
 	}
 
 }

@@ -69,7 +69,7 @@ typedef char c8;
 typedef short s16;
 typedef int i32;
 typedef long i64;
-typedef u128 FileHandle;
+typedef u128 FileId;
 
 typedef glm::quat quat;
 typedef glm::mat4 mat4;

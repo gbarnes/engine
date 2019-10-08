@@ -5,12 +5,8 @@
 
 namespace Dawn
 {
-	typedef GenericHandle MeshHandle;
-	typedef GenericHandle MaterialHandle;
-	typedef GenericHandle ShaderHandle;
-	typedef GenericHandle GfxResourceViewHandle;
-	typedef GenericHandle ImageHandle;
-	typedef GenericHandle ModelHandle;
+	typedef GenericHandle ResourceId;
+
 
 	enum ResourceType
 	{
@@ -26,51 +22,47 @@ namespace Dawn
 	};
 
 
-	struct DAWN_API Mesh
+	struct DAWN_API Resource
 	{
-		MeshHandle Id;
+		ResourceId Id = INVALID_HANDLE;
+		FileId FileId = -1;
+		ResourceType Type = ResourceType_None;
+	};
+
+	struct DAWN_API Mesh : Resource
+	{
 		const char* Name;
 		GfxResId VertexArrayId;
 		u32 NumIndices;
 		u32 NumVertices;
-		std::vector<MaterialHandle> Materials;
+		std::vector<ResourceId> Materials;
 	};
 
-	struct DAWN_API Shader
+	struct DAWN_API Shader : Resource
 	{
-		ShaderHandle Id;
-		FileHandle FileId;
 		GfxResId ResourceId;
 	};
 
-	struct DAWN_API Material
+	struct DAWN_API Material : Resource
 	{
-		FileHandle HandleToFile;
-		MaterialHandle Id;
-		ShaderHandle ShaderId;
-
 		// todo: make this more generic but for now we will store all the data we need in
 		// this material instead of having a more flexible system depending on the material. 
-
 		vec4 DiffuseColor;
 		vec4 SpecularColor;
 		vec4 AmbientColor;
 		float Shinieness;
+
+		GfxResId DiffuseTexture = INVALID_HANDLE;
 	};
 
-	struct DAWN_API Model
+	struct DAWN_API Model : Resource
 	{
-		ModelHandle Id;
-		FileHandle FileId;
-		std::vector<MeshHandle> Meshes;
-		std::vector<MaterialHandle> Materials;
+		std::vector<ResourceId> Meshes;
+		std::vector<ResourceId> Materials;
 	};
 
-	struct DAWN_API Image
+	struct DAWN_API Image : Resource
 	{
-		ImageHandle Id;
-		FileHandle FileId;
-		u8* Pixels;
 		u32 Width;
 		u32 Height;
 		u16 ChannelsPerPixel;
