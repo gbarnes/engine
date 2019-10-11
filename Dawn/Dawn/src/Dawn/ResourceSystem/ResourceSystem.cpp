@@ -27,8 +27,8 @@ namespace Dawn
 		return ResourceType_None;
 	}
 
-	ResourceSystem::ResourceSystem(std::string InPath, std::vector<std::string> InFilter)
-		: WorkingSpace(InPath), Filters(InFilter)
+	ResourceSystem::ResourceSystem(Path InPath, std::vector<std::string> InFilter)
+		: WorkingSpace(InPath.generic_string() + "/"), Filters(InFilter)
 	{
 	}
 
@@ -110,6 +110,12 @@ namespace Dawn
 	{
 		FileMetaData* meta = GetMetaDataFromHandle(InHandle);
 		if (meta == nullptr) 
+		{
+			DWN_CORE_ERROR("File with handle {0} couldn't be found.", InHandle);
+			return INVALID_HANDLE;
+		}
+
+		if (meta->Name.empty())
 		{
 			DWN_CORE_ERROR("File with handle {0} couldn't be found.", InHandle);
 			return INVALID_HANDLE;

@@ -3,6 +3,7 @@
 #include <utility>
 #include "Camera/Camera.h"
 #include "Transform/Transform.h"
+#include "Lights/LightComponents.h"
 #include "EntityTable.h"
 
 namespace Dawn

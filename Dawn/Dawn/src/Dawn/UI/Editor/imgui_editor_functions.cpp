@@ -80,7 +80,7 @@ namespace Dawn
 
 		ShowEntity(g_SelectedEntity);
 
-		auto world = g_Application->GetWorld();
+		auto world = g_Application->GetWorld(); 
 		auto components = world->GetComponentTypesByEntity(g_SelectedEntity->Id);
 		for (auto component : components)
 		{
@@ -88,6 +88,8 @@ namespace Dawn
 				ShowCameraComponent(world->GetComponentByEntity<Camera>(g_SelectedEntity->Id));
 			else if(component == "Transform")
 				ShowTransformComponent(world->GetComponentByEntity<Transform>(g_SelectedEntity->Id));
+			else if (component == "DirectionalLight")
+				ShowDirectionalLightComponent(world->GetComponentByEntity<DirectionalLight>(g_SelectedEntity->Id));
 		}
 
 		ImGui::End();

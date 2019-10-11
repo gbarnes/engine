@@ -38,6 +38,11 @@ namespace Dawn
 		std::vector<ResourceId> Materials;
 	};
 
+	struct DAWN_API AnimatedMesh : Resource
+	{
+		const char* Name;
+	};
+
 	struct DAWN_API Shader : Resource
 	{
 		GfxResId ResourceId;
@@ -57,6 +62,7 @@ namespace Dawn
 
 	struct DAWN_API Model : Resource
 	{
+		bool bHasAnimations = false;
 		std::vector<ResourceId> Meshes;
 		std::vector<ResourceId> Materials;
 	};

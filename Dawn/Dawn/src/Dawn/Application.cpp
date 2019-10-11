@@ -18,8 +18,10 @@
 #include "EntitySystem/ComponentTable.h"
 #include "EntitySystem/Transform/Transform.h"
 #include "EntitySystem/Camera/Camera.h"
+#include "EntitySystem/Lights/LightComponents.h"
 #include "EntitySystem/PhysicsWorld.h"
 #include "EntitySystem/RigidBody/RigidbodySystem.h"
+#include "Core/Config.h"
 
 #define USE_OPENGL_GFX
 #include "Core/GDI/inc_gfx.h"
@@ -49,7 +51,9 @@ namespace Dawn
 
 	void Application::Run()
 	{
-		ResourceSystem = Dawn::ResourceSystem::Create("E:/Git/engine/Dawn/Assets/", { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx" });
+		Config::Load({ "Engine" });
+
+		ResourceSystem = Dawn::ResourceSystem::Create(Paths::ProjectContentDir(), { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx" });
 		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadModel), { ".obj", ".fbx" });
 		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadShader), { ".shader" });
 		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadImage), { ".jpg", ".png", ".PNG" });
@@ -146,6 +150,7 @@ namespace Dawn
 		World = std::make_unique<Dawn::World>();
 		World->AddTable("Transform", std::make_unique<ComponentTable<Transform>>());
 		World->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
+		World->AddTable("DirectionalLight", std::make_unique<ComponentTable<DirectionalLight>>());
 		World->AddSystem(std::make_unique<RigidbodySystem>());
 		
 		g_Camera = CreateCamera(GetWorld().get(), 

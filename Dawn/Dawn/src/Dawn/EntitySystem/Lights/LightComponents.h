@@ -8,6 +8,7 @@ namespace Dawn
 {
 	struct DAWN_API DirectionalLight : public Component<DirectionalLight>
 	{
+		REGISTER_TYPE(DirectionalLight)
 		vec4 Color;
 	};
 

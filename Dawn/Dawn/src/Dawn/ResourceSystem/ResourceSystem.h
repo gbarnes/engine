@@ -38,8 +38,8 @@ namespace Dawn
 	class DAWN_API ResourceSystem
 	{
 	public:
-		static Shared<ResourceSystem> Create(std::string InPath, std::vector<std::string> InFilter)
-		{
+		static Shared<ResourceSystem> Create(Path InPath, std::vector<std::string> InFilter)
+		{ 
 			return std::shared_ptr<ResourceSystem>(new ResourceSystem(InPath, InFilter));
 		}
 
@@ -68,7 +68,7 @@ namespace Dawn
 		DECLARE_RESOURCE_TYPE(ResourceType_Image, Image, Images)
 		DECLARE_RESOURCE_TYPE(ResourceType_Shader, Shader, Shaders)
 	private:
-		ResourceSystem(std::string InPath, std::vector<std::string> InFilter);
+		ResourceSystem(Path InPath, std::vector<std::string> InFilter);
 
 		std::vector<std::string> Filters;
 

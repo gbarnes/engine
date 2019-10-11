@@ -24,6 +24,7 @@ using namespace Microsoft::WRL;
 #include <array>
 #include <set>
 #include <functional>
+#include <filesystem>
 
 #include <map> // for std::map
 #include <mutex> // for std::mutex
@@ -76,6 +77,11 @@ typedef glm::mat4 mat4;
 typedef glm::vec4 vec4;
 typedef glm::vec3 vec3;
 typedef glm::vec2 vec2;
+
+namespace Dawn
+{
+	using Path = std::filesystem::path;
+}
 
 #define _KB(x) (x * 1024)
 #define _MB(x) (x * 1024 * 1024)

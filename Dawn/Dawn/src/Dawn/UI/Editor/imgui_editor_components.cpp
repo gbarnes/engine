@@ -4,6 +4,7 @@
 #include "EntitySystem/Entity.h"
 #include "EntitySystem/Camera/Camera.h"
 #include "EntitySystem/Transform/Transform.h"
+#include "EntitySystem/Lights/LightComponents.h"
 
 namespace Dawn
 {
@@ -70,6 +71,16 @@ namespace Dawn
 			if (ImGui::SliderFloat("FarZ", &InCamera->FarZ, 100.0f, 10000.0f))
 				CameraUtils::CalculatePerspective(InCamera);
 
+			ImGui::Unindent(10.0f);
+		}
+	}
+
+	void ShowDirectionalLightComponent(DirectionalLight* InLight)
+	{
+		if (ImGui::CollapsingHeader("DirectionalLight"))
+		{
+			ImGui::Indent(10.0f);
+			ImGui::ColorEdit4("Color", &InLight->Color[0]);
 			ImGui::Unindent(10.0f);
 		}
 	}

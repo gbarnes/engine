@@ -63,7 +63,6 @@ namespace Dawn
 		Shared<PhysicsWorld> Physics;
 		Unique<Window> Window;
 
-		physx::PxFoundation* Physx;
 		AppSettings Settings;
 		Timer Clock;
 
