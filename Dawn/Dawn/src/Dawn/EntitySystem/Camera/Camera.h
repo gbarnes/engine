@@ -75,10 +75,17 @@ namespace Dawn
 		//
 		// Calculates the view matrix from the given orientation and translation matrix
 		//
-		static const mat4& CalculateView(Camera* InCamera, Transform* InTransform)
+		FORCEINLINE static const mat4& CalculateView(Camera* InCamera, Transform* InTransform)
 		{
 			InCamera->View = glm::mat4_cast(glm::conjugate(InTransform->Rotation));
 			InCamera->View = glm::translate(InCamera->View, -InTransform->Position);
+			return InCamera->View;
+		}
+
+		FORCEINLINE static const mat4& CalculateView2(Camera* InCamera, Transform* InTransform)
+		{
+			//InCamera->View = glm::mat4_cast(InTransform->Rotation);
+			InCamera->View = glm::lookAt(InTransform->Position, vec3(0, 0, -1), vec3(0,1,0)); //glm::translate(InCamera->View, InTransform->Position);
 			return InCamera->View;
 		}
 
@@ -86,7 +93,7 @@ namespace Dawn
 		//
 		// Calculates the perspective matrix for the given camera.
 		//
-		static const mat4& CalculatePerspective(Camera* InCamera)
+		FORCEINLINE static const mat4& CalculatePerspective(Camera* InCamera)
 		{
 			InCamera->Projection = glm::perspective(glm::radians(InCamera->FieldOfView), InCamera->AspectRatio, InCamera->NearZ, InCamera->FarZ);
 			return InCamera->Projection;
@@ -95,9 +102,9 @@ namespace Dawn
 		//
 		// Calculates the orthographic matrix for the given camera.
 		//
-		static const mat4& CalculateOthographic(Camera* InCamera)
+		FORCEINLINE static const mat4& CalculateOthographic(Camera* InCamera)
 		{
-			InCamera->Projection = glm::ortho(0.0f, (float)InCamera->Width, (float)InCamera->Height, 0.0f, InCamera->NearZ, InCamera->FarZ);
+			InCamera->Projection = glm::ortho<float>(0.0f, (float)InCamera->Width, 0.0f, (float)InCamera->Height, InCamera->NearZ, InCamera->FarZ);
 			return InCamera->Projection;
 		}
 

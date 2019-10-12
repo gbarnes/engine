@@ -24,5 +24,6 @@ namespace Dawn
 		void SetMat4(const std::string& Name, const mat4& Value) override;
 	private:
 		u32 ProgramId;
+		std::map<GfxShaderType, u32> ShaderIds;
 	};
 }

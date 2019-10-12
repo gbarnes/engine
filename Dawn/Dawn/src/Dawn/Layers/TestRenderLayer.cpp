@@ -53,11 +53,10 @@ namespace Dawn
 			}
 		}
 
-		auto imageId = RS->LoadFile("Textures/crate0_diffuse.PNG");
+		auto imageId = RS->LoadFile("Textures/smiley.jpg");
 		if (imageId.IsValid)
 		{
 			DiffuseImage = RS->FindImage(imageId);
-			auto imagePtr = DiffuseImage;
 		}
 
 		g_World = World;
@@ -224,7 +223,8 @@ namespace Dawn
 		Primitives->Grid(vec3(0, 0, 0), vec3(1000, 1000, 1000));
 
 		Primitives->SetCamera(g_camera1);
-		Primitives->Axis(vec3(100, g_camera->Height - 100.0f, -100), vec3(75), g_camera->GetTransform(g_World.get())->Rotation);
+		Primitives->Quad(GDI->GetTexture(DiffuseImage->TextureId), vec3(100, g_camera->Height - 100.0f, 0), vec3(100.0f));
+		Primitives->Axis(vec3(100, 50, -100), vec3(75), g_camTransform->Rotation);
 	}
 
 	void TestRenderLayer::Process()

@@ -2,13 +2,13 @@
 
 namespace Dawn
 {
-	GfxVertexArray* GfxPrimitiveFactory::AllocateGrid(GfxGDI* InGDI)
+	GfxVertexArray* GfxPrimitiveFactory::AllocateQuad(GfxGDI* InGDI, const vec2& UVCoords)
 	{
 		float GridVertices[4 * 5] = {
-		-0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
-		0.5f,  0.5f,  0.0f, 1000.0f, 0.0f,
-		0.5f, -0.5f,  0.0f, 1000.0f, 1000.0f,
-		-0.5f, -0.5f, 0.0f, 0.0f, 1000.0f
+		-0.5f,  0.5f, 0.0f,		0.0f, 0.0f,
+		0.5f,  0.5f,  0.0f,		UVCoords.x, 0.0f,
+		0.5f, -0.5f,  0.0f,		UVCoords.x,  UVCoords.y,
+		-0.5f, -0.5f, 0.0f,		0.0f, UVCoords.y
 		};
 
 		u32 GridIndices[6] = {  // note that we start from 0!

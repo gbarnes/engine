@@ -43,7 +43,7 @@ namespace Dawn
 		//
 		// Takes care of casting the quaternion rotation to a rotation matrix
 		//
-		static mat4 GetRotationMatrix(Transform* InTransform)
+		FORCEINLINE static mat4 GetRotationMatrix(Transform* InTransform)
 		{
 			if (InTransform == nullptr)
 				return mat4(1.0f);
@@ -54,7 +54,7 @@ namespace Dawn
 		//
 		// 
 		//
-		static void Rotate(Transform* InTransform, const quat& Rotation)
+		FORCEINLINE static void Rotate(Transform* InTransform, const quat& Rotation)
 		{
 			InTransform->Rotation = Rotation;
 		}
@@ -63,7 +63,7 @@ namespace Dawn
 		// Calculates the up direction vector for the transform 
 		// by the currently given orientation.
 		//
-		static vec3 CalculateUp(Transform* InTransform)
+		FORCEINLINE static vec3 CalculateUp(Transform* InTransform)
 		{
 			if (InTransform == nullptr) 
 				return vec3(0.0f);
@@ -76,7 +76,7 @@ namespace Dawn
 		// Calculates the forward direction vector for the transform 
 		// by the currently given orientation.
 		//
-		static vec3 CalculateForward(Transform* InTransform)
+		FORCEINLINE static vec3 CalculateForward(Transform* InTransform)
 		{
 			if (InTransform == nullptr)
 				return vec3(0.0f);
@@ -89,7 +89,7 @@ namespace Dawn
 		// Calculates the right direction vector for the transform 
 		// by the currently given orientation.
 		//
-		static vec3 CalculateRight(Transform* InTransform)
+		FORCEINLINE static vec3 CalculateRight(Transform* InTransform)
 		{
 			if (InTransform == nullptr)
 				return vec3(0.0f);
@@ -97,8 +97,6 @@ namespace Dawn
 			InTransform->Right =  InTransform->Rotation * glm::vec3(1, 0, 0);
 			return InTransform->Right;
 		}
-
-
 	};
 
 }

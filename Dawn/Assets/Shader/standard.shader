@@ -20,20 +20,20 @@ uniform mat4 projection;
 void main()
 {
 	gl_Position = projection * view * model * vec4(position, 1.0f);
-	TexCoord0 = uv0;
-	TexCoord1 = uv1;
+	TexCoord0 = uv0; 
+	TexCoord1 = uv1; 
 	FragPos = vec3(model * vec4(position, 1.0));
 	Normal = normal;
-}]]>
+}]]>  
 	</step>
 	<step type="ps"><![CDATA[#version 330 core
-
-out vec4 FragColor;
-
+  
+out vec4 FragColor;    
+  
 in vec2 TexCoord0;
-in vec2 TexCoord1;
+in vec2 TexCoord1; 
 in vec3 FragPos;  
-in vec3 Normal;  
+in vec3 Normal;   
 
 struct Material {
     vec4 ambient;
@@ -42,10 +42,10 @@ struct Material {
     float shininess;
 }; 
   
-uniform Material material;
+uniform Material material; 
 
 struct Light {
-    vec3 position;
+    vec3 position; 
     vec4 diffuse;
 };
 
@@ -58,7 +58,7 @@ void main()
 	float diff = max(dot(norm, lightDir), 0.0);
 	vec4 diffuse = diff * light.diffuse;
 
-	FragColor = diffuse * material.diffuse;
+	FragColor = (vec4(0.35, 0.35, 0.35, 1.0) + diffuse) * material.diffuse;
 }]]>
 	</step>
 </shader>

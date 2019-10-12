@@ -8,6 +8,7 @@ namespace Dawn
 {
 	class File;
 	class ResourceSystem;
+	struct ResourceWatchData;
 
 	struct DAWN_API FileMetaData
 	{
@@ -18,8 +19,16 @@ namespace Dawn
 		u128 Size;
 	};
 
+
 	typedef std::map<FileId, FileMetaData> FileMetaDatabase;
-	typedef std::function<ResourceId(ResourceSystem* InFS, std::string&, FileMetaData*) > FileLoadDelegate;
+	typedef std::function<ResourceId(ResourceSystem* InFS, const std::string&, FileMetaData*) > FileLoadDelegate;
+
+
+	struct DAWN_API FileLoaderDelegates
+	{
+		FileLoadDelegate OnLoadDelegate;
+		FileLoadDelegate OnReloadDelegate;
+	};
 
 	static FileId CreateHashFromFileName(std::string InFilename) {
 		return std::hash<std::string>()(InFilename);
@@ -35,21 +44,22 @@ namespace Dawn
 	return CreateResource(##typeName##, &Resources.##tableName##, OutResource);\
 	}
 
-	class DAWN_API ResourceSystem
+	class DAWN_API ResourceSystem : public std::enable_shared_from_this<ResourceSystem>
 	{
 	public:
-		static Shared<ResourceSystem> Create(Path InPath, std::vector<std::string> InFilter)
+		static Shared<ResourceSystem> Create(Path InPath, std::vector<std::string> InFilter, bool InWatchForChanges = false)
 		{ 
-			return std::shared_ptr<ResourceSystem>(new ResourceSystem(InPath, InFilter));
+			return Shared<ResourceSystem>(new ResourceSystem(InPath, InFilter, InWatchForChanges));
 		}
 
 		~ResourceSystem();
 
 		// Setup Phase
 	public:
+		void Refresh();
 		void Shutdown();
 		bool BuildDatabase();
-		void RegisterLoader(FileLoadDelegate InDelegate, const std::list<std::string> & InExtensions);
+		void RegisterLoader(const FileLoadDelegate& InLoadDelegate, const FileLoadDelegate& InReloadDelegate, const std::list<std::string> & InExtensions);
 
 		// File loading api
 	public:
@@ -68,7 +78,7 @@ namespace Dawn
 		DECLARE_RESOURCE_TYPE(ResourceType_Image, Image, Images)
 		DECLARE_RESOURCE_TYPE(ResourceType_Shader, Shader, Shaders)
 	private:
-		ResourceSystem(Path InPath, std::vector<std::string> InFilter);
+		ResourceSystem(Path InPath, std::vector<std::string> InFilter, bool bWatchForChanges);
 
 		std::vector<std::string> Filters;
 
@@ -81,9 +91,11 @@ namespace Dawn
 			HandleObjectArray<Material> Materials;
 		};
 
+		bool bWatchForChanges;
+		Unique<ResourceWatchData> ResourcesWatchData;
 		ResourceDatabase Resources;
 		std::map<FileId, ResourceId> FileIdToResourceId;
-		std::map<std::string, FileLoadDelegate> FileLoaders;
+		std::map<std::string, FileLoaderDelegates> FileLoaders;
 		
 		std::string WorkingSpace;
 		FileMetaDatabase MetaDatabase;

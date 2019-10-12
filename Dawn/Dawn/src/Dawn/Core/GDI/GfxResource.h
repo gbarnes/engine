@@ -185,6 +185,8 @@ namespace Dawn
 
 		virtual void Bind() = 0;
 		virtual void Unbind() = 0;
+		virtual void Reset(u8* Data, u32 Width, u32 Height, u16 ChannelsPerPixel, GfxWrapDesc Wrap,
+			GfxFilterDesc Filter, bool GenerateMipMaps) = 0;
 
 		inline const GfxResId GetId() const {
 			return Id;

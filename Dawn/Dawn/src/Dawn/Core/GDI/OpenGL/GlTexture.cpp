@@ -7,6 +7,13 @@ namespace Dawn
 		GfxFilterDesc Filter, bool GenerateMipMaps)
 		: GfxTexture(Id)
 	{
+		Reset(Data, Width, Height, ChannelsPerPixel, Wrap, Filter, GenerateMipMaps);
+	}
+
+	void GLTexture::Reset(u8* Data, u32 Width, u32 Height, u16 ChannelsPerPixel, GfxWrapDesc Wrap,
+		GfxFilterDesc Filter, bool GenerateMipMaps)
+	{
+		glDeleteTextures(1, &RendererId);
 		glGenTextures(1, &RendererId);
 		glBindTexture(GL_TEXTURE_2D, RendererId);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, Wrap.WrapS);

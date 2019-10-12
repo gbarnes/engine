@@ -30,8 +30,16 @@ namespace Dawn
 	bool GLShader::AttachSource(GfxShaderType InType, const char* InShaderCode)
 	{
 		auto glCode = ShaderTypeToGLCode(InType);
-		auto shaderId = glCreateShader(glCode);
 
+		auto ShaderIdFound = ShaderIds.find(InType);
+		if (ShaderIdFound != ShaderIds.end())
+		{
+			glDetachShader(ProgramId, ShaderIdFound->second);
+			ShaderIds.erase(InType);
+		}
+
+
+		auto shaderId = glCreateShader(glCode);
 		glShaderSource(shaderId, 1, &InShaderCode, NULL);
 		glCompileShader(shaderId);
 
@@ -48,7 +56,7 @@ namespace Dawn
 
 		glAttachShader(ProgramId, shaderId);
 		glLinkProgram(ProgramId);
-		glDeleteShader(shaderId);
+		ShaderIds.insert(std::make_pair(InType, shaderId));
 
 		return true;
 	}

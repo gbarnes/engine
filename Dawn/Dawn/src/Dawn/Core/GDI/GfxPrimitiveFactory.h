@@ -14,9 +14,8 @@ namespace Dawn
 	{
 	public:
 
-		static GfxVertexArray* AllocateGrid(GfxGDI* InGDI);
 		static GfxVertexArray* AllocateLine(GfxGDI* InGDI);
-		//static GfxVertexArray* AllocateQuad();
+		static GfxVertexArray* AllocateQuad(GfxGDI* InGDI, const vec2& UVCoords);
 		//static GfxVertexArray* AllocateSphere();
 		//static GfxVertexArray* AllocateCircle();
 	};

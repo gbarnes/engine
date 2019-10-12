@@ -27,7 +27,7 @@ namespace Dawn
 	{
 		const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
 		const auto GDI = g_Application->GetGDI();
-
+		
 		for (u32 i = 0; i < InNode->mNumMeshes; ++i)
 		{
 			const aiMesh* aiMesh = InScene->mMeshes[InNode->mMeshes[i]];
@@ -143,7 +143,7 @@ namespace Dawn
 	//
 	// Loads a mesh with the assimp lib.
 	//
-	ResourceId RS_LoadModel(ResourceSystem* InResourceSystem, std::string& InWorkspacePath, FileMetaData* InMetaData)
+	ResourceId RS_LoadModel(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InMetaData)
 	{
 		ResourceId Id = InResourceSystem->FindResourceIdFromFileId(InMetaData->Id);
 		if (Id.IsValid)
@@ -171,7 +171,7 @@ namespace Dawn
 		return Id;
 	}
 
-	ResourceId RS_LoadShader(ResourceSystem* InResourceSystem, std::string& InWorkspacePath, FileMetaData* InMetaData)
+	ResourceId RS_LoadShader(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InMetaData)
 	{
 		ResourceId Id = InResourceSystem->FindResourceIdFromFileId(InMetaData->Id);
 		if (Id.IsValid)
@@ -212,7 +212,7 @@ namespace Dawn
 		return shader->Id;
 	}
 
-	ResourceId RS_LoadImage(ResourceSystem* InResourceSystem, std::string& InWorkspacePath, FileMetaData* InFile)
+	ResourceId RS_LoadImage(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InFile)
 	{
 		const auto GDI = g_Application->GetGDI();
 
@@ -227,7 +227,7 @@ namespace Dawn
 		
 		if (data != nullptr)
 		{
-			stbi__vertical_flip(data, x, y, n);
+			//stbi__vertical_flip(data, x, y, n);
 			Image* image;
 			Id = InResourceSystem->CreateImage(&image);
 
@@ -262,4 +262,79 @@ namespace Dawn
 
 		return INVALID_HANDLE;
 	}
+
+
+	ResourceId RS_ReloadModel(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InMetaData)
+	{
+		DWN_CORE_WARN("No implementation to reload a model yet...");
+		return INVALID_HANDLE;
+	}
+
+	ResourceId RS_ReloadShader(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InMetaData)
+	{
+		const auto GDI = g_Application->GetGDI();
+		auto ResourceId = InResourceSystem->FindResourceIdFromFileId(InMetaData->Id);
+		auto CastedResource = InResourceSystem->FindShader(ResourceId);
+
+		if (CastedResource->ResourceId.IsValid)
+		{
+			std::string combinedPath = ToFullFilePath(InWorkspacePath, InMetaData);
+
+			// This is a temporary solution to be able to load ps and vs shader at 
+			// the same time. I guess once I switch back to DX12 or DX11 it should be
+			// different. - gbarnes 03/29/19
+
+			pugi::xml_document doc;
+			pugi::xml_parse_result result = doc.load_file(combinedPath.c_str());
+			if (!result)
+			{
+				DWN_CORE_ERROR("Couldn't parse shader xml!");
+				return INVALID_HANDLE;
+			}
+
+			GfxShader* shader = GDI->GetShader(CastedResource->ResourceId);
+			if (shader)
+			{
+				std::vector<u32> shadersToDelete;
+				for (auto step : doc.child("shader").children())
+				{
+					auto typeAttr = std::string(step.attribute("type").as_string());
+					bool isPixelShader = (typeAttr == "ps");
+
+					auto shaderBuffer = step.text().as_string();
+					shader->AttachSource(isPixelShader ? GfxShaderType::ST_Pixel : GfxShaderType::ST_Vertex, shaderBuffer);
+				}
+			}
+		}
+
+		return INVALID_HANDLE;
+	}
+
+	ResourceId RS_ReloadImage(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InMetaData)
+	{
+		const auto GDI = g_Application->GetGDI();
+		auto ResourceId = InResourceSystem->FindResourceIdFromFileId(InMetaData->Id);
+		auto CastedResource = InResourceSystem->FindImage(ResourceId);
+
+		if (CastedResource->TextureId.IsValid)
+		{
+			auto Texture = GDI->GetTexture(CastedResource->TextureId);
+			if (Texture)
+			{
+				int x, y, n;
+
+				std::string path = ToFullFilePath(InWorkspacePath, InMetaData);
+				unsigned char *data = stbi_load(path.c_str(), &x, &y, &n, 4);
+				if (data)
+				{
+					Texture->Reset(data, x, y, n, { GL_REPEAT, GL_REPEAT }, { GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR }, true);
+					stbi_image_free(data);
+				}
+			}
+		}
+		
+
+		return INVALID_HANDLE;
+	}
+
 }

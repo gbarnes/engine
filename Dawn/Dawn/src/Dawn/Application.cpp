@@ -53,10 +53,10 @@ namespace Dawn
 	{
 		Config::Load({ "Engine" });
 
-		ResourceSystem = Dawn::ResourceSystem::Create(Paths::ProjectContentDir(), { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx" });
-		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadModel), { ".obj", ".fbx" });
-		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadShader), { ".shader" });
-		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadImage), { ".jpg", ".png", ".PNG" });
+		ResourceSystem = Dawn::ResourceSystem::Create(Paths::ProjectContentDir(), { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx" }, true);
+		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadModel), BIND_FS_LOADER(Dawn::RS_ReloadModel), { ".obj", ".fbx" });
+		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadShader), BIND_FS_LOADER(Dawn::RS_ReloadShader), { ".shader" });
+		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadImage), BIND_FS_LOADER(Dawn::RS_ReloadImage), { ".jpg", ".png", ".PNG" });
 
 		if (!ResourceSystem->BuildDatabase())
 		{
@@ -128,6 +128,8 @@ namespace Dawn
 		{
 			if (!Window->PeekMessages())
 				break;
+
+			ResourceSystem->Refresh();
 		}
 
 		ClearLayers();

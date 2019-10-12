@@ -38,6 +38,12 @@ namespace Dawn
 			return ProjectDir().append("Config");
 		}
 
-		
+		//
+		// Returns the project config dir
+		//
+		FORCEINLINE Path ProjectShaderDir()
+		{
+			return ProjectContentDir().append("Shader");
+		}
 	}
 }

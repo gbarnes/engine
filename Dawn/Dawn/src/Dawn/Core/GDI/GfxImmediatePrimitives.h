@@ -14,6 +14,7 @@ namespace Dawn
 	class GfxGDI;
 	struct Image;
 	struct Shader;
+	class GfxTexture;
 
 	//
 	// Provides immediate drawing for basic primitives.
@@ -31,6 +32,7 @@ namespace Dawn
 		virtual void Plane() = 0;
 		virtual void DrawRay(const Ray& InRay, float InLength, const vec4& InColor, const mat4& model = mat4(1)) = 0;
 		virtual void Axis(const vec3& InPosition, const vec3& Scale = vec3(1), const quat& Orientation = quat()) = 0;
+		virtual void Quad(GfxTexture* InTexture, const vec3& InPosition, const vec3& InScale, const quat& InOrientation = quat()) = 0;
 
 		void SetCamera(Camera* InCamera)
 		{

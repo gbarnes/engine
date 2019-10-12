@@ -4,6 +4,7 @@
 #include <string.h>
 #include <filesystem>
 #include "Core/Loading/File.h"
+#include "ResourceWatcher.h"
 #include "inc_core.h"
 
 namespace fs = std::filesystem;
@@ -27,8 +28,8 @@ namespace Dawn
 		return ResourceType_None;
 	}
 
-	ResourceSystem::ResourceSystem(Path InPath, std::vector<std::string> InFilter)
-		: WorkingSpace(InPath.generic_string() + "/"), Filters(InFilter)
+	ResourceSystem::ResourceSystem(Path InPath, std::vector<std::string> InFilter, bool InWatchForChanges)
+		: WorkingSpace(InPath.generic_string() + "/"), Filters(InFilter), bWatchForChanges(InWatchForChanges)
 	{
 	}
 
@@ -38,6 +39,12 @@ namespace Dawn
 
 	void ResourceSystem::Shutdown()
 	{
+		ResourceWatcher::StopMonitoring(ResourcesWatchData.get());
+		Resources.Meshes.Clear();
+		Resources.Models.Clear();
+		Resources.Shaders.Clear();
+		Resources.Images.Clear();
+		Resources.Materials.Clear();
 	}
 
 	bool ResourceSystem::BuildDatabase()
@@ -74,14 +81,42 @@ namespace Dawn
 				metaData.Ext = file.extension().string();
 				MetaDatabase.emplace(std::pair<FileId, FileMetaData>(metaData.Id, metaData));
 
+
 				DWN_CORE_INFO("Added {0} ({1}) to file database...", metaData.Name, metaData.Id);
 			}
 		}
 
+		if(bWatchForChanges)
+			ResourcesWatchData.reset(ResourceWatcher::StartMonitoring(this->shared_from_this(), Paths::ProjectContentDir()));
+
 		return true;
 	}
 
-	void ResourceSystem::RegisterLoader(FileLoadDelegate InDelegate, const std::list<std::string> & InExtensions)
+	void ResourceSystem::Refresh()
+	{
+		if (!bWatchForChanges)
+			return;
+
+		auto SetOfFiles = ResourceWatcher::GrabLatestFileChanges(ResourcesWatchData.get());
+		for (auto File : SetOfFiles)
+		{
+			auto FileHandle = GetMetaDataFromHandle(CREATE_FILE_HANDLE(Path(File).generic_string()));
+			if (!FileHandle)
+				continue;
+
+			DWN_CORE_INFO("Detected file change: {0}", File);
+			auto it = FileLoaders.find(FileHandle->Ext);
+			if (it == FileLoaders.end())
+			{
+				DWN_CORE_ERROR("There is no resource loader for extension {0}!", FileHandle->Ext);
+				return;
+			}
+
+			it->second.OnReloadDelegate(this, WorkingSpace, FileHandle);
+		}
+	}
+
+	void ResourceSystem::RegisterLoader(const FileLoadDelegate& InLoadDelegate, const FileLoadDelegate& InReloadDelegate, const std::list<std::string> & InExtensions)
 	{
 		for (const std::string& Extension : InExtensions)
 		{
@@ -91,14 +126,22 @@ namespace Dawn
 				continue;
 			}
 
-			FileLoaders.emplace(std::pair<std::string, FileLoadDelegate>(Extension, InDelegate));
+			FileLoaderDelegates Delegates = {};
+			Delegates.OnLoadDelegate = InLoadDelegate;
+			Delegates.OnReloadDelegate = InReloadDelegate;
+
+			FileLoaders.emplace(std::make_pair(Extension, Delegates));
 		}
 	}
 
 
 	FileMetaData* ResourceSystem::GetMetaDataFromHandle(FileId InHandle)
 	{
-		return &MetaDatabase[InHandle];
+		auto It = MetaDatabase.find(InHandle);
+		if (It == MetaDatabase.end())
+			return nullptr;
+
+		return &It->second;
 	}
 
 	ResourceId ResourceSystem::LoadFile(std::string InFilename)
@@ -128,7 +171,7 @@ namespace Dawn
 			return INVALID_HANDLE;
 		}
 
-		ResourceId Id = it->second(this, WorkingSpace, meta);
+		ResourceId Id = it->second.OnLoadDelegate(this, WorkingSpace, meta);
 
 		if(FileIdToResourceId.find(InHandle) == FileIdToResourceId.end())
 			this->FileIdToResourceId.emplace(std::pair<FileId, ResourceId>(InHandle, Id));
