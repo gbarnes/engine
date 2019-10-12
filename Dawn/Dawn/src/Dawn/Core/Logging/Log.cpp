@@ -1,5 +1,5 @@
 #include "Log.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/msvc_sink.h"
 
 namespace Dawn 
 {
@@ -9,10 +9,13 @@ namespace Dawn
 	void Log::Init() 
 	{
 		spdlog::set_pattern("%^[%T] %n: %v%$");
-		s_CoreLogger = spdlog::stdout_color_mt("DAWN");
-		s_CoreLogger->set_level(spdlog::level::trace);
 
-		s_ClientLogger = spdlog::stdout_color_mt("APP");
+		auto sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
+		s_CoreLogger = std::make_shared<spdlog::logger>("DAWN", sink);
+		s_CoreLogger->set_level(spdlog::level::trace); 
+		
+		auto sink2 = std::make_shared<spdlog::sinks::msvc_sink_mt>();
+		s_ClientLogger = std::make_shared<spdlog::logger>("APP", sink2);
 		s_ClientLogger->set_level(spdlog::level::trace);
 	}
 

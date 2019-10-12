@@ -2,6 +2,7 @@
 #include "ResourceSystem.h"
 #include "ResourceUtils.h"
 #include <unordered_set>
+#include <fstream>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG 
@@ -102,7 +103,7 @@ namespace Dawn
 				InResourceSystem->CreateMaterial(&Material);
 
 				const auto aiMaterial = InScene->mMaterials[aiMesh->mMaterialIndex];
-				
+
 				// TODO (gb): add texture loading and path handling, asset conversion to a custom binary format etc.
 				/*u32 diffuseTextureCount = aiGetMaterialTextureCount(aiMaterial, aiTextureType_DIFFUSE);
 				DWN_CORE_INFO("Diffuse Texture count: {0}", diffuseTextureCount);
@@ -153,7 +154,7 @@ namespace Dawn
 		Assimp::Importer Importer;
 
 		const aiScene* scene = Importer.ReadFile(combinedPath.c_str(),
-			aiProcess_Triangulate | aiProcess_GenNormals  | aiProcessPreset_TargetRealtime_MaxQuality
+			aiProcess_Triangulate | aiProcess_GenNormals | aiProcessPreset_TargetRealtime_MaxQuality
 		);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
@@ -171,45 +172,147 @@ namespace Dawn
 		return Id;
 	}
 
+	bool ReadFileLineByLine(const std::string& File, std::function<void(std::string&)> InProcessingFunc)
+	{
+		std::ifstream file(File);
+		if (file.is_open()) {
+			std::string line;
+			while (getline(file, line))
+			{
+				if (InProcessingFunc != nullptr)
+					InProcessingFunc(std::string(line));
+			}
+			file.close();
+			return true;
+		}
+
+		return false;
+	}
+
+	std::string LoadShaderInclude(const std::string& InFile)
+	{
+		std::string IncludedFile;
+
+		ReadFileLineByLine(InFile, [&](const std::string& Line) 
+		{
+			IncludedFile.append(Line + "\n");
+		});
+
+		return IncludedFile;
+	}
+
+	const std::set<std::string> PragmaKeywords = { "vert_begin", "include", "frag_begin" };
+	const std::string PragmaDefine = "#pragma ";
+	const std::string VersionDefine = "#version";
+	bool ParseShaderFile(const std::string& InPath, std::string* OutVersionString, std::string* OutVertexSource, std::string* OutFragSource)
+	{
+		bool bIsParsingVertexShader = false;
+		bool bIsParsingFragShader = false;
+
+		bool bIsShaderLoaded = ReadFileLineByLine(InPath, [&](const std::string& Line)
+		{
+			if (Line.substr(0, PragmaDefine.size()) == PragmaDefine)
+			{
+				std::string PragmaKeyword = Line.substr(PragmaDefine.size());
+				std::string PragmaValue;
+				std::string::size_type PosSpace = PragmaKeyword.find_first_of(' ');
+
+				if (PosSpace != std::string::npos)
+				{
+					PragmaValue = PragmaKeyword.substr(PosSpace, PragmaKeyword.size());
+					PragmaKeyword = PragmaKeyword.substr(0, PosSpace);
+				}
+
+				if (PragmaKeywords.find(PragmaKeyword) != PragmaKeywords.end())
+				{
+					if (PragmaKeyword == "vert_begin")
+					{
+						bIsParsingFragShader = false;
+						bIsParsingVertexShader = true;
+					}
+					else if (PragmaKeyword == "frag_begin")
+					{
+						bIsParsingVertexShader = false;
+						bIsParsingFragShader = true;
+					}
+					else if (PragmaKeyword == "include" && PragmaValue.size() > 2 && (bIsParsingVertexShader || bIsParsingFragShader))
+					{
+						// include statments look like this #pragma include "filename" 
+						// so we have to remove character from the front and back to get the path
+						std::string IncludeName = PragmaValue.substr(2, PragmaValue.size() - 3);
+						std::string SourceCode = LoadShaderInclude(Paths::ProjectShaderDir().append(IncludeName).string());
+						
+						if (!SourceCode.empty())
+						{
+							if (bIsParsingVertexShader)
+								OutVertexSource->append(SourceCode + "\n");
+							else if (bIsParsingFragShader)
+								OutFragSource->append(SourceCode + "\n");
+						}
+					}
+				}
+			}
+			else if (Line.substr(0, VersionDefine.size()) == VersionDefine)
+			{
+				*OutVersionString = Line + "\n";
+			}
+			else
+			{
+				if (bIsParsingVertexShader)
+					OutVertexSource->append(Line + "\n");
+				else if (bIsParsingFragShader)
+					OutFragSource->append(Line + "\n");
+			}
+		});
+
+		return bIsShaderLoaded;
+	}
+	
+
+
 	ResourceId RS_LoadShader(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InMetaData)
 	{
-		ResourceId Id = InResourceSystem->FindResourceIdFromFileId(InMetaData->Id);
-		if (Id.IsValid)
-			return Id;
+		const auto GDI = g_Application->GetGDI();
+		ResourceId ShaderId = InResourceSystem->FindResourceIdFromFileId(InMetaData->Id);
 
-		std::string combinedPath = ToFullFilePath(InWorkspacePath, InMetaData);
+		std::string FullPath = ToFullFilePath(InWorkspacePath, InMetaData);
 
-		// This is a temporary solution to be able to load ps and vs shader at 
-		// the same time. I guess once I switch back to DX12 or DX11 it should be
-		// different. - gbarnes 03/29/19
+		// Todo -- add other shader types later on ... and we of course should be able to somehow use 
+		//		   this with directx (hlsl) too once we get that back in (gb, 10/12/19).
+		
+		std::string VertexSource = "";
+		std::string FragSource = "";
+		std::string VersionString = "";
 
-		pugi::xml_document doc;
-		pugi::xml_parse_result result = doc.load_file(combinedPath.c_str());
-		if (!result)
+		bool bIsShaderLoaded = ParseShaderFile(FullPath, &VersionString, &VertexSource, &FragSource);
+
+		if (bIsShaderLoaded)
 		{
-			DWN_CORE_ERROR("Couldn't parse shader xml!");
-			return INVALID_HANDLE;
+			std::string FinalVertexShader = VersionString + VertexSource;
+			std::string FinalPixelShader = VersionString + FragSource;
+
+			GfxShader* InternalShader = nullptr;
+			if (!ShaderId.IsValid)
+			{
+				Shader* shader;
+				InResourceSystem->CreateShader(&shader);
+
+				shader->FileId = InMetaData->Id;
+				ShaderId = shader->Id;
+				shader->ResourceId = GDI->CreateShader(&InternalShader);
+			}
+			else
+			{
+				auto Shader = InResourceSystem->FindShader(ShaderId);
+				InternalShader = GDI->GetShader(Shader->ResourceId);
+			}
+
+			assert(InternalShader != nullptr && "Gfx shader null.");
+			InternalShader->AttachSource(GfxShaderType::ST_Vertex, FinalVertexShader.c_str());
+			InternalShader->AttachSource(GfxShaderType::ST_Pixel, FinalPixelShader.c_str());
 		}
 
-		Shader* shader;
-		InResourceSystem->CreateShader(&shader);
-
-		shader->FileId = InMetaData->Id;
-
-		GfxShader* ResourceShader;
-		shader->ResourceId = g_Application->GetGDI()->CreateShader(&ResourceShader);
-
-		std::vector<u32> shadersToDelete;
-		for (auto step : doc.child("shader").children())
-		{
-			auto typeAttr = std::string(step.attribute("type").as_string());
-			bool isPixelShader = (typeAttr == "ps");
-			
-			auto shaderBuffer = step.text().as_string();
-			ResourceShader->AttachSource(isPixelShader ? GfxShaderType::ST_Pixel : GfxShaderType::ST_Vertex, shaderBuffer);
-		}
-
-		return shader->Id;
+		return ShaderId;
 	}
 
 	ResourceId RS_LoadImage(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InFile)
@@ -270,45 +373,6 @@ namespace Dawn
 		return INVALID_HANDLE;
 	}
 
-	ResourceId RS_ReloadShader(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InMetaData)
-	{
-		const auto GDI = g_Application->GetGDI();
-		auto ResourceId = InResourceSystem->FindResourceIdFromFileId(InMetaData->Id);
-		auto CastedResource = InResourceSystem->FindShader(ResourceId);
-
-		if (CastedResource->ResourceId.IsValid)
-		{
-			std::string combinedPath = ToFullFilePath(InWorkspacePath, InMetaData);
-
-			// This is a temporary solution to be able to load ps and vs shader at 
-			// the same time. I guess once I switch back to DX12 or DX11 it should be
-			// different. - gbarnes 03/29/19
-
-			pugi::xml_document doc;
-			pugi::xml_parse_result result = doc.load_file(combinedPath.c_str());
-			if (!result)
-			{
-				DWN_CORE_ERROR("Couldn't parse shader xml!");
-				return INVALID_HANDLE;
-			}
-
-			GfxShader* shader = GDI->GetShader(CastedResource->ResourceId);
-			if (shader)
-			{
-				std::vector<u32> shadersToDelete;
-				for (auto step : doc.child("shader").children())
-				{
-					auto typeAttr = std::string(step.attribute("type").as_string());
-					bool isPixelShader = (typeAttr == "ps");
-
-					auto shaderBuffer = step.text().as_string();
-					shader->AttachSource(isPixelShader ? GfxShaderType::ST_Pixel : GfxShaderType::ST_Vertex, shaderBuffer);
-				}
-			}
-		}
-
-		return INVALID_HANDLE;
-	}
 
 	ResourceId RS_ReloadImage(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InMetaData)
 	{

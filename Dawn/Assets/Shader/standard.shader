@@ -1,7 +1,6 @@
-<?xml version="1.0"?>
-<shader>
-	<step type="vs"><![CDATA[#version 330 core
+#version 330 core
 
+#pragma vert_begin
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 uv0;
@@ -24,31 +23,19 @@ void main()
 	TexCoord1 = uv1; 
 	FragPos = vec3(model * vec4(position, 1.0));
 	Normal = normal;
-}]]>  
-	</step>
-	<step type="ps"><![CDATA[#version 330 core
-  
-out vec4 FragColor;    
-  
+}
+
+#pragma frag_begin
+#pragma include "shader_globals.include"
+
+out vec4 FragColor;
+
 in vec2 TexCoord0;
 in vec2 TexCoord1; 
 in vec3 FragPos;  
 in vec3 Normal;   
 
-struct Material {
-    vec4 ambient;
-    vec4 diffuse;
-    vec4 specular;
-    float shininess;
-}; 
-  
-uniform Material material; 
-
-struct Light {
-    vec3 position; 
-    vec4 diffuse;
-};
-
+uniform Material material;
 uniform Light light;  
 
 void main()
@@ -59,6 +46,4 @@ void main()
 	vec4 diffuse = diff * light.diffuse;
 
 	FragColor = (vec4(0.35, 0.35, 0.35, 1.0) + diffuse) * material.diffuse;
-}]]>
-	</step>
-</shader>
+}

@@ -4,7 +4,7 @@
 
 extern Dawn::Application* Dawn::CreateApplication();
 
-int main(int argc, char** argv)
+int WINAPI WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR cmd, int show)
 {
 	using namespace Dawn;
 

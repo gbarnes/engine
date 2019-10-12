@@ -12,7 +12,7 @@ namespace Dawn
 		this->Instance = nullptr;
 		this->PrevInstance = nullptr;
 		this->CmdLine = nullptr;
-		this->CmdShow = 1;
+		this->CmdShow = 0;
 		this->Title = L"Engine";
 		this->IsFullscreen = false;
 		this->ClassName = L"EngineClassWindow";
@@ -106,7 +106,7 @@ namespace Dawn
 		}
 
 		SetProp(HWnd, L"Window", (HANDLE)this);
-		ShowWindow(this->HWnd, this->CmdShow);
+		ShowWindow(this->HWnd, 1);
 		UpdateWindow(this->HWnd);
 		IsCreated = true;
 

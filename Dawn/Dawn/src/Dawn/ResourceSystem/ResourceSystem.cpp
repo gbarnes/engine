@@ -151,6 +151,8 @@ namespace Dawn
 
 	ResourceId ResourceSystem::LoadFile(FileId InHandle)
 	{
+		auto StartTime = std::chrono::steady_clock::now();
+
 		FileMetaData* meta = GetMetaDataFromHandle(InHandle);
 		if (meta == nullptr) 
 		{
@@ -176,6 +178,11 @@ namespace Dawn
 		if(FileIdToResourceId.find(InHandle) == FileIdToResourceId.end())
 			this->FileIdToResourceId.emplace(std::pair<FileId, ResourceId>(InHandle, Id));
 
+		auto EndTime = std::chrono::steady_clock::now();
+		auto TimeInSeconds = std::chrono::duration_cast<std::chrono::milliseconds>(EndTime - StartTime);
+
+		DWN_CORE_INFO("Resource {0} loaded into memory in {1} ms.", meta->Name, TimeInSeconds.count());
+		
 		return Id;
 	}
 

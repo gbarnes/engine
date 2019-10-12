@@ -122,7 +122,6 @@ namespace Dawn
 		ImGui::End();
 	}
 
-
 	void Dawn::RenderEditorUI()
 	{
 		if (ImGui::BeginMainMenuBar())
