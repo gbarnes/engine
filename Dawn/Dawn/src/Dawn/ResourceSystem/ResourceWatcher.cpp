@@ -80,8 +80,10 @@ namespace Dawn
 						}
 					}
 
-					if (fni->NextEntryOffset == 0)
+					if (fni->NextEntryOffset == 0) {
+						buffer = std::vector<BYTE>(1024 * 64);
 						break;
+					}
 
 					fni = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<BYTE*>(fni) + fni->NextEntryOffset);
 				} while (true);

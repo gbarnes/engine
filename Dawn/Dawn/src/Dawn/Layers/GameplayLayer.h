@@ -11,7 +11,7 @@ namespace Dawn
 		~GameplayLayer();
 
 		virtual void Setup();
-		virtual void Process();
+		virtual void Process(float InDeltaTime);
 		virtual void Free();
 	};
 }

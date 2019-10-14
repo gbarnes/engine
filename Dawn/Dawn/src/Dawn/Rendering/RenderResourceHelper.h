@@ -14,15 +14,16 @@ namespace Dawn
 		PS_Debug_Point
 	};
 
-	struct CommonShaderHandles
+	struct DAWN_API CommonShaderHandles
 	{
+		static ResourceId FinalPass;
 		static ResourceId Standard;
 		static ResourceId Phong;
 		static ResourceId Debug;
 		static ResourceId DebugPrim;
 	};
 
-	struct EditorShaderHandles
+	struct DAWN_API EditorShaderHandles
 	{
 		static ResourceId Grid;
 	};
@@ -31,7 +32,7 @@ namespace Dawn
 
 	namespace RenderResourceHelper
 	{
-		void LoadCommonShaders(ResourceSystem* InResourceSystem);
-		void CreateCommonPipelineStates();
+		DAWN_API void LoadCommonShaders(ResourceSystem* InResourceSystem);
+		DAWN_API void CreateCommonPipelineStates();
 	}
 }

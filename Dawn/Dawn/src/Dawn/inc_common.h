@@ -8,9 +8,11 @@ using namespace Microsoft::WRL;
 #pragma warning( disable: 4251 )
 
 #ifdef DAWN_BUILD_DLL 
-	#define DAWN_API __declspec(dllexport)
+	#define DAWN_API
+	//#define DAWN_API __declspec(dllexport)
 #else
-	#define DAWN_API __declspec(dllimport)
+	#define DAWN_API
+	//#define DAWN_API __declspec(dllimport)
 #endif
 
 // STL Headers
@@ -65,11 +67,14 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 typedef unsigned long u64;
 typedef unsigned long long u128;
+typedef float f32;
+typedef double f64;
 
 typedef char c8;
 typedef short s16;
 typedef int i32;
 typedef long i64;
+typedef long long i128;
 typedef u128 FileId;
 
 typedef glm::quat quat;

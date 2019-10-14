@@ -14,9 +14,9 @@ namespace Dawn
 		~ImGuiLayer();
 		
 		void Setup();
-		void Update();
+		void Update(float InDeltaTime);
 		void Render();
-		void Process();
+		void Process(float InDeltaTime);
 		void Free();
 
 	private:

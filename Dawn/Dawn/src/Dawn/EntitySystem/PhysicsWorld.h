@@ -1,6 +1,6 @@
 #pragma once
 #include "inc_core.h"
-#pragma comment(lib, "PhysX_64.lib")
+/*#pragma comment(lib, "PhysX_64.lib")
 #pragma comment(lib, "PhysXCommon_64.lib")
 #pragma comment(lib, "PhysXFoundation_64.lib")
 #pragma comment(lib, "PhysXCooking_64.lib")
@@ -12,7 +12,7 @@
 #pragma comment(lib, "LowLevelDynamics_static_64.lib")
 #pragma comment(lib, "LowLevelAABB_static_64.lib")
 #pragma comment(lib, "FastXml_static_64.lib")
-#pragma comment(lib, "LowLevel_static_64.lib")
+#pragma comment(lib, "LowLevel_static_64.lib")*/
 
 #include "PxPhysicsAPI.h"
 

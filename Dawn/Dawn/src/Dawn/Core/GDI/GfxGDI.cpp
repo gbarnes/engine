@@ -31,6 +31,11 @@ namespace Dawn
 		this->ShaderPool.Free(InId);
 	}
 
+	void GfxGDI::ReturnRenderBuffer(GfxResId InId)
+	{
+		this->RenderBufferPool.Free(InId);
+	}
+
 	void GfxGDI::SetClearColor(const vec4& InColor)
 	{
 		this->ClearColor = InColor;

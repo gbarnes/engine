@@ -15,7 +15,7 @@ namespace Dawn
 		~WorldSimulateLayer();
 
 		virtual void Setup();
-		virtual void Process();
+		virtual void Process(float InDeltaTime);
 		virtual void Free();
 	};
 }

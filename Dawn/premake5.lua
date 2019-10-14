@@ -19,7 +19,7 @@ include "Dawn/vendor/pugixml"
 
 project "Dawn"
 	location "Dawn"
-	kind "SharedLib"
+	kind "StaticLib"
 	language "C++"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
@@ -51,25 +51,7 @@ project "Dawn"
 	
 	links 
 	{
-		"ImGui",
-		"DirectXTex",
-		"Brofiler",
-		"glad",
-		"pugixml",
-		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysX_64.lib",
-		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCommon_64.lib",
-		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXFoundation_64.lib",
-		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCooking_64.lib",
-		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXExtensions_static_64.lib",
-		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXPvdSDK_static_64.lib",
-		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXTask_static_64.lib",
-		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXVehicle_static_64.lib",
-		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCharacterKinematic_static_64.lib",
-		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevelDynamics_static_64.lib",
-		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevelAABB_static_64.lib",
-		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/FastXml_static_64.lib",
-		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevel_static_64.lib",
-		"Dawn/vendor/assimp/lib/x64/assimp-vc140-mt.lib"
+		
 	}
 	
 	libdirs { "Dawn/vendor/assimp/lib/x64/*", "Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/*"  }
@@ -140,12 +122,14 @@ project "Dawn"
 
 project "Sandbox"
 	location "Sandbox"
-	kind "ConsoleApp"
+	kind "WindowedApp"
 	language "C++"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
+	linkoptions { '/NODEFAULTLIB:"libcmt.lib"' }
+	
 	files
 	{
 		"%{prj.name}/src/**.h",
@@ -156,7 +140,7 @@ project "Sandbox"
 	{
 		"Dawn/vendor/spdlog/include/",
 		"Dawn/vendor/stb/include/",
-		"Dawn/src",
+		"Dawn/src/Dawn",
 		"Dawn/vendor/DirectXTex/",
 		"Dawn/vendor/glad/glad/",
 		"Dawn/vendor/brofiler/src/",
@@ -170,6 +154,11 @@ project "Sandbox"
 	
 	links 
 	{
+		"ImGui",
+		"DirectXTex",
+		"Brofiler",
+		"glad",
+		"pugixml",
 		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysX_64.lib",
 		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCommon_64.lib",
 		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXFoundation_64.lib",
@@ -183,6 +172,7 @@ project "Sandbox"
 		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevelAABB_static_64.lib",
 		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/FastXml_static_64.lib",
 		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevel_static_64.lib",
+		"Dawn/vendor/assimp/lib/x64/assimp-vc140-mt.lib",
 		"Dawn"
 	}
 

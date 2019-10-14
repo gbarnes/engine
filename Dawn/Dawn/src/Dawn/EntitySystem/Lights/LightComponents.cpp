@@ -4,9 +4,9 @@
 
 namespace Dawn
 {
-	MAKE_TYPE_BEGIN(DirectionalLight)
-		ADD_MEMBER(DirectionalLight, Color, vec4)
-	MAKE_TYPE_END()
+	//MAKE_TYPE_BEGIN(DirectionalLight)
+	//	ADD_MEMBER(DirectionalLight, Color, vec4)
+	//MAKE_TYPE_END()
 
 	DirectionalLight* LightUtils::CreateDirectionalLight(World* InWorld, quat InOrientation, vec4 InColor)
 	{

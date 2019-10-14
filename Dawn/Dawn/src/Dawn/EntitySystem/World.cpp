@@ -68,6 +68,20 @@ namespace Dawn
 		return this->GetComponentByEntity<Camera>(e);
 	}
 
+	std::vector<Camera*> World::GetCameras()
+	{ 
+		std::vector<Camera*> Cams;
+
+		for (auto CamId : CameraEntities)
+		{
+			auto CamRef = GetComponentByEntity<Camera>(CamId);
+			if (CamRef)
+				Cams.push_back(CamRef);
+		}
+
+		return Cams;
+	}
+
 	//
 	// Creates a new Entity with the given name and returns it's 
 	// entity handle.

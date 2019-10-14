@@ -30,6 +30,7 @@ namespace Dawn
 			const vec3& InPosition = vec3(0), const quat& InOrientation = quat());
 		
 		Camera* GetCamera(u32 InId);
+		std::vector<Camera*> GetCameras();
 
 		inline EntityId CreateEntity(const std::string &InName) const;
 

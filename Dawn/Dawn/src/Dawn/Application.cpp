@@ -29,7 +29,6 @@
 namespace Dawn
 {
 	Shared<Application> g_Application = nullptr;
-
 	SEventHandle g_MouseMovedEvtHandle, g_MousePressedHandle, g_MouseReleasedHandle;
 	uint64_t Application::FrameCount = 0;
 
@@ -49,11 +48,13 @@ namespace Dawn
 	{
 	}
 
+	
+
 	void Application::Run()
 	{
 		Config::Load({ "Engine" });
 
-		ResourceSystem = Dawn::ResourceSystem::Create(Paths::ProjectContentDir(), { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx" }, false);
+		ResourceSystem = Dawn::ResourceSystem::Create(Paths::ProjectContentDir(), { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx" }, true);
 		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadModel), BIND_FS_LOADER(Dawn::RS_ReloadModel), { ".obj", ".fbx" });
 		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadShader), BIND_FS_LOADER(Dawn::RS_LoadShader), { ".shader" });
 		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadImage), BIND_FS_LOADER(Dawn::RS_ReloadImage), { ".jpg", ".png", ".PNG" });
@@ -104,6 +105,12 @@ namespace Dawn
 			return;
 		}
 
+		// Boot up World!
+		World = std::make_unique<Dawn::World>();
+		World->AddTable("Transform", std::make_unique<ComponentTable<Transform>>());
+		World->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
+		World->AddTable("DirectionalLight", std::make_unique<ComponentTable<DirectionalLight>>());
+		World->AddSystem(std::make_unique<RigidbodySystem>());
 
 		Physics = std::make_unique<PhysicsWorld>();
 		if(!Physics->Initialize())
@@ -119,89 +126,76 @@ namespace Dawn
 		}
 
 		DWN_CORE_INFO("Core Context initialized.");
-		
-		IsInitialized = true;
-		Clock.Reset();
 		Input::Reset();
 
-		while (true)
-		{
-			if (!Window->PeekMessages())
-				break;
 
-			ResourceSystem->Refresh();
+		{
+			// todo --- move this into a custom clock/timer class!
+			// since we only target windows we can use the performance functions.
+			QueryPerformanceFrequency(&Frequency);
+			QueryPerformanceCounter(&tBegin);
+			IsInitialized = true;
+
+			while (true)
+			{
+				if (!Window->PeekMessages())
+					break;
+			}
 		}
 
-		ClearLayers();
-		Physics->Shutdown();
-		GDI->Shutdown();
-		ResourceSystem->Shutdown();
-		JobSystem::Shutdown();
+		// -------- CLEANUP
+		{
+			Cleanup();
+			ClearLayers();
+			Physics->Shutdown();
+			GDI->Shutdown();
+			ResourceSystem->Shutdown();
+			JobSystem::Shutdown();
 
-		DWN_CORE_INFO("Core Context shutdown.");
+			DWN_CORE_INFO("Core Context shutdown.");
+		}
 	}
 
-	Camera* g_Camera;
-	
-
-	void Application::Load()
+	void Application::Tick()
 	{
-		RenderResourceHelper::LoadCommonShaders(ResourceSystem.get());
+		if (!IsInitialized)
+			return;
 
-		// Boot up World!
-		World = std::make_unique<Dawn::World>();
-		World->AddTable("Transform", std::make_unique<ComponentTable<Transform>>());
-		World->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
-		World->AddTable("DirectionalLight", std::make_unique<ComponentTable<DirectionalLight>>());
-		World->AddSystem(std::make_unique<RigidbodySystem>());
-		
-		g_Camera = CreateCamera(GetWorld().get(), 
-									"Cam0", 
-									Settings.Width, 
-									Settings.Height, 
-									0.1f, 10000.0f, 65.0f, 
-									vec4(0.4f, 0.6f, 0.9f, 1.0f),
-									vec3(0, 3, 10)
-								  );
-		
-		CameraUtils::CalculatePerspective(g_Camera);
+		FrameCount++;
 
-		auto Cam1 = CreateCamera(GetWorld().get(), 
-					"Cam1",
-					Settings.Width,
-					Settings.Height,
-					0.0f, 10000.0f, 65.0f,
-					vec4(0.4f, 0.6f, 0.9f, 1.0f),
-					vec3(0, 0, 0),
-					quat(1, 0, 0, 0)
-				);
-
-		CameraUtils::CalculateOthographic(Cam1);
-
-		auto Id = ResourceSystem->LoadFile("Textures/grid.png");
-		if (auto GridImage = ResourceSystem->FindImage(Id))
+		frame_accumulator += dt;
+		while (frame_accumulator >= MS_PER_UPDATE)
 		{
-			GDI->GetPrimitiveHelper()->AllocateBuffers
-			(
-				GridImage, 
-				ResourceSystem->FindShader(CommonShaderHandles::DebugPrim),
-				ResourceSystem->FindShader(EditorShaderHandles::Grid)
-			);
+			Update(frame_accumulator);
+			ResourceSystem->Refresh();
+			frame_accumulator -= MS_PER_UPDATE;
 		}
+
+		QueryPerformanceCounter(&tEnd);
+		dt = (float)(tEnd.QuadPart - tBegin.QuadPart) / (float)Frequency.QuadPart;
+		tBegin = tEnd;
+
+		if (dt > 1.0f / 10.0f)
+			dt = MS_PER_UPDATE;
+
+		Render();
+		Input::Reset();
 	}
 
 	void Application::Resize(int width, int height)
 	{
-		g_Camera->Width = width;
-		g_Camera->Height = height;
-		g_Camera->AspectRatio = (float)width / (float)height;
-		CameraUtils::CalculatePerspective(g_Camera);
+		auto Cameras = World->GetCameras();
+		for (auto Camera : Cameras)
+		{
+			Camera->Width = width;
+			Camera->Height = height;
+			Camera->AspectRatio = (float)width / (float)height;
 
-		auto cam = GetWorld()->GetCamera(1);
-		cam->Width = width;
-		cam->Height = height;
-		cam->AspectRatio = (float)width / (float)height;
-		CameraUtils::CalculateOthographic(cam);
+			if(Camera->bIsOrthographic)
+				CameraUtils::CalculateOthographic(Camera);
+			else 
+				CameraUtils::CalculatePerspective(Camera);
+		}
 
 		Settings.Width = width;
 		Settings.Height = height;
@@ -209,34 +203,11 @@ namespace Dawn
 		DWN_CORE_INFO("Resizing Window to {0}x{1}!", width, height);
 	}
 
-	void Application::Tick()
-	{BROFILER_FRAME("MainThread")
-		
-		if (!IsInitialized)
-			return;
-
-		++Application::FrameCount;
-		
-		Clock.Tick();
-
-		GDI->SetViewport(0, 0, Settings.Width, Settings.Height);
-		GDI->SetClearColor(g_Camera->ClearColor);
-		GDI->Clear();
-
-		for (Layer* layer : Layers)
-		{
-			layer->Process();
-		}
-
-		GDI->Present();
-		Input::Reset();
-	}
-
 	void Application::SetupLayers()
 	{
 		LayerInsertCount = Layers.begin();
 
-		this->PushLayer(new ImGuiLayer(this->shared_from_this(), Window->GetHwnd()));
+		//this->PushLayer(new ImGuiLayer(this->shared_from_this(), Window->GetHwnd()));
 		this->PushLayer(new TestRenderLayer(this->shared_from_this()));
 		this->PushLayer(new WorldSimulateLayer(this->shared_from_this()));
 

@@ -68,7 +68,8 @@ namespace Dawn
 			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
 			ImGuiWindowFlags_NoInputs);
 		ImGui::SetWindowPos(ImVec2(10, 30));
-		ImGui::TextColored(ImVec4(0, 1, 0, 1), "%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::TextColored(ImVec4(0, 1, 0, 1), "%.3f ms/frame (%.1f FPS)", ImGui::GetIO().DeltaTime, ImGui::GetIO().Framerate);
+	//	g_Application->GetDeltaTime();
 		ImGui::End();
 	}
 
@@ -100,8 +101,9 @@ namespace Dawn
 	{
 		auto world = g_Application->GetWorld();
 		auto transforms = world->GetComponentsByType<Transform>();
-
+		ImGui::SetNextWindowBgAlpha(1.f);
 		ImGui::Begin("Scene", &g_ShowSceneWindow);
+		
 		if (ImGui::TreeNode("Root"))
 		{
 			for (auto transform : transforms)
@@ -115,7 +117,6 @@ namespace Dawn
 					g_SelectedEntity = const_cast<Entity*>(entity);
 				}
 			}
-
 			ImGui::TreePop();
 		}
 
@@ -124,6 +125,45 @@ namespace Dawn
 
 	void Dawn::RenderEditorUI()
 	{
+		/*static bool opt_fullscreen_persistant = true;
+		static ImGuiDockNodeFlags opt_flags = ImGuiDockNodeFlags_None;
+		bool opt_fullscreen = opt_fullscreen_persistant;
+
+		// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+		// because it would be confusing to have two docking targets within each others.
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+		if (opt_fullscreen)
+		{
+			ImGuiViewport* viewport = ImGui::GetMainViewport();
+			ImGui::SetNextWindowPos(viewport->Pos);
+			ImGui::SetNextWindowSize(viewport->Size);
+			ImGui::SetNextWindowViewport(viewport->ID);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+		}
+
+		// When using ImGuiDockNodeFlags_PassthruDockspace, DockSpace() will render our background and handle the pass-thru hole, so we ask Begin() to not render a background.
+		if (opt_flags & ImGuiDockNodeFlags_PassthruDockspace)
+			window_flags |= ImGuiWindowFlags_NoBackground;
+
+		static bool bOpen = true;
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+		ImGui::Begin("DockSpace Demo", &bOpen, window_flags);
+		ImGui::PopStyleVar();
+
+		if (opt_fullscreen)
+			ImGui::PopStyleVar(2);
+
+		// Dockspace
+		ImGuiIO& io = ImGui::GetIO();
+		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+		{
+			ImGuiID dockspace_id = ImGui::GetID("MyDockspace");
+			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), opt_flags);
+		}*/
+
 		if (ImGui::BeginMainMenuBar())
 		{
 			if (ImGui::BeginMenu("World"))
@@ -137,20 +177,7 @@ namespace Dawn
 				if (ImGui::MenuItem("Browser")) { g_showAssetBrowser = !g_showAssetBrowser; }
 				ImGui::EndMenu();
 			}
-			
 
-			/*if (ImGui::BeginMenu("Edit"))
-			{
-				if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
-				if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
-				ImGui::Separator();
-				if (ImGui::MenuItem("Cut", "CTRL+X")) {}
-				if (ImGui::MenuItem("Copy", "CTRL+C")) {}
-				if (ImGui::MenuItem("Paste", "CTRL+V")) {}
-				ImGui::EndMenu();
-			}*/
-
-			
 			if (ImGui::BeginMenu("Debug"))
 			{
 				static bool FpsCheckBoxVariable = false;
@@ -158,12 +185,12 @@ namespace Dawn
 				ImGui::Separator();
 				if (ImGui::MenuItem("Profiler")) {}
 				if (ImGui::MenuItem("Console")) {}
-				
+
 				ImGui::EndMenu();
 			}
 			ImGui::EndMainMenuBar();
 		}
-
+		
 		if (g_ShowFpsCounter)
 			ShowFpsCounter();
 
@@ -175,6 +202,9 @@ namespace Dawn
 
 		if (g_ShowSceneWindow)
 			ShowSceneWindow();
+
+		//ImGui::End();
+
 	}
 
 

@@ -5,9 +5,11 @@
 
 namespace Dawn 
 {
+	class GfxGDI;
+
 	namespace ImGuiWrapper
 	{
-		void Create(void* InHwnd);
+		void Create(void* InHwnd, GfxGDI* InGDI);
 		void Shutdown();
 		void BeginNewFrame();
 		void Render();

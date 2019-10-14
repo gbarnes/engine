@@ -1,7 +1,8 @@
 #include "ImGuiWrapper.h"
 #include "imgui.h"
+#include "Core/GDI/GfxGDI.h"
+#include "Core/GDI/OpenGL/GfxGLGDI.h"
 #include "Vendor/ImGui/imgui_impl_win32.h"
-
 #include "Vendor/ImGui/imgui_impl_opengl3.h"
 
 #ifdef USE_DX12_GFX
@@ -15,8 +16,14 @@ namespace Dawn
 	ComPtr<ID3D12DescriptorHeap> g_D3DSrvDescHeap;
 #endif
 
-	void ImGuiWrapper::Create(void* InHwnd)
+	
+	static HWND g_hwnd = 0;
+	static HGLRC g_glcontext = 0;
+
+	void ImGuiWrapper::Create(void* InHwnd, GfxGDI* InGDI)
 	{
+		GfxGLGDI* GLGDI = dynamic_cast<GfxGLGDI*>(InGDI);
+
 		// Todo: Add error checking & Logs 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -26,8 +33,11 @@ namespace Dawn
 		io.DisplaySize = ImVec2(1280, 720);
 		io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 		io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; //| ImGuiConfigFlags_ViewportsEnable;
 
-
+		g_hwnd = (HWND)InHwnd;
+		g_glcontext = (HGLRC)GLGDI->hRC;
 		ImGui_ImplWin32_Init(InHwnd);
 		ImGui_ImplOpenGL3_Init("#version 150");
 
@@ -157,9 +167,21 @@ namespace Dawn
 #ifdef USE_DX12_GFX
 		InCmdList->SetDescriptorHeaps(1, g_D3DSrvDescHeap.GetAddressOf());
 #endif
-
+		ImGuiIO& io = ImGui::GetIO();
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		// Update and Render additional Platform Windows
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			auto hRC = wglGetCurrentContext();
+			HDC backup_current_context = GetDC(g_hwnd);
+
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
+			wglMakeCurrent(backup_current_context, g_glcontext);
+		}
+
 #ifdef USE_DX12_GFX
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), InCmdList);
 #endif

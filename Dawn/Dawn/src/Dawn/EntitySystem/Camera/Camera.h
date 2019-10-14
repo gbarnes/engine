@@ -25,6 +25,7 @@ namespace Dawn
 		float AspectRatio = 0;
 		u32 Width = 800;
 		u32 Height = 600;
+		bool bIsOrthographic = false;
 
 		vec4 ClearColor = { 0.4f, 0.6f, 0.9f, 1.0f };
 		vec3 WorldUp = {0.0f,1.0f,0.0f};

@@ -1,11 +1,20 @@
 #pragma once
-#include <Dawn.h>
+#include "inc_common.h"
+#include "inc_core.h"
+#include "Application.h"
+#include "EntryPoint.h"
 
 class SandboxApp : public Dawn::Application
 {
 public:
 	SandboxApp(AppSettings& InSettings);
 	~SandboxApp();
+
+	virtual void Load() override;
+	virtual void Update(float InDeltaTime) override;
+	virtual void Render() override;
+	void Resize(int InWidth, int InHeight) override;
+	void Cleanup() override;
 };
 
 Dawn::Application* Dawn::CreateApplication()
@@ -16,7 +25,7 @@ Dawn::Application* Dawn::CreateApplication()
 		1280,
 		720,
 		false, // fullscreen
-		true, // vsync 
+		false, // vsync 
 		32,
 		32,
 		8

@@ -17,7 +17,7 @@ uniform mat4 view;
 uniform mat4 projection;
 
 void main()
-{
+{ 
 	gl_Position = projection * view * model * vec4(position, 1.0f);
 	TexCoord0 = uv0; 
 	TexCoord1 = uv1; 
@@ -42,8 +42,8 @@ void main()
 {
 	vec3 norm = normalize(Normal);
 	vec3 lightDir = normalize(light.position - FragPos);  
-	float diff = max(dot(norm, lightDir), 0.0);
-	vec4 diffuse = diff * light.diffuse;
-
+	float diff = max(dot(norm, lightDir), 0.0); 
+	vec4 diffuse = diff * light.diffuse; 
+ 
 	FragColor = (vec4(0.35, 0.35, 0.35, 1.0) + diffuse) * material.diffuse;
 }

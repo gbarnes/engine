@@ -196,7 +196,7 @@ namespace Dawn
 
 		if (InTexture)
 		{
-			glActiveTexture(GL_TEXTURE0);
+			GDI->ActivateTextureSlot(0);
 			GridShader->SetInt("gridTexture", 0);
 			InTexture->Bind();
 		}

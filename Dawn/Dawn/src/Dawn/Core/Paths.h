@@ -31,6 +31,14 @@ namespace Dawn
 		}
 
 		//
+		// Returns the project content dir
+		//
+		FORCEINLINE Path ProjectLogDir()
+		{
+			return ProjectDir().append("Logs");
+		}
+
+		//
 		// Returns the project config dir
 		//
 		FORCEINLINE Path ProjectConfigDir()

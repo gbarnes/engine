@@ -26,11 +26,13 @@ namespace Dawn
 		GfxResId CreateShader(GfxShader** OutShader) override;
 		GfxResId CreateTexture(u8* Data, u32 Width, u32 Height, u16 ChannelsPerPixel, GfxWrapDesc Wrap,
 			GfxFilterDesc Filter, bool GenerateMipMaps, GfxTexture** OutTexture) override;
+		GfxResId CreateRenderBuffer(GfxRenderBuffer** OutTexture) override;
 
+		// todo-- move this back to protected (gb, 10/13)
+		HGLRC hRC;
 	protected:
 		HWND HwnD;
 		HDC hDC;
-		HGLRC hRC;
 	};
 }
 //#endif

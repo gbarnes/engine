@@ -17,15 +17,15 @@ namespace Dawn
 	{
 	}
 
-	void WorldSimulateLayer::Process()
+	void WorldSimulateLayer::Process(float InDeltaTime)
 	{
 		auto scene = Application->GetPhysics()->GetScene();
 		auto world = Application->GetWorld();
-		auto time = Timer::GetTime();
+		//auto time = Timer::GetTime();
 
 		if (scene) 
 		{
-			scene->simulate(time.GetDeltaSeconds());
+			scene->simulate(InDeltaTime);
 			scene->fetchResults(true);
 		}
 		

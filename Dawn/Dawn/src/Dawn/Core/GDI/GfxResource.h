@@ -223,10 +223,38 @@ namespace Dawn
 		virtual void SetMat4(const std::string& Name, const mat4& Value) = 0;
 	};
 
+	enum GfxRenderTargetType
+	{
+		RTT_Color, 
+		RTT_Depth,
+		RTT_DepthStencil
+	};
 
-	typedef std::shared_ptr<GfxTexture> GfxTexturePtr;
-	typedef std::shared_ptr<GfxShader> GfxShaderPtr;
-	typedef std::shared_ptr<GfxVertexBuffer> GfxVertexBufferPtr;
-	typedef std::shared_ptr<GfxIndexBuffer> GfxIndexBufferPtr;
-	typedef std::shared_ptr<GfxVertexArray> GfxVertexArrayPtr;
+
+	class GfxRenderBuffer : public GfxResource
+	{
+	public:
+		GfxRenderBuffer(GfxResId InId) : GfxResource(InId) {};
+		virtual ~GfxRenderBuffer() = default;
+		
+		virtual void Bind() = 0;
+		virtual void Unbind() = 0;
+		virtual void AttachColorTarget(u32 InIndex, u32 InWidth, u32 InHeight) = 0;
+		virtual void AttachDepthStencilTarget(u32 InWidth, u32 InHeight) = 0;
+
+		virtual void BindColorTarget(u32 InIndex) = 0;
+		virtual void UnbindColorTarget(u32 InIndex) = 0;
+
+		inline const GfxResId GetId() const {
+			return Id;
+		}
+	};
+
+
+	typedef Shared<GfxTexture> GfxTexturePtr;
+	typedef Shared<GfxShader> GfxShaderPtr;
+	typedef Shared<GfxVertexBuffer> GfxVertexBufferPtr;
+	typedef Shared<GfxIndexBuffer> GfxIndexBufferPtr;
+	typedef Shared<GfxVertexArray> GfxVertexArrayPtr;
+	typedef Shared<GfxRenderBuffer> GfxRenderTargetPtr;
 }

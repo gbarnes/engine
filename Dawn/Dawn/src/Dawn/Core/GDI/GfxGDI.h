@@ -7,13 +7,12 @@
 
 namespace Dawn
 {
-
 	typedef HandleObjectSlot<GfxIndexBuffer> IndexBufferSlot;
 	typedef HandleObjectSlot<GfxVertexBuffer> VertexBufferSlot;
 	typedef HandleObjectSlot<GfxVertexArray> VertexArraySlot;
 	typedef HandleObjectSlot<GfxShader> ShaderSlot;
 	typedef HandleObjectSlot<GfxTexture> TextureSlot;
-
+	typedef HandleObjectSlot<GfxRenderBuffer> RenderBufferSlot;
 
 	class DAWN_API GfxGDI : public std::enable_shared_from_this<GfxGDI>
 	{
@@ -40,6 +39,7 @@ namespace Dawn
 		virtual GfxResId CreateShader(GfxShader** OutShader) = 0;
 		virtual GfxResId CreateTexture(u8* InData, u32 InWidth, u32 InHeight, u16 InChannelsPerPixel, GfxWrapDesc InWrap,
 			GfxFilterDesc InFilter, bool InGenerateMipMaps, GfxTexture** OutTexture) = 0;
+		virtual GfxResId CreateRenderBuffer(GfxRenderBuffer** OutTexture) = 0;
 
 
 		inline GfxVertexBuffer* GetVertexBuffer(GfxResId InId)
@@ -67,6 +67,11 @@ namespace Dawn
 			return TexturePool.Find(InId);
 		}
 
+		inline GfxRenderBuffer* GetRenderBuffer(GfxResId InId)
+		{
+			return RenderBufferPool.Find(InId);
+		}
+
 		inline GfxImmediatePrimitives* GetPrimitiveHelper()
 		{
 			return Primitives.get();
@@ -76,7 +81,7 @@ namespace Dawn
 		void ReturnIndexBuffer(GfxResId InId);
 		void ReturnVertexArray(GfxResId InId);
 		void ReturnShader(GfxResId InId);
-
+		void ReturnRenderBuffer(GfxResId InId);
 	protected:
 		Unique<GfxImmediatePrimitives> Primitives;
 		HandleObjectArray<GfxVertexBuffer> VertexBufferPool;
@@ -84,6 +89,7 @@ namespace Dawn
 		HandleObjectArray<GfxVertexArray> VertexArrayPool;
 		HandleObjectArray<GfxShader> ShaderPool;
 		HandleObjectArray<GfxTexture> TexturePool;
+		HandleObjectArray<GfxRenderBuffer> RenderBufferPool;
 
 		vec4 ClearColor = vec4(1, 0, 0, 1);
 	};

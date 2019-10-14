@@ -8,7 +8,7 @@ namespace Dawn
 	typedef GenericHandle ResourceId;
 
 
-	enum ResourceType
+	enum DAWN_API ResourceType
 	{
 		ResourceType_None,
 		ResourceType_Model,

@@ -19,10 +19,10 @@ namespace Dawn
 
 	void ImGuiLayer::Setup()
 	{
-		ImGuiWrapper::Create(WindowHandle);
+		ImGuiWrapper::Create(WindowHandle, Application->GetGDI().get());
 	}
 
-	void ImGuiLayer::Update()
+	void ImGuiLayer::Update(float InDeltaTime)
 	{
 		ImGuiWrapper::BeginNewFrame();
 		RenderEditorUI();
@@ -34,9 +34,9 @@ namespace Dawn
 		ImGuiWrapper::Render();
 	}
 
-	void ImGuiLayer::Process()
+	void ImGuiLayer::Process(float InDeltaTime)
 	{
-		Update();
+		Update(InDeltaTime);
 		Render();
 	}
 

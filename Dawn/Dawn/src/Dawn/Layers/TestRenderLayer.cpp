@@ -32,6 +32,7 @@ namespace Dawn
 	float pitch = 0.0f;
 	vec3 right = vec3(1.0f, 0.0f, 0.0f), forward = vec3(0.0f, 0.0f, -1.0f), up = vec3(0.0f, 1.0f, 0.0f);
 
+
 	TestRenderLayer::TestRenderLayer(Shared<Dawn::Application> InApplication)
 		: Layer(InApplication)
 	{
@@ -70,22 +71,11 @@ namespace Dawn
 
 		auto Light = LightUtils::CreateDirectionalLight(World.get(), quat(), vec4(0.9, 0.9, 0.9, 1.0f));
 		DirectionalLightId = Light->Id.Entity;
+
 	}
 
-	quat rotation;
-	float pitch2 = 0;
-	void TestRenderLayer::Update()
+	void TestRenderLayer::Update(float InDeltaTime)
 	{
-		// This is pretty wasteful for performance since we get the camera and transform 
-		// each frame! 
-		const auto time = static_cast<float>(Timer::GetTime().GetTotalSeconds());
-		const auto timeDelta = static_cast<float>(Timer::GetTime().GetDeltaSeconds());
-		float angle = time * 90.0f;
-		vec3 rotationAxis(0, 1, 0);
-		
-		pitch2 += 20.0f * timeDelta;
-
-		rotation = glm::angleAxis(glm::radians(pitch2), vec3(0, 1, 0));
 		Model = glm::scale(mat4(1), vec3(0.1f));//glm::translate(mat4(1), vec3(-2.0f, 0.0f, 0.0f)) * glm::mat4_cast(rotation);
 	
 		vec2 mousePosition = Input::GetMousePosition();
@@ -106,58 +96,59 @@ namespace Dawn
 		
 		if (Input::IsMouseButtonDown(MouseBtn_Right))
 		{
-			static float sensitivity = 12.0f;
-			yaw += xoffset * sensitivity * timeDelta;
-			pitch += yoffset * sensitivity * timeDelta;
+			static float sensitivity = 30.0f;
+			yaw += xoffset * sensitivity * InDeltaTime;
+			pitch += yoffset * sensitivity *InDeltaTime;
 
 			up = TransformUtils::CalculateUp(g_camTransform);
 			forward = TransformUtils::CalculateForward(g_camTransform);
 			right = TransformUtils::CalculateRight(g_camTransform);
 
-			float velocity = (Input::IsKeyDown(KeyCode_Shift)) ? 25.5f : 6.5f;
+			float velocity = (Input::IsKeyDown(KeyCode_Shift)) ? 15.5f : 10.0f;
 
 
 			if (Input::IsKeyDown(KeyCode_A))
 			{
-				g_camTransform->Position -=  right *  velocity * timeDelta;
+				g_camTransform->Position -=  right *  velocity * InDeltaTime;
 			}
 
 			if (Input::IsKeyDown(KeyCode_D))
 			{
-				g_camTransform->Position += right *  velocity * timeDelta;
+				g_camTransform->Position += right *  velocity * InDeltaTime;
 			}
 
 			if (Input::IsKeyDown(KeyCode_W))
 			{
-				g_camTransform->Position -= forward * velocity * timeDelta;
+				g_camTransform->Position -= forward * velocity * InDeltaTime;
 			}
 
 			if (Input::IsKeyDown(KeyCode_S))
 			{
-				g_camTransform->Position += forward * velocity * timeDelta;
+				g_camTransform->Position += forward * velocity * InDeltaTime;
 			}
 			
 			if (Input::IsKeyDown(KeyCode_Q))
 			{
-				g_camTransform->Position += g_camera->WorldUp * velocity * timeDelta;
+				g_camTransform->Position += g_camera->WorldUp * velocity * InDeltaTime;
 			}
 
 			if (Input::IsKeyDown(KeyCode_E))
 			{
-				g_camTransform->Position -= g_camera->WorldUp * velocity * timeDelta;
+				g_camTransform->Position -= g_camera->WorldUp * velocity * InDeltaTime;
 			}
 		}
 		
 		quat rot = glm::angleAxis(glm::radians(-yaw), vec3(0, 1, 0)) * glm::angleAxis(glm::radians(pitch), vec3(1, 0, 0));
 		TransformUtils::Rotate(g_camTransform, rot);
-
-		CameraUtils::CalculateView(g_camera, g_camTransform);
-		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(g_World.get()));
 	}
 
 	void TestRenderLayer::Render()
 	{
 		BROFILER_CATEGORY("RenderLayer_Render", Brofiler::Color::AliceBlue);
+
+
+		CameraUtils::CalculateView(g_camera, g_camTransform);
+		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(g_World.get()));
 
 		const auto GDI = Application->GetGDI();
 		const auto World = Application->GetWorld();
@@ -219,6 +210,7 @@ namespace Dawn
 			}
 		}
 
+
 		Primitives->SetCamera(g_camera);
 		Primitives->Grid(vec3(0, 0, 0), vec3(1000, 1000, 1000));
 
@@ -227,10 +219,10 @@ namespace Dawn
 		Primitives->Axis(vec3(100, 50, -100), vec3(75), g_camTransform->Rotation);
 	}
 
-	void TestRenderLayer::Process()
+	void TestRenderLayer::Process(float InDeltaTime)
 	{
-		Update();
-		Render();
+		//Update(InDeltaTime);
+		//Render();
 	}
 
 	void TestRenderLayer::Free()

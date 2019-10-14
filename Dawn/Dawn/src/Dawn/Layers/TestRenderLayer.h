@@ -13,9 +13,9 @@ namespace Dawn
 		TestRenderLayer(Shared<Dawn::Application> InApplication);
 
 		void Setup();
-		void Update();
+		void Update(float InDeltaTime);
 		void Render();
-		void Process();
+		void Process(float InDeltaTime);
 		void Free();
 
 	private:

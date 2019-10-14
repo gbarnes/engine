@@ -3,6 +3,7 @@
 #include "GLShaders.h"
 #include "GLTexture.h"
 #include "GLImmediatePrimitives.h"
+#include "GLRenderBuffer.h"
 //#ifdef USE_OPENGL_GFX
 
 namespace Dawn
@@ -104,6 +105,7 @@ namespace Dawn
 		this->VertexBufferPool.Clear();
 		this->IndexBufferPool.Clear();
 		this->ShaderPool.Clear();
+		this->RenderBufferPool.Clear();
 
 		wglMakeCurrent(NULL, NULL);
 		wglDeleteContext(hRC);
@@ -138,12 +140,6 @@ namespace Dawn
 	{
 		glActiveTexture(GL_TEXTURE0 + InIndex);
 	}
-
-	/*void GfxGLGDI::DrawLine(u32 First, u32 Count)
-	{
-		glDrawArrays(GL_LINE_STRIP, First, Count);
-	}*/
-
 
 	GfxResId GfxGLGDI::CreateVertexBuffer(float* Vertices, u32 Size, GfxVertexBuffer** OutBuffer)
 	{
@@ -197,6 +193,17 @@ namespace Dawn
 		Slot->Element = new GLTexture(Slot->GetId(), Data, Width, Height, ChannelsPerPixel, Wrap, Filter, GenerateMipMaps);
 
 		if(OutTexture != nullptr)
+			*OutTexture = Slot->Element;
+
+		return Slot->GetId();
+	}
+
+	GfxResId GfxGLGDI::CreateRenderBuffer(GfxRenderBuffer** OutTexture)
+	{
+		RenderBufferSlot* Slot = RenderBufferPool.Request();
+		Slot->Element = new GLRenderBuffer(Slot->GetId());
+
+		if (OutTexture != nullptr)
 			*OutTexture = Slot->Element;
 
 		return Slot->GetId();
