@@ -12,9 +12,9 @@ namespace Dawn
 		friend class TypeMemberCollection;
 	public:
 		std::string Name;
-		u128 Size;
+		u64 Size;
 
-		Type(std::string InName, u128 InSize, TypeInitMethod InInit)
+		Type(std::string InName, u64 InSize, TypeInitMethod InInit)
 			: Name(InName), Size(InSize) 
 		{
 			if(InInit != nullptr)
@@ -33,7 +33,7 @@ namespace Dawn
 		}
 
 		
-		void AddMember(std::string InName, u128 InSize) 
+		void AddMember(std::string InName, u64 InSize) 
 		{
 			TypeMember member = { InName, InSize };
 			Members.emplace(std::make_pair(InName, member));
@@ -43,7 +43,7 @@ namespace Dawn
 		struct TypeMember
 		{
 			std::string Name;
-			u128 Offset;
+			u64 Offset;
 		};
 
 		std::map<std::string, TypeMember> Members;

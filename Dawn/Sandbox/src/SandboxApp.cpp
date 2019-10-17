@@ -5,6 +5,8 @@
 #include "Core/GDI/inc_gfx.h"
 #include "Vendor/ImGui/ImGuiWrapper.h"
 #include "UI/Editor/imgui_editor_functions.h"
+#include "Rendering/Renderer.h"
+#include "Rendering/RenderBucket.h"
 
 using namespace Dawn;
 
@@ -29,14 +31,14 @@ void SandboxApp::Load()
 	RenderResourceHelper::LoadCommonShaders(ResourceSystem.get());
 
 	g_Camera = CreateCamera(GetWorld().get(),
-		"Cam0",
+		"EditorCam",
 		Settings.Width,
 		Settings.Height,
 		0.1f, 10000.0f, 65.0f,
 		vec4(0.4f, 0.6f, 0.9f, 1.0f),
 		vec3(0, 3, 10)
 	);
-
+	g_Camera->GetEntity()->bIsHiddenInEditorHierarchy = true;
 	CameraUtils::CalculatePerspective(g_Camera);
 
 	auto Cam1 = CreateCamera(GetWorld().get(),
@@ -73,6 +75,8 @@ void SandboxApp::Load()
 	g_ScreenQuadVAO = GfxPrimitiveFactory::AllocateQuad(GDI.get(), vec2(1.0f, -1.0f), 1.0f);
 
 	ImGuiWrapper::Create(this->Settings.Hwnd, this->GetGDI().get());
+
+	
 }
 
 void SandboxApp::Resize(int InWidth, int InHeight)
@@ -88,61 +92,19 @@ void SandboxApp::Resize(int InWidth, int InHeight)
 
 void SandboxApp::Update(float InDeltaTime)
 {
-	++Application::FrameCount;
-
 	for (Layer* layer : Layers)
 	{
 		layer->Update(InDeltaTime);
 	}
 }
 
+void SandboxApp::FixedUpdate(float InFixedTime)
+{
+	
+}
+
 void SandboxApp::Render()
 {
-
-	// Render to "G-Buffer"
-	{
-		g_RenderBuffer->Bind();
-		GDI->SetViewport(0, 0, Settings.Width, Settings.Height);
-		GDI->SetClearColor(g_Camera->ClearColor);
-		GDI->Clear();
-
-		for (Layer* layer : Layers)
-		{
-			layer->Render();
-		}
-
-		g_RenderBuffer->Unbind();
-	}
-
-	// Final Pass Render Targets to Backbuffer!
-	{
-		GDI->SetClearColor(g_Camera->ClearColor);
-		GDI->Clear();
-
-		auto cam = GetWorld()->GetCamera(1);
-
-		auto FinalPassShader = GDI->GetShader(ResourceSystem->FindShader(CommonShaderHandles::FinalPass)->ResourceId);
-		if (FinalPassShader)
-		{
-			FinalPassShader->Bind();
-			GDI->ActivateTextureSlot(0);
-			g_RenderBuffer->BindColorTarget(0);
-			FinalPassShader->SetInt("screenTexture", 0);
-			GDI->DrawIndexed(g_ScreenQuadVAO->GetId());
-			g_RenderBuffer->UnbindColorTarget(0);
-			FinalPassShader->Unbind();
-		}
-	}
-
-	// Render IMGUI!
-	{
-		ImGuiWrapper::BeginNewFrame();
-		RenderEditorUI();
-		ImGuiWrapper::Render();
-
-	}
-
-	GDI->Present();
 }
 
 void SandboxApp::Cleanup()

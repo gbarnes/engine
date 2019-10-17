@@ -257,4 +257,36 @@ namespace Dawn
 	typedef Shared<GfxIndexBuffer> GfxIndexBufferPtr;
 	typedef Shared<GfxVertexArray> GfxVertexArrayPtr;
 	typedef Shared<GfxRenderBuffer> GfxRenderTargetPtr;
+
+	template<typename T>
+	class ScopedGfxBind
+	{
+	public:
+		ScopedGfxBind()
+		{
+		}
+
+		ScopedGfxBind(T* InResource)
+		{
+			Bind(InResource);
+		}
+
+		~ScopedGfxBind()
+		{
+			if(Resource)
+				Resource->Unbind();
+		}
+
+		void Bind(T* InResource)
+		{
+			if (InResource)
+			{
+				Resource = InResource;
+				Resource->Bind();
+			}
+		}
+
+	private:
+		T* Resource = nullptr;
+	};
 }

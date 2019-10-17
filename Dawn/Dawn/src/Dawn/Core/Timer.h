@@ -30,14 +30,14 @@ namespace Dawn
 
 		}
 
-		u128 GetTimeCycles() const
+		u64 GetTimeCycles() const
 		{
 			return TimeCycles;
 		}
 
 		float CalculateDeltaSeconds(const Timer& Other)
 		{
-			u128 dt = TimeCycles - Other.TimeCycles;
+			u64 dt = TimeCycles - Other.TimeCycles;
 			return CyclesToSeconds(dt);
 		}
 
@@ -45,7 +45,7 @@ namespace Dawn
 		{
 			if (!bIsPaused)
 			{
-				u128 dtScaledCycles = SecondsToCycles(InRealDtSeconds * TimeScale);
+				u64 dtScaledCycles = SecondsToCycles(InRealDtSeconds * TimeScale);
 				TimeCycles += dtScaledCycles;
 			}
 		}
@@ -53,20 +53,42 @@ namespace Dawn
 	private:
 		static float CyclesPerSecond;
 
-		u128 TimeCycles;
+		u64 TimeCycles;
 		float TimeScale;
 		bool bIsPaused;
 
-		static inline u128 SecondsToCycles(float TimeSeconds)
+		static inline u64 SecondsToCycles(float TimeSeconds)
 		{
-			return (u128)(TimeSeconds * CyclesPerSecond);
+			return (u64)(TimeSeconds * CyclesPerSecond);
 		}
 
 		// Only use this method to convert small durations into seconds!
-		static inline float CyclesToSeconds(u128 TimeCycles)
+		static inline float CyclesToSeconds(u64 TimeCycles)
 		{
 			return (float)TimeCycles / CyclesPerSecond;
 		}
 
 	};
+
+
+	struct DAWN_API Time
+	{
+		static LARGE_INTEGER ClockFrequency;
+		static float TargetUpdateRate;
+		static float TargetPhysicsUpdateRate;
+
+		float AlignedUpdateDeltaTime = 0.0f;
+		float AlignedPhysicsDeltaTime = 0.0f;
+		float FrameDeltaTime = TargetUpdateRate;
+		float TimeScale = 1.0f;
+		bool bIsInitialized = false;
+		bool bIsPaused = false;
+		u64 FrameCount;
+
+		LARGE_INTEGER TimeFrameBegin;
+		LARGE_INTEGER TimeFrameEnd;
+	};
+
+	DAWN_API void InitTime(Time& InTime, float InTargetUpdateRate = 1.0f/60.0f);
+	DAWN_API void StepTime(Time& InTime);
 }

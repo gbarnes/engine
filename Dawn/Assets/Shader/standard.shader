@@ -14,12 +14,12 @@ out vec3 Normal;
 
 uniform mat4 model;
 uniform mat4 view;
-uniform mat4 projection;
+uniform mat4 proj;
 
 void main()
 { 
-	gl_Position = projection * view * model * vec4(position, 1.0f);
-	TexCoord0 = uv0; 
+	gl_Position = proj * view * model * vec4(position, 1.0f);
+	TexCoord0 = uv0;
 	TexCoord1 = uv1; 
 	FragPos = vec3(model * vec4(position, 1.0));
 	Normal = normal;

@@ -1,5 +1,6 @@
 #include "TestRenderLayer.h"
 #include "Core/GDI/inc_gfx.h"
+#include "Rendering/Renderer.h"
 #include "Application.h"
 #include "inc_core.h"
 #include "UI/UIEditorEvents.h"
@@ -23,6 +24,7 @@ namespace Dawn
 	Camera* g_camera1;
 	Transform* g_camTransform;
 
+	GfxResId FinalPassQuadId;
 	EntityId DirectionalLightId;
 
 	vec3 tempTarget = vec3(0, 0, -1);
@@ -72,6 +74,8 @@ namespace Dawn
 		auto Light = LightUtils::CreateDirectionalLight(World.get(), quat(), vec4(0.9, 0.9, 0.9, 1.0f));
 		DirectionalLightId = Light->Id.Entity;
 
+		auto Quad = GfxPrimitiveFactory::AllocateQuad(GDI.get(), vec2(1.0f, -1.0f), 1.0f);
+		FinalPassQuadId = Quad->GetId();
 	}
 
 	void TestRenderLayer::Update(float InDeltaTime)
@@ -142,87 +146,58 @@ namespace Dawn
 		TransformUtils::Rotate(g_camTransform, rot);
 	}
 
+
 	void TestRenderLayer::Render()
 	{
 		BROFILER_CATEGORY("RenderLayer_Render", Brofiler::Color::AliceBlue);
 
-
 		CameraUtils::CalculateView(g_camera, g_camTransform);
 		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(g_World.get()));
 
-		const auto GDI = Application->GetGDI();
-		const auto World = Application->GetWorld();
-		const auto ResourceSystem = Application->GetResourceSystem();
-		const auto Primitives = GDI->GetPrimitiveHelper();
+		auto Renderer = Application->GetRenderer();
 
+		auto ViewportCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::SetViewportData>(0u);
+		ViewportCmd->Width = g_camera->Width;
+		ViewportCmd->Height = g_camera->Height;
+
+		auto ClearData = Renderer->PerFrameData.GeometryBucket.AppendCommand<Draw::ClearSceneData>(ViewportCmd);
+		ClearData->ClearColor = g_camera->ClearColor;
+
+		auto ClearFinalPass = Renderer->PerFrameData.FinalPassBucket.AddCommand<Draw::ClearSceneData>(0u);
+		ClearFinalPass->ClearColor = g_camera->ClearColor;
+
+		auto FinalPassData = Renderer->PerFrameData.FinalPassBucket.AppendCommand<Draw::FinalPassCombineData>(ClearFinalPass);
+		FinalPassData->ShaderId = CommonShaderHandles::FinalPass;
+		FinalPassData->RenderBufferId = Renderer->TransientData.RenderBufferId;
+		FinalPassData->FSQuadVAOId = FinalPassQuadId;
+
+		const auto ResourceSystem = Application->GetResourceSystem();
 		if (usedModel != nullptr && CommonShaderHandles::Standard.IsValid)
 		{
-			const auto ShaderResource = ResourceSystem->FindShader(CommonShaderHandles::Standard);
-			assert(ShaderResource != nullptr);
-
-			const auto Shader = GDI->GetShader(ShaderResource->ResourceId);
-			if (Shader)
+			for (const auto &id : usedModel->Meshes)
 			{
-				Shader->Bind();
-
-				// set pojection
-				Shader->SetMat4("model", Model);
-				Shader->SetMat4("view", g_camera->GetView());
-				Shader->SetMat4("projection", g_camera->GetProjection());
-
-
-				// Get the directional light
-				auto LightTransform = World->GetComponentByEntity<Transform>(DirectionalLightId);
-				auto Light = World->GetComponentByEntity<DirectionalLight>(DirectionalLightId);
-				
-				Shader->SetVec4("light.diffuse", Light->Color);
-				Shader->SetVec3("light.position", LightTransform->Position);
-
-				//GDI->ActivateTextureSlot(0);
-
-				//Shader->SetInt("ourTexture", 0);
-
-				for (const auto &id : usedModel->Meshes)
+				const auto Mesh = ResourceSystem->FindMesh(id);
+				if (Mesh)
 				{
-					//auto DiffuseTexture = GDI->GetTexture(DiffuseImage->TextureId);
-					//DiffuseTexture->Bind();
-
-					const auto Mesh = ResourceSystem->FindMesh(id);
-					if (Mesh)
+					for (const auto& MaterialId : Mesh->Materials)
 					{
-						for (const auto& MaterialId : Mesh->Materials)
-						{
-							const auto Material = ResourceSystem->FindMaterial(MaterialId);
-
-							Shader->SetVec4("material.diffuse", Material->DiffuseColor);
-							Shader->SetVec4("material.ambient", Material->AmbientColor);
-							Shader->SetVec4("material.specular", Material->SpecularColor);
-							Shader->SetFloat("material.shininess", 1.0f);
-						}
-						
-						GDI->DrawIndexed(Mesh->VertexArrayId);
+						auto Key = GenDrawKey64(true, MaterialId.Index, RenderLayer::StaticGeom, 0.0f);
+						auto DrawCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::DrawIndexedData>(Key);
+						DrawCmd->IndexCount = Mesh->NumIndices;
+						DrawCmd->VertexArrayId = Mesh->VertexArrayId;
+						DrawCmd->Model = Model;
 					}
-
-					//DiffuseTexture->Unbind();
 				}
-
-				Shader->Unbind();
 			}
 		}
 
-
+		/*
 		Primitives->SetCamera(g_camera);
 		Primitives->Grid(vec3(0, 0, 0), vec3(1000, 1000, 1000));
 
 		Primitives->SetCamera(g_camera1);
 		Primitives->Quad(GDI->GetTexture(DiffuseImage->TextureId), vec3(100, g_camera->Height - 100.0f, 0), vec3(100.0f));
-		Primitives->Axis(vec3(100, 50, -100), vec3(75), g_camTransform->Rotation);
-	}
-
-	void TestRenderLayer::Process(float InDeltaTime)
-	{
-		//Update(InDeltaTime);
-		//Render();
+		Primitives->Axis(vec3(100, 50, -100), vec3(75), g_camTransform->Rotation);*/
 	}
 
 	void TestRenderLayer::Free()

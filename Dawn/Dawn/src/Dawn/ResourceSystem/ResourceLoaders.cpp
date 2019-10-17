@@ -19,6 +19,7 @@
 #include "Application.h"
 #include "Core/GDI/inc_gfx.h"
 #include "Core/Loading/File.h"
+#include "Rendering/RenderResourceHelper.h"
 
 
 namespace Dawn
@@ -128,7 +129,7 @@ namespace Dawn
 				float shinieness = 0;
 				aiGetMaterialFloat(aiMaterial, AI_MATKEY_SHININESS, &shinieness);
 				Material->Shinieness = shinieness;
-
+				Material->ShaderId = CommonShaderHandles::Standard;
 				Mesh->Materials.push_back(Material->Id);
 			}
 
@@ -185,6 +186,7 @@ namespace Dawn
 			file.close();
 			return true;
 		}
+	
 
 		return false;
 	}

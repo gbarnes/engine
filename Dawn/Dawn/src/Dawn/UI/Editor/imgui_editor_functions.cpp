@@ -109,6 +109,8 @@ namespace Dawn
 			for (auto transform : transforms)
 			{
 				auto entity = transform->GetEntity();
+				if (entity->bIsHiddenInEditorHierarchy)
+					continue;
 
 				ImGui::Text(entity->Name.c_str());
 				if (ImGui::IsItemClicked())

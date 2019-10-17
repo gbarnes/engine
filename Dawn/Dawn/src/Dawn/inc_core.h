@@ -7,4 +7,5 @@
 #include "Core/Input.h"
 #include "Core/Type.h"
 #include "Core/Paths.h"
+#include "Core/Memory/MemoryUtils.h"
 #include <Brofiler.h>

@@ -7,7 +7,7 @@ namespace Dawn
 	u32 EntityTable::CurrentId = 0;
 	u32 EntityTable::TotalCount = 0;
 
-	const Entity* EntityTable::Get(const EntityId& InId)
+	Entity* EntityTable::Get(const EntityId& InId)
 	{
 		EntityId CurrentId = EntityIds[InId.Index];
 		if (CurrentId.Generation > InId.Generation) {

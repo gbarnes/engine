@@ -17,22 +17,16 @@ namespace Dawn
 	{
 	}
 
-	void WorldSimulateLayer::Process(float InDeltaTime)
+	void WorldSimulateLayer::FixedUpdate(float InFixedDeltaTime)
 	{
 		auto scene = Application->GetPhysics()->GetScene();
 		auto world = Application->GetWorld();
-		//auto time = Timer::GetTime();
 
 		if (scene) 
 		{
-			scene->simulate(InDeltaTime);
+			scene->simulate(InFixedDeltaTime);
 			scene->fetchResults(true);
 		}
-		
-		// process rigidbodys
-		auto system = world->GetSystemByType<RigidbodySystem>(RigidbodySystem::GetType());
-		if(system)
-			system->Update(world.get());
 	}
 
 	void WorldSimulateLayer::Free()

@@ -29,7 +29,7 @@ namespace Dawn
 
 		ComponentId Id;
 
-		const Entity* GetEntity()
+		Entity* GetEntity()
 		{
 			return Dawn::EntityTable::Get(Id.Entity);
 		}

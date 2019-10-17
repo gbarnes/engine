@@ -56,7 +56,7 @@ namespace Dawn
 		vec4 SpecularColor;
 		vec4 AmbientColor;
 		float Shinieness;
-
+		GfxResId ShaderId;
 		GfxResId DiffuseTexture = INVALID_HANDLE;
 	};
 

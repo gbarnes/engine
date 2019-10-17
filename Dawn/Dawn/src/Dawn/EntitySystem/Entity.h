@@ -11,6 +11,7 @@ namespace Dawn
 	{
 		EntityId Id;
 		std::string Name;
+		bool bIsHiddenInEditorHierarchy = false;
 		bool PersistsThroughLoad = false;
 
 		Transform* GetTransform(World* InWorld);

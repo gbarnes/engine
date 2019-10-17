@@ -4,7 +4,6 @@
 #include "Core/Event.h"
 #include "Core/Events/MouseEvent.h"
 #include "inc_common.h"
-#include "Layers/ImGuiLayer.h"
 #include "Layers/TestRenderLayer.h"
 #include "Layers/WorldSimulateLayer.h"
 #include "ResourceSystem/ResourceSystem.h"
@@ -22,6 +21,7 @@
 #include "EntitySystem/PhysicsWorld.h"
 #include "EntitySystem/RigidBody/RigidbodySystem.h"
 #include "Core/Config.h"
+#include "Rendering/Renderer.h"
 
 #define USE_OPENGL_GFX
 #include "Core/GDI/inc_gfx.h"
@@ -30,7 +30,6 @@ namespace Dawn
 {
 	Shared<Application> g_Application = nullptr;
 	SEventHandle g_MouseMovedEvtHandle, g_MousePressedHandle, g_MouseReleasedHandle;
-	uint64_t Application::FrameCount = 0;
 
 	AppSettings* Application::GetSettings()
 	{
@@ -53,6 +52,12 @@ namespace Dawn
 	void Application::Run()
 	{
 		Config::Load({ "Engine" });
+
+		//Memory::HeapArea Heap(_128MB);
+		//SimpleArena Arena(Heap);
+		
+		//AppSettings* Settings2 = D_NEW(AppSettings, Arena);
+		//Settings2->AlphaBits = 0;
 
 		ResourceSystem = Dawn::ResourceSystem::Create(Paths::ProjectContentDir(), { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx" }, true);
 		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadModel), BIND_FS_LOADER(Dawn::RS_ReloadModel), { ".obj", ".fbx" });
@@ -98,6 +103,9 @@ namespace Dawn
 			return;
 		}
 
+		Renderer = std::make_shared<DeferredRenderer>();
+		Renderer->AllocateTransientData(this);
+
 		if (JobSystem::Initialize() != EResult_OK)
 		{
 			DWN_CORE_ERROR("Couldn't initialize job system!\n");
@@ -128,12 +136,10 @@ namespace Dawn
 		DWN_CORE_INFO("Core Context initialized.");
 		Input::Reset();
 
-
 		{
 			// todo --- move this into a custom clock/timer class!
 			// since we only target windows we can use the performance functions.
-			QueryPerformanceFrequency(&Frequency);
-			QueryPerformanceCounter(&tBegin);
+			InitTime(Time);
 			IsInitialized = true;
 
 			while (true)
@@ -148,9 +154,9 @@ namespace Dawn
 			Cleanup();
 			ClearLayers();
 			Physics->Shutdown();
+			JobSystem::Shutdown();
 			GDI->Shutdown();
 			ResourceSystem->Shutdown();
-			JobSystem::Shutdown();
 
 			DWN_CORE_INFO("Core Context shutdown.");
 		}
@@ -161,25 +167,50 @@ namespace Dawn
 		if (!IsInitialized)
 			return;
 
-		FrameCount++;
-
-		frame_accumulator += dt;
-		while (frame_accumulator >= MS_PER_UPDATE)
+		Time.FrameCount++;
+		Time.AlignedUpdateDeltaTime += Time.FrameDeltaTime;
+		while (Time.AlignedUpdateDeltaTime >= Time::TargetUpdateRate)
 		{
-			Update(frame_accumulator);
-			ResourceSystem->Refresh();
-			frame_accumulator -= MS_PER_UPDATE;
+			Update(Time.AlignedUpdateDeltaTime * Time.TimeScale);
+			Time.AlignedUpdateDeltaTime -= Time::TargetUpdateRate;
 		}
 
-		QueryPerformanceCounter(&tEnd);
-		dt = (float)(tEnd.QuadPart - tBegin.QuadPart) / (float)Frequency.QuadPart;
-		tBegin = tEnd;
+		Time.AlignedPhysicsDeltaTime += Time.FrameDeltaTime;
+		while (Time.AlignedPhysicsDeltaTime >= Time::TargetPhysicsUpdateRate)
+		{
+			const float FixedTime = Time.AlignedPhysicsDeltaTime * Time.TimeScale;
+			FixedUpdate(FixedTime);
 
-		if (dt > 1.0f / 10.0f)
-			dt = MS_PER_UPDATE;
+			// Take care of updating the physics engine!
+			auto scene = GetPhysics()->GetScene();
+			if (scene)
+			{
+				scene->simulate(FixedTime);
+				scene->fetchResults(true);
+			}
 
-		Render();
+			Time.AlignedPhysicsDeltaTime -= Time::TargetPhysicsUpdateRate;
+		}
+
+		StepTime(Time);
+		
+		// Rendering
+		{
+			Renderer->BeginFrame(GDI.get(), World.get());
+
+			for (auto Layer : Layers)
+				Layer->Render();
+
+			Renderer->Submit(this);
+			Renderer->EndFrame(GDI.get());
+		}
+
 		Input::Reset();
+		ResourceSystem->Refresh();
+	}
+
+	void Application::Render()
+	{
 	}
 
 	void Application::Resize(int width, int height)
@@ -199,7 +230,7 @@ namespace Dawn
 
 		Settings.Width = width;
 		Settings.Height = height;
-
+		Renderer->Resize(GDI.get(), width, height);
 		DWN_CORE_INFO("Resizing Window to {0}x{1}!", width, height);
 	}
 
@@ -240,4 +271,5 @@ namespace Dawn
 
 		Layers.clear();
 	}
+
 }

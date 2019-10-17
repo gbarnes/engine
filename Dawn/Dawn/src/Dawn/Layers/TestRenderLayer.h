@@ -15,7 +15,6 @@ namespace Dawn
 		void Setup();
 		void Update(float InDeltaTime);
 		void Render();
-		void Process(float InDeltaTime);
 		void Free();
 
 	private:

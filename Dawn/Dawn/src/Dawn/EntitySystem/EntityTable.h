@@ -9,7 +9,7 @@ namespace Dawn
 	class EntityTable
 	{
 	public:
-		static const Entity* Get(const EntityId& InId);
+		static Entity* Get(const EntityId& InId);
 		static EntityId Create(const std::string& InName);
 		static void Remove(const EntityId& InId);
 	private:

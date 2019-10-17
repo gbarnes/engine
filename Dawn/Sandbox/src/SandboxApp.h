@@ -12,6 +12,7 @@ public:
 
 	virtual void Load() override;
 	virtual void Update(float InDeltaTime) override;
+	virtual void FixedUpdate(float InFixedTime) override;
 	virtual void Render() override;
 	void Resize(int InWidth, int InHeight) override;
 	void Cleanup() override;
