@@ -9,6 +9,7 @@
 //
 
 #define D_NEW(Type, MemoryArena) new (MemoryArena.Allocate(sizeof(Type), __alignof(Type), SourceInfo(__FILE__, __LINE__))) Type
+#define D_NEW_ALLOC(Type, Offset, Allocator) new (Allocator.Allocate(sizeof(Type), __alignof(Type), Offset)) Type
 #define D_DELETE(Type, MemoryArena) Delete(Type, MemoryArena)
 #define D_NEW_ARRAY(Type, MemoryArena) NewArray<TypeAndCount<Type>::Type>(MemoryArena, TypeAndCount<Type>::Count,  __FILE__, __LINE__, IntToType<IsPOD<TypeAndCount<type>::Type>::Value>())
 #define D_DELETE_ARRAY(Object, MemoryArena) DeleteArray(Object, MemoryArena)

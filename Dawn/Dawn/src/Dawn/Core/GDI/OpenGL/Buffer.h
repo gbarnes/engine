@@ -13,12 +13,12 @@ namespace Dawn
 		GLVertexBuffer()
 			: GfxVertexBuffer(GfxResId()) {};
 
-		GLVertexBuffer(float* Vertices, u32 Size, GfxResId InId);
+		GLVertexBuffer(void* Vertices, u32 Size, GfxResId InId);
 		virtual ~GLVertexBuffer();
 
 		virtual void Bind() override;
 		virtual void Unbind() override;
-		virtual void Reset(float* InData, u32 InSize) override;
+		virtual void Reset(void* InData, u32 InSize) override;
 		virtual const GfxBufferLayout& GetLayout() const override;
 		virtual void SetLayout(GfxBufferLayout& InLayout) override;
 
@@ -56,7 +56,7 @@ namespace Dawn
 
 		void Bind() override;
 		void Unbind() override;
-		void AttachVertexBuffer(GfxVertexBuffer* InBuffer) override;
+		void AttachVertexBuffer(GfxVertexBuffer* InBuffer, i32 InDivisor = -1) override;
 		void SetIndexBuffer(GfxIndexBuffer* InBuffer) override;
 		void SetName(std::string Name) override;
 		GfxVertexBuffer* GetVertexBuffer(GfxGDI* InGDI, u32 InIndex) override;

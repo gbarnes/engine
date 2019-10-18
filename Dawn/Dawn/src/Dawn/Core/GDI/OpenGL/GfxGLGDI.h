@@ -16,11 +16,13 @@ namespace Dawn
 	public:
 		void ActivateTextureSlot(u32 InIndex) override;
 		void DrawIndexed(GfxResId VertexArrayId) override;
+		void DrawArray(GfxResId VertexArrayId) override;
+		void DrawInstanced(GfxResId VertexArrayId, u32 InAmount) override;
 		void Clear() override;
 		void SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom) override;
 
 	public:
-		GfxResId CreateVertexBuffer(float* Vertices, u32 Size, GfxVertexBuffer** OutBuffer) override;
+		GfxResId CreateVertexBuffer(void* Vertices, u32 Size, GfxVertexBuffer** OutBuffer) override;
 		GfxResId CreateIndexBuffer(u32* Indices, u32 Size, GfxIndexBuffer** OutBuffer) override;
 		GfxResId CreateVertexArray(GfxVertexArray** OutBuffer) override;
 		GfxResId CreateShader(GfxShader** OutShader) override;

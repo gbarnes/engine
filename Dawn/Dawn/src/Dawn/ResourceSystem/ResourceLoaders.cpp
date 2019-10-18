@@ -312,6 +312,7 @@ namespace Dawn
 			assert(InternalShader != nullptr && "Gfx shader null.");
 			InternalShader->AttachSource(GfxShaderType::ST_Vertex, FinalVertexShader.c_str());
 			InternalShader->AttachSource(GfxShaderType::ST_Pixel, FinalPixelShader.c_str());
+			InternalShader->SetName(FullPath);
 		}
 
 		return ShaderId;

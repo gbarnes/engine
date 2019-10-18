@@ -2,6 +2,7 @@
 #include "inc_core.h"
 #include "inc_common.h"
 #include "Core/Container/HandleObjectArray.h"
+#include "Core/Memory/MemoryUtils.h"
 #include "Resources.h"
 
 namespace Dawn
@@ -41,7 +42,7 @@ namespace Dawn
 	return FindResourceFromId(InId, &Resources.##tableName##);\
 	}\
 	ResourceId Create##className##(##className##** OutResource){\
-	return CreateResource(##typeName##, &Resources.##tableName##, OutResource);\
+	return CreateResource<##className##>(##typeName##, &Resources.##tableName##, OutResource);\
 	}
 
 	class DAWN_API ResourceSystem : public std::enable_shared_from_this<ResourceSystem>
@@ -107,8 +108,8 @@ namespace Dawn
 		ResourceId CreateResource(ResourceType InType, HandleObjectArray<T>* InArray, T** OutResource)
 		{
 			const auto Slot = InArray->Request();
-			
-			T* NewResource = new T();
+			Allocators::LinearAllocator* Arena = InArray->GetMemArena();
+			T* NewResource = new (Arena->Allocate(sizeof(T), __alignof(T), 0)) T(); //D_NEW_ALLOC(T, 0, Arena)();
 
 			Resource* BaseResource = static_cast<Dawn::Resource*>(NewResource);
 			BaseResource->Id = Slot->GetId();

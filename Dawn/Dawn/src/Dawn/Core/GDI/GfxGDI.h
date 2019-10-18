@@ -27,13 +27,15 @@ namespace Dawn
 	public:
 		virtual void ActivateTextureSlot(u32 InIndex) = 0;
 		virtual void DrawIndexed(GfxResId InVertexArrayId) = 0;
+		virtual void DrawArray(GfxResId VertexArrayId) = 0;
+		virtual void DrawInstanced(GfxResId VertexArrayId, u32 InAmount) = 0;
 		void SetClearColor(const vec4& InColor);
 		virtual void SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom) = 0;
 
 		virtual void Clear() = 0;
 
 	public:
-		virtual GfxResId CreateVertexBuffer(float* InVertices, u32 InSize, GfxVertexBuffer** OutBuffer) = 0;
+		virtual GfxResId CreateVertexBuffer(void* InVertices, u32 InSize, GfxVertexBuffer** OutBuffer) = 0;
 		virtual GfxResId CreateIndexBuffer(u32* InIndices, u32 InSize, GfxIndexBuffer** OutBuffer) = 0;
 		virtual GfxResId CreateVertexArray(GfxVertexArray** OutBuffer) = 0;
 		virtual GfxResId CreateShader(GfxShader** OutShader) = 0;

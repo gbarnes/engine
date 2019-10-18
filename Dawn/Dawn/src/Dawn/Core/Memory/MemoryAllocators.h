@@ -13,7 +13,7 @@ namespace Dawn
 			LinearAllocator(void* InStart, void* InEnd);
 
 			void* Allocate(size_t InSize, size_t InAlignment, size_t InOffset);
-			inline void Free(void* InPtr);
+			inline void Free(void* InPtr) {}
 			
 			inline void Reset()
 			{

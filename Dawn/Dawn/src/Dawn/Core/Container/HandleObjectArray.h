@@ -1,5 +1,6 @@
 #pragma once
 #include "inc_common.h"
+#include "Core/Memory/MemoryUtils.h"
 
 namespace Dawn
 {
@@ -28,6 +29,7 @@ namespace Dawn
 		friend class HandleObjectArray<T>;
 	};
 
+
 	// 
 	// An array that contains handles mapped to specific
 	// memory content. Handles will be reused once a slot 
@@ -42,6 +44,15 @@ namespace Dawn
 			FreeHandle.IsValid = true;
 			FreeHandle.Generation = 0;
 			FreeHandle.Index = 0;
+
+			// todo --- we should really use another allocator which supports deleting / pool allocator?!
+			HeapMemory = Memory::HeapArea(_4MB);
+			Allocator = Allocators::LinearAllocator(HeapMemory.GetStart(), HeapMemory.GetEnd());
+		}
+
+		~HandleObjectArray()
+		{
+			HeapMemory.Free();
 		}
 
 		HandleObjectSlot<T>* Request()
@@ -70,9 +81,9 @@ namespace Dawn
 		T* Find(const GenericHandle& Id)
 		{
 			assert(Id.IsValid == true);
-			auto& Element = Slots[Id.Index];
-			assert(Element.Id.Generation == Id.Generation);
-			return Slots[Id.Index].Element;
+			auto& Slot = Slots[Id.Index];
+			assert(Slot.Id.Generation == Id.Generation);
+			return Slot.Element;
 		}
 
 		void Free(const GenericHandle& Id)
@@ -82,30 +93,29 @@ namespace Dawn
 
 			FreeHandle = Id;
 			auto& Slot = Slots[Id.Index];
-
-			delete Slot.Element;
+			Allocator.Free(Slot.Element);
 			Slot.Element = nullptr;
 		}
 
 		void Clear()
 		{
-			for (auto Slot : Slots)
-			{
-				if (Slot.Element != nullptr)
-				{
-					delete Slot.Element;
-					Slot.Element = nullptr;
-				}
-			}
-
+			Allocator.Reset();
 			Slots.clear();
 
 			FreeHandle.IsValid = true;
 			FreeHandle.Generation = 0;
 			FreeHandle.Index = 0;
+
+		}
+
+		Allocators::LinearAllocator* GetMemArena()
+		{
+			return &Allocator;
 		}
 
 	private:
+		Allocators::LinearAllocator Allocator;
+		Memory::HeapArea HeapMemory;
 		GenericHandle FreeHandle;
 		std::vector<HandleObjectSlot<T>> Slots;
 	};

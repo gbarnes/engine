@@ -7,6 +7,7 @@
 #include "GfxGDI.h"
 #include "GfxPrimitiveFactory.h"
 #include "GfxImmediatePrimitives.h"
+#include "GfxRenderDoc.h"
 
 //#ifdef USE_OPENGL_GFX
 //#endif

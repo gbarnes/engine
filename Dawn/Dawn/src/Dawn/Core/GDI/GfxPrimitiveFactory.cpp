@@ -21,8 +21,8 @@ namespace Dawn
 
 		GfxBufferLayout Layout =
 		{
-			{ GfxShaderDataType::Float3, "aPos" },
-			{ GfxShaderDataType::Float2, "aUV0" }
+			{ GfxShaderDataType::Float3, "position" },
+			{ GfxShaderDataType::Float2, "uv0" }
 		};
 
 		GfxVertexBuffer* VertexBuffer;
@@ -63,54 +63,45 @@ namespace Dawn
 
 	GfxVertexArray* GfxPrimitiveFactory::AllocateCube(GfxGDI* InGDI)
 	{
+		u32 indices[] = {
+			// front
+			0, 1, 2,
+			2, 3, 0,
+			// right
+			1, 5, 6,
+			6, 2, 1,
+			// back
+			7, 6, 5,
+			5, 4, 7,
+			// left
+			4, 0, 3,
+			3, 7, 4,
+			// bottom
+			4, 5, 1,
+			1, 0, 4,
+			// top
+			3, 2, 6,
+			6, 7, 3
+		};
+
 		float vertices[] = {
-			-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-			 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-			-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-			 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-			 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-			-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-			-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-			-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-			-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-			 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-			 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-			 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-			 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-			-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+			// front
+			-0.5, -0.5, 0.5,	0.0, 0.0,
+			 0.5, -0.5, 0.5,	1.0, 0.0,
+			 0.5, 0.5, 0.5,		1.0, 1.0,
+			-0.5, 0.5, 0.5,		0.0, 1.0,
+			// back
+			-0.5, -0.5, -0.5,	0.0, 0.0,
+			 0.5, -0.5, -0.5,	1.0, 0.0,
+			 0.5, 0.5, -0.5,	1.0, 1.0,
+			-0.5, 0.5, -0.5,	0.0, 1.0
 		};
 
 		GfxBufferLayout Layout =
 		{
-			{ GfxShaderDataType::Float3, "aPos" },
-			{ GfxShaderDataType::Float2, "aUV0" }
+			{ GfxShaderDataType::Float3, "position" },
+			{ GfxShaderDataType::Float3, "normal" },
+			{ GfxShaderDataType::Float2, "uv0" }
 		};
 
 		GfxVertexArray* GridArray;
@@ -120,6 +111,11 @@ namespace Dawn
 		InGDI->CreateVertexBuffer(vertices, sizeof(vertices), &VertexBuffer);
 		VertexBuffer->SetLayout(Layout);
 		GridArray->AttachVertexBuffer(VertexBuffer);
+
+		GfxIndexBuffer* IndexBuffer;
+		InGDI->CreateIndexBuffer(indices, sizeof(indices) / sizeof(u32), &IndexBuffer);
+
+		GridArray->SetIndexBuffer(IndexBuffer);
 
 		return GridArray;
 

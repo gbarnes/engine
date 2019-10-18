@@ -23,12 +23,13 @@ namespace Dawn
 		return 0;
 	}
 
-	GLVertexBuffer::GLVertexBuffer(float* Vertices, u32 Size, GfxResId InId)
+	GLVertexBuffer::GLVertexBuffer(void* InVertices, u32 InSize, GfxResId InId)
 		: GfxVertexBuffer(InId)
 	{
+		this->Size = InSize;
 		glCreateBuffers(1, &RendererId);
 		glBindBuffer(GL_ARRAY_BUFFER, RendererId);
-		glBufferData(GL_ARRAY_BUFFER, Size, Vertices, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, InSize, InVertices, GL_STATIC_DRAW);
 	}
 
 	GLVertexBuffer::~GLVertexBuffer()
@@ -51,8 +52,9 @@ namespace Dawn
 		Layout = InLayout;
 	}
 
-	void GLVertexBuffer::Reset(float* InData, u32 InSize)
+	void GLVertexBuffer::Reset(void* InData, u32 InSize)
 	{
+		this->Size = InSize;
 		Bind();
 
 		glBufferData(GL_ARRAY_BUFFER, InSize, InData, GL_STATIC_DRAW);
@@ -124,7 +126,7 @@ namespace Dawn
 		glBindVertexArray(0);
 	}
 
-	void GLVertexArray::AttachVertexBuffer(GfxVertexBuffer* InBuffer)
+	void GLVertexArray::AttachVertexBuffer(GfxVertexBuffer* InBuffer, i32 InDivisor)
 	{
 		Bind();
 
@@ -140,6 +142,11 @@ namespace Dawn
 				element.Normalized ? GL_TRUE : GL_FALSE,
 				layout.GetStride(),
 				(const void*)(intptr_t)element.Offset);
+			
+
+			if (InDivisor > -1)
+				glVertexAttribDivisor(VertexBufferIndex, InDivisor);
+
 			VertexBufferIndex++;
 		}
 

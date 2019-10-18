@@ -10,7 +10,9 @@
 #include "EntitySystem/Transform/Transform.h"
 #include "EntitySystem/Lights/LightComponents.h"
 #include "EntitySystem/Entity.h"
+#include "ResourceSystem/Resources.h"
 #include "imgui.h"
+#include "JobSystem/JobSystem.h"
 
 namespace Dawn
 {
@@ -18,6 +20,9 @@ namespace Dawn
 	Shader* vertexShader;
 	Model* usedModel;
 	Image* DiffuseImage;
+	Material* SampleMaterial;
+	GfxVertexArray* CubeMeshArray;
+	GfxVertexBuffer* ModelMatrixBuffer;
 
 	Shared<World> g_World;
 	Camera* g_camera;
@@ -33,7 +38,8 @@ namespace Dawn
 	float yaw = 0.0f; 
 	float pitch = 0.0f;
 	vec3 right = vec3(1.0f, 0.0f, 0.0f), forward = vec3(0.0f, 0.0f, -1.0f), up = vec3(0.0f, 1.0f, 0.0f);
-
+	u64 CubeDrawKey;
+	constexpr u32 Size = 10 * 10;
 
 	TestRenderLayer::TestRenderLayer(Shared<Dawn::Application> InApplication)
 		: Layer(InApplication)
@@ -76,6 +82,55 @@ namespace Dawn
 
 		auto Quad = GfxPrimitiveFactory::AllocateQuad(GDI.get(), vec2(1.0f, -1.0f), 1.0f);
 		FinalPassQuadId = Quad->GetId();
+
+		
+		auto MatId = RS->CreateMaterial(&SampleMaterial);
+		SampleMaterial->DiffuseColor = vec4(0.7f, 0.7f, 0.7f, 1.0f);
+		SampleMaterial->ShaderId = CommonShaderHandles::StandardInstanced;
+
+
+
+		{
+			auto handle = RS->LoadFile("Model/cube.obj");
+			if (handle.IsValid)
+			{
+				auto cube = RS->FindModel(handle);
+				auto mesh = RS->FindMesh(cube->Meshes[0]);
+
+				glm::mat4* modelMatrices = new glm::mat4[Size];
+				u32 row = 0;
+				u32 columnCount = 0;
+				u32 index = 0;
+				for (u32 i = 0; i < 10; ++i)
+				{
+					for (u32 y = 0; y < 10; ++y)
+					{
+						glm::mat4 model = glm::mat4(1.0f);
+						model = glm::translate(model, vec3(i * 2.1f, -1.0f, y * 2.1f));
+						model = glm::scale(model, glm::vec3(2.0f));
+						modelMatrices[index] = (model);
+						++index;
+					}
+				}
+
+				CubeMeshArray = GDI->GetVertexArray(mesh->VertexArrayId);
+
+				GfxBufferLayout Layout =
+				{
+					{ GfxShaderDataType::Float4, "instanceMatrix" },
+					{ GfxShaderDataType::Float4, "instanceMatrix" },
+					{ GfxShaderDataType::Float4, "instanceMatrix" },
+					{ GfxShaderDataType::Float4, "instanceMatrix" }
+				};
+
+				GDI->CreateVertexBuffer(&modelMatrices[0], Size * sizeof(glm::mat4), &ModelMatrixBuffer);
+				ModelMatrixBuffer->SetLayout(Layout);
+				CubeMeshArray->AttachVertexBuffer(ModelMatrixBuffer, 1);
+				delete[] modelMatrices;
+			}
+		}
+
+		CubeDrawKey = GenDrawKey64(true, SampleMaterial->Id.Index, RenderLayer::StaticGeom, 0.0f);
 	}
 
 	void TestRenderLayer::Update(float InDeltaTime)
@@ -155,6 +210,7 @@ namespace Dawn
 		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(g_World.get()));
 
 		auto Renderer = Application->GetRenderer();
+		auto GDI = Application->GetGDI();
 
 		auto ViewportCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::SetViewportData>(0u);
 		ViewportCmd->Width = g_camera->Width;
@@ -191,6 +247,12 @@ namespace Dawn
 			}
 		}
 
+
+		//JobSystem::CreateJob();
+		auto DrawCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::DrawInstancedData>(CubeDrawKey);
+		DrawCmd->VertexArrayId = CubeMeshArray->GetId();
+		DrawCmd->IndexCount = CubeMeshArray->GetIndexBuffer(GDI.get())->GetSize();
+		DrawCmd->Amount = Size;
 		/*
 		Primitives->SetCamera(g_camera);
 		Primitives->Grid(vec3(0, 0, 0), vec3(1000, 1000, 1000));
@@ -202,13 +264,5 @@ namespace Dawn
 
 	void TestRenderLayer::Free()
 	{
-		//glDeleteVertexArrays(1, &usedMesh->GDI_VAOId);
-
-		/*diffuseTexture->TextureView.Reset();
-		diffuseTexture.reset();
-
-		usedMesh->IndexBufferView.Reset();
-		usedMesh->VertexBufferView.Reset();
-		usedMesh.reset();*/
 	}
 }

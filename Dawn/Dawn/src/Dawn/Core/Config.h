@@ -20,11 +20,13 @@ namespace Dawn
 		void Save(std::initializer_list<std::string> InConfigNames);
 
 		bool GetInt(const std::string& InConfigName, const std::string& InKey, int* OutValue);
+		bool GetBool(const std::string& InConfigName, const std::string& InKey, bool* OutValue);
 		bool GetFloat(const std::string& InConfigName, const std::string& InKey, float* OutValue);
 		bool GetString(const std::string& InConfigName, const std::string& InKey, std::string* OutValue);
 
 		void SetInt(const std::string& InConfigName, const std::string& InKey, int InValue);
 		void SetFloat(const std::string& InConfigName, const std::string& InKey, float InValue);
 		void SetString(const std::string& InConfigName, const std::string& InKey, const std::string& InValue);
+		void SetBool(const std::string& InConfigName, const std::string& InKey, bool InValue);
 	}
 }

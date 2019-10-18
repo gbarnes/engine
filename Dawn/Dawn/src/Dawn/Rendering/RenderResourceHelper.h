@@ -18,6 +18,7 @@ namespace Dawn
 	{
 		static ResourceId FinalPass;
 		static ResourceId Standard;
+		static ResourceId StandardInstanced;
 		static ResourceId Phong;
 		static ResourceId Debug;
 		static ResourceId DebugPrim;

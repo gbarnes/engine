@@ -63,7 +63,7 @@ namespace Dawn
 				ConfigFile Config = {};
 				Config.Name = File;
 
-				i32 Size = -1;
+				u32 Size = -1;
 				bool bIsParsingSection = false;
 				std::string CurrentData;
 				std::string LastSection;
@@ -167,7 +167,7 @@ namespace Dawn
 
 				// Sections and Keys are stored like this SectionName/KeyName
 				// Split these into separate parts.
-				int Offset = SectionAndKey.find('/');
+				u32 Offset = SectionAndKey.find('/');
 				std::string SectionPart = SectionAndKey.substr(0, Offset);
 				std::string Key = SectionAndKey.substr(Offset+1, SectionAndKey.size());
 
@@ -217,6 +217,16 @@ namespace Dawn
 		return true;
 	}
 
+	bool Config::GetBool(const std::string& InConfigName, const std::string& InKey, bool* OutValue)
+	{
+		std::string* Value = FindValue(InConfigName, InKey);
+		if (Value == nullptr)
+			return nullptr;
+
+		(*OutValue) = std::stoi(*Value);
+		return true;
+	}
+
 	void Config::SetInt(const std::string& InConfigName, const std::string& InKey, int InValue)
 	{
 		std::string* Value = FindValue(InConfigName, InKey);
@@ -251,5 +261,17 @@ namespace Dawn
 		}
 
 		(*Value) = InValue;
+	}
+
+	void Config::SetBool(const std::string& InConfigName, const std::string& InKey, bool InValue)
+	{
+		std::string* Value = FindValue(InConfigName, InKey);
+		if (Value == nullptr)
+		{
+			CreateValue(InConfigName, InKey, std::to_string(InValue));
+			return;
+		}
+
+		(*Value) = std::to_string(InValue);
 	}
 }

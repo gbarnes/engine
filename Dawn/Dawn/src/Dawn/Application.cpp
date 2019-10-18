@@ -53,6 +53,8 @@ namespace Dawn
 	{
 		Config::Load({ "Engine" });
 
+		RenderDoc::InitRenderDocHook();
+
 		//Memory::HeapArea Heap(_128MB);
 		//SimpleArena Arena(Heap);
 		
@@ -95,6 +97,7 @@ namespace Dawn
 		}
 		Settings.Hwnd = Window->GetHwnd();
 
+		
 		this->GDI = std::shared_ptr<GfxGDI>(GfxGDI::Create());
 		if (!this->GDI->Init(Settings))
 		{

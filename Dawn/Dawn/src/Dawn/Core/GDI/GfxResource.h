@@ -19,6 +19,16 @@ namespace Dawn
 			return Id;
 		}
 
+		void SetName(const std::string& InName)
+		{
+			Name = InName;
+		}
+
+		FORCEINLINE std::string GetName() const
+		{
+			return Name;
+		}
+
 	protected:
 		std::string Name;
 		GfxResId Id;
@@ -134,9 +144,16 @@ namespace Dawn
 
 		virtual void Bind() = 0;
 		virtual void Unbind() = 0;
-		virtual void Reset(float* InData, u32 InSize) = 0;
+		virtual void Reset(void* InData, u32 InSize) = 0;
 		virtual void SetLayout(GfxBufferLayout& Layout) = 0;
 		virtual const GfxBufferLayout& GetLayout() const = 0;
+
+		inline u32 GetSize()
+		{
+			return Size;
+		}
+	protected:
+		u32 Size;
 	};
 
 	class GfxIndexBuffer : public GfxResource
@@ -170,7 +187,7 @@ namespace Dawn
 
 		virtual void Bind() = 0;
 		virtual void Unbind() = 0;
-		virtual void AttachVertexBuffer(GfxVertexBuffer* InBuffer) = 0;
+		virtual void AttachVertexBuffer(GfxVertexBuffer* InBuffer, i32 InDivisor = -1) = 0;
 		virtual void SetIndexBuffer(GfxIndexBuffer* InBuffer) = 0;
 		virtual GfxVertexBuffer* GetVertexBuffer(GfxGDI* GDI, u32 InIndex) = 0;
 		virtual GfxIndexBuffer* GetIndexBuffer(GfxGDI* GDI) = 0;

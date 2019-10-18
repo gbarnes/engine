@@ -32,6 +32,7 @@ namespace Dawn
 		{
 		public:
 			inline void TagAllocation(void*, u32) const {}
+			inline void TagDeallocation(void*, u32) const {}
 		};
 
 		class SingleThread
@@ -62,6 +63,11 @@ namespace Dawn
 		class HeapArea
 		{
 		public:
+			HeapArea()
+				:Size(0)
+			{
+			}
+
 			HeapArea(size_t InSize)
 				: Size(InSize)
 			{
@@ -71,7 +77,12 @@ namespace Dawn
 
 			~HeapArea()
 			{
-				free((void*)MemoryStart);
+				
+			}
+
+			void Free()
+			{
+				free(static_cast<void*>(MemoryStart));
 			}
 
 			void* GetStart() const
@@ -111,7 +122,7 @@ namespace Dawn
 			char* PlainMemory = static_cast<char*>(Allocator.Allocate(NewSize, InAlignment, BoundsPolicy::SIZE_FRONT));
 
 			BoundChecker.GuardFront(PlainMemory);
-			MemoryTagger.TagAllocation(PlainMemory + BoundsPolicy::SIZE_FRONT, OriginalSize);
+			MemoryTagger.TagAllocation(PlainMemory + BoundsPolicy::SIZE_FRONT, (u32)OriginalSize);
 			BoundChecker.GuardBack(PlainMemory + BoundsPolicy::SIZE_FRONT + OriginalSize);
 
 			ThreadGuard.Leave();
@@ -124,12 +135,12 @@ namespace Dawn
 			ThreadGuard.Enter();
 
 			char* OriginalMemory = static_cast<char*>(InPtr) - BoundsPolicy::SIZE_FRONT;
-			const size_t AllocationSize = Allocator.GetAllocationSize(OriginalMemory);
+			//const size_t AllocationSize = Allocator.GetAllocationSize(OriginalMemory);
 
-			BoundChecker.CheckFront(OriginalMemory);
-			BoundChecker.CheckBack(OriginalMemory + AllocationSize - BoundsPolicy::SIZE_BACK);
+			//BoundChecker.CheckFront(OriginalMemory);
+			//BoundChecker.CheckBack(OriginalMemory + AllocationSize - BoundsPolicy::SIZE_BACK);
 
-			MemoryTagger.TagDeallocation(OriginalMemory, AllocationSize);
+			//MemoryTagger.TagDeallocation(OriginalMemory, AllocationSize);
 
 			Allocator.Free(OriginalMemory);
 			ThreadGuard.Leave();

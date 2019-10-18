@@ -4,6 +4,8 @@
 #include "GLTexture.h"
 #include "GLImmediatePrimitives.h"
 #include "GLRenderBuffer.h"
+#include "Core/Memory/MemoryUtils.h"
+#include "../GfxRenderDoc.h"
 //#ifdef USE_OPENGL_GFX
 
 namespace Dawn
@@ -91,6 +93,8 @@ namespace Dawn
 
 		Primitives = std::make_unique<GLImmediatePrimitives>(GLImmediatePrimitives(this->shared_from_this()));
 
+		RenderDoc::StartFrameCapture();
+
 		return true;
 	}
 
@@ -106,6 +110,8 @@ namespace Dawn
 		this->IndexBufferPool.Clear();
 		this->ShaderPool.Clear();
 		this->RenderBufferPool.Clear();
+		
+		RenderDoc::EndFrameCapture();
 
 		wglMakeCurrent(NULL, NULL);
 		wglDeleteContext(hRC);
@@ -117,12 +123,26 @@ namespace Dawn
 	void GfxGLGDI::DrawIndexed(GfxResId VertexArrayId)
 	{
 		GLVertexArray* vertexArray = (GLVertexArray*)this->GetVertexArray(VertexArrayId);
-		if (vertexArray)
-		{
-			vertexArray->Bind();
-			glDrawElements(GL_TRIANGLES, vertexArray->GetIndexBuffer(this)->GetSize(), GL_UNSIGNED_INT, 0);
-			vertexArray->Unbind();
-		}
+		vertexArray->Bind();
+		glDrawElements(GL_TRIANGLES, vertexArray->GetIndexBuffer(this)->GetSize(), GL_UNSIGNED_INT, 0);
+		vertexArray->Unbind();
+	}
+
+	void GfxGLGDI::DrawArray(GfxResId VertexArrayId)
+	{
+		GLVertexArray* vertexArray = (GLVertexArray*)this->GetVertexArray(VertexArrayId);
+		vertexArray->Bind();
+		glDrawArrays(GL_TRIANGLES, 0, vertexArray->GetVertexBuffer(this, 0)->GetSize());
+		vertexArray->Unbind();
+	}
+
+	void GfxGLGDI::DrawInstanced(GfxResId VertexArrayId, u32 InAmount)
+	{
+		GLVertexArray* vertexArray = (GLVertexArray*)this->GetVertexArray(VertexArrayId);
+		vertexArray->Bind();
+		u32 Size = vertexArray->GetIndexBuffer(this)->GetSize();
+		glDrawElementsInstanced(GL_TRIANGLES, Size, GL_UNSIGNED_INT, 0, InAmount);
+		vertexArray->Unbind();
 	}
 
 	void GfxGLGDI::Clear()
@@ -141,10 +161,11 @@ namespace Dawn
 		glActiveTexture(GL_TEXTURE0 + InIndex);
 	}
 
-	GfxResId GfxGLGDI::CreateVertexBuffer(float* Vertices, u32 Size, GfxVertexBuffer** OutBuffer)
+	GfxResId GfxGLGDI::CreateVertexBuffer(void* Vertices, u32 Size, GfxVertexBuffer** OutBuffer)
 	{
 		VertexBufferSlot* Slot = VertexBufferPool.Request();
-		Slot->Element =new GLVertexBuffer(Vertices, Size, Slot->GetId());
+		Allocators::LinearAllocator* Arena = VertexBufferPool.GetMemArena();
+		Slot->Element = new (Arena->Allocate(sizeof(GLVertexBuffer), __alignof(GLVertexBuffer), 0)) GLVertexBuffer(Vertices, Size, Slot->GetId()); //D_NEW_ALLOC(GLVertexBuffer, 0, Arena)(Vertices, Size, Slot->GetId());
 
 		if (OutBuffer != nullptr)
 			*OutBuffer = Slot->Element;
@@ -156,7 +177,8 @@ namespace Dawn
 	GfxResId GfxGLGDI::CreateIndexBuffer(u32* Indices, u32 Size, GfxIndexBuffer** OutBuffer)
 	{
 		IndexBufferSlot* Slot = IndexBufferPool.Request();
-		Slot->Element = new GLIndexBuffer(Indices, Size, Slot->GetId());
+		Allocators::LinearAllocator* Arena = IndexBufferPool.GetMemArena();
+		Slot->Element = new (Arena->Allocate(sizeof(GLIndexBuffer), __alignof(GLIndexBuffer), 0)) GLIndexBuffer(Indices, Size, Slot->GetId()); //D_NEW_ALLOC(GLIndexBuffer, 0, Arena)(Indices, Size, Slot->GetId());
 
 		if (OutBuffer != nullptr)
 			*OutBuffer = Slot->Element;
@@ -167,7 +189,8 @@ namespace Dawn
 	GfxResId GfxGLGDI::CreateVertexArray(GfxVertexArray** OutBuffer)
 	{
 		VertexArraySlot* Slot = VertexArrayPool.Request();
-		Slot->Element = new GLVertexArray(Slot->GetId());
+		Allocators::LinearAllocator* Arena = VertexArrayPool.GetMemArena();
+		Slot->Element = new (Arena->Allocate(sizeof(GLVertexArray), __alignof(GLVertexArray), 0)) GLVertexArray(Slot->GetId()); //D_NEW_ALLOC(GLVertexArray, 0, Arena)(Slot->GetId());
 		
 		if (OutBuffer != nullptr)
 			*OutBuffer = Slot->Element;
@@ -178,7 +201,8 @@ namespace Dawn
 	GfxResId GfxGLGDI::CreateShader(GfxShader** OutShader)
 	{
 		ShaderSlot* Slot = ShaderPool.Request();
-		Slot->Element = new GLShader(Slot->GetId());
+		Allocators::LinearAllocator* Arena = ShaderPool.GetMemArena();
+		Slot->Element = new (Arena->Allocate(sizeof(GLShader), __alignof(GLShader), 0)) GLShader(Slot->GetId());//D_NEW_ALLOC(GLShader, 0, Arena)(Slot->GetId());
 
 		if (OutShader != nullptr)
 			*OutShader = Slot->Element;
@@ -190,7 +214,8 @@ namespace Dawn
 		GfxFilterDesc Filter, bool GenerateMipMaps, GfxTexture** OutTexture)
 	{
 		TextureSlot* Slot = TexturePool.Request();
-		Slot->Element = new GLTexture(Slot->GetId(), Data, Width, Height, ChannelsPerPixel, Wrap, Filter, GenerateMipMaps);
+		Allocators::LinearAllocator* Arena = TexturePool.GetMemArena();
+		Slot->Element = new (Arena->Allocate(sizeof(GLTexture), __alignof(GLTexture), 0)) GLTexture(Slot->GetId(), Data, Width, Height, ChannelsPerPixel, Wrap, Filter, GenerateMipMaps);//D_NEW_ALLOC(GLTexture, 0, Arena)(Slot->GetId(), Data, Width, Height, ChannelsPerPixel, Wrap, Filter, GenerateMipMaps);
 
 		if(OutTexture != nullptr)
 			*OutTexture = Slot->Element;
@@ -201,7 +226,8 @@ namespace Dawn
 	GfxResId GfxGLGDI::CreateRenderBuffer(GfxRenderBuffer** OutTexture)
 	{
 		RenderBufferSlot* Slot = RenderBufferPool.Request();
-		Slot->Element = new GLRenderBuffer(Slot->GetId());
+		Allocators::LinearAllocator* Arena = RenderBufferPool.GetMemArena();
+		Slot->Element = new (Arena->Allocate(sizeof(GLRenderBuffer), __alignof(GLRenderBuffer), 0)) GLRenderBuffer(Slot->GetId());//D_NEW_ALLOC(GLRenderBuffer, 0, Arena) (Slot->GetId());
 
 		if (OutTexture != nullptr)
 			*OutTexture = Slot->Element;

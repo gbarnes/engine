@@ -6,7 +6,8 @@
 #include "Application.h"
 #include "EntitySystem/Lights/LightComponents.h"
 #include "EntitySystem/Entity.h"
-
+#include "Core/Memory/MemoryAllocators.h"
+#include "RenderResourceHelper.h"
 
 namespace Dawn
 {
@@ -18,38 +19,34 @@ namespace Dawn
 		typedef T Key;
 	public:
 		RenderBucket()
-		{}
+		{
+			HeapMemory = Memory::HeapArea(_2MB);
+			Allocator = Allocators::LinearAllocator(HeapMemory.GetStart(), HeapMemory.GetEnd());
+		}
+
+		~RenderBucket()
+		{
+			HeapMemory.Free();
+			delete[] Keys;
+			delete[] Data;
+		}
 
 		void Free()
 		{
-			// super duper stupid - this should be better with a linear allocator for the commands.
-			std::vector<CommandPacket> Packets;
-			for (u32 i = 0; i < CommandCount; ++i)
-			{
-				CommandPacket packet = Data[i];
-
-				do
-				{
-					Packets.push_back(packet);
-					packet = commandPacket::LoadNextCommandPacket(packet);
-					
-				} while (packet != nullptr);
-			}
-
-			for (auto Packet : Packets)
-				delete Packet;
-
+			Allocator.Reset();
 			CommandCount = 0;
-
-			delete[] Keys;
-			delete[] Data;
 		}
 
 		void Reset(u32 InMaxSize, GfxResId InFrameBuffer, const mat4& InViewMatrix, const mat4& InProjMatrix)
 		{
 			RenderBufferId = InFrameBuffer;
-			Keys = new Key[InMaxSize];
-			Data = new CommandPacket[InMaxSize];
+
+			if (Keys == nullptr && Data == nullptr)
+			{
+				Keys = new Key[InMaxSize];
+				Data = new CommandPacket[InMaxSize];
+			}
+
 			Projection = InProjMatrix;
 			View = InViewMatrix;
 		}
@@ -57,7 +54,7 @@ namespace Dawn
 		template<typename U>
 		U* AddCommand(Key InKey, size_t auxMemorySize = 0u)
 		{
-			CommandPacket packet = commandPacket::Create<U>(auxMemorySize);
+			CommandPacket packet = commandPacket::Create<U>(Allocator, auxMemorySize);
 			
 			{
 				const u32 Current = CommandCount++;
@@ -74,7 +71,7 @@ namespace Dawn
 		template <typename U, typename V>
 		U* AppendCommand(V* command, size_t auxMemorySize = 0u)
 		{
-			CommandPacket packet = commandPacket::Create<U>(auxMemorySize);
+			CommandPacket packet = commandPacket::Create<U>(Allocator, auxMemorySize);
 
 			// append this command to the given one
 			commandPacket::StoreNextCommandPacket<V>(command, packet);
@@ -88,7 +85,7 @@ namespace Dawn
 		template<typename U>
 		U* AllocateCommand()
 		{
-			return new U();
+			return D_NEW(U, AllocationArena);
 		}
 
 		void Sort()
@@ -180,6 +177,9 @@ namespace Dawn
 		Key* Keys;
 		CommandPacket* Data;
 		std::atomic<u32> CommandCount;
+		Allocators::LinearAllocator Allocator;
+		Memory::HeapArea HeapMemory;
+
 
 		mat4 Projection;
 		mat4 View;

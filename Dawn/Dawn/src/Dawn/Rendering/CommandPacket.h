@@ -1,5 +1,6 @@
 #pragma once
 #include "DrawCallCommands.h"
+#include "Core/Memory/MemoryAllocators.h"
 
 namespace Dawn
 {
@@ -23,9 +24,9 @@ namespace Dawn
 		static const size_t OFFSET_COMMAND = OFFSET_BACKEND_DISPATCH_FUNCTION + sizeof(DrawDispatchFunction);
 
 		template <typename T>
-		static CommandPacket Create(size_t auxMemorySize)
+		static CommandPacket Create(Allocators::LinearAllocator& Allocator, size_t auxMemorySize)
 		{
-			return ::operator new(GetSize<T>(auxMemorySize));
+			return Allocator.Allocate(GetSize<T>(auxMemorySize), __alignof(T), 0);
 		}
 
 		template <typename T>

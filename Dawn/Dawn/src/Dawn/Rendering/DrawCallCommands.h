@@ -14,7 +14,22 @@ namespace Dawn
 			u32 IndexCount;
 			GfxResId VertexArrayId;
 			mat4 Model;
-		};	
+		};
+
+		struct DAWN_API DrawInstancedData
+		{
+			static const DrawDispatchFunction DRAW_FUNCTION;
+			u32 IndexCount;
+			GfxResId VertexArrayId;
+			u32 Amount;
+		};
+
+		struct DAWN_API DrawVertexData
+		{
+			static const DrawDispatchFunction DRAW_FUNCTION;
+			GfxResId VertexArrayId;
+			mat4 Model;
+		};
 
 		struct DAWN_API ClearSceneData
 		{
@@ -38,6 +53,8 @@ namespace Dawn
 		};
 
 		DAWN_API void DrawIndexed(GfxGDI* InGDI, GfxShader* InShader, const void* data);
+		DAWN_API void DrawInstanced(GfxGDI* InGDI, GfxShader* InShader, const void* data);
+		DAWN_API void DrawVertex(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void ClearScene(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void SetViewport(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void CombineFinalPass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
