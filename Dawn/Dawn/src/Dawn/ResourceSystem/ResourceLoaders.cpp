@@ -41,7 +41,7 @@ namespace Dawn
 			Mesh->NumIndices = aiMesh->mNumFaces * 3;
 			Mesh->NumVertices = aiMesh->mNumVertices;
 			
-
+			std::string Content;
 			std::vector<float> VertexData;
 			for (u32 y = 0; y < aiMesh->mNumVertices; ++y)
 			{
@@ -62,6 +62,7 @@ namespace Dawn
 				VertexData.push_back(texCoord1->y);
 			}
 
+			Content = "";
 			std::vector<u32> IndexData;
 			for (u32 u = 0; u < aiMesh->mNumFaces; ++u)
 			{
@@ -70,6 +71,7 @@ namespace Dawn
 				IndexData.push_back(Face.mIndices[0]);
 				IndexData.push_back(Face.mIndices[1]);
 				IndexData.push_back(Face.mIndices[2]);
+
 			}
 
 			GfxBufferLayout MeshLayout
@@ -112,23 +114,31 @@ namespace Dawn
 				aiString path;
 				aiGetMaterialTexture(aiMaterial, aiTextureType_DIFFUSE, 0, &path);
 				DWN_CORE_INFO("Texture Path: {0}", path.C_Str());*/
+				//Material->Name
+
+				aiString matname;
+				aiGetMaterialString(aiMaterial, AI_MATKEY_NAME, &matname);
+				Material->Name = matname.C_Str();
+				//aiMaterial->
+
+				aiColor4D albedo = aiColor4D(0, 0, 0, 0);
+				aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_DIFFUSE, &albedo);
+				Material->Albedo = vec4(albedo.r, albedo.g, albedo.b, albedo.a);
 
 
-				aiColor4D diffuseColor = aiColor4D(1, 1, 1, 1);
-				aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_DIFFUSE, &diffuseColor);
-				Material->DiffuseColor = vec4(diffuseColor.r, diffuseColor.g, diffuseColor.b, diffuseColor.a);
+				aiColor4D emissiveColor = aiColor4D(0, 0, 0, 0);
+				aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_EMISSIVE, &emissiveColor);
+				Material->Emissive = vec4(emissiveColor.r, emissiveColor.g, emissiveColor.b, emissiveColor.a);
 
-				aiColor4D specularColor = aiColor4D(1, 1, 1, 1);
-				aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_SPECULAR, &specularColor);
-				Material->SpecularColor = vec4(specularColor.r, specularColor.g, specularColor.b, specularColor.a);
+				/*float reflection = 0;
+				aiGetMaterialFloat(aiMaterial, AI_MATKEY_REFLECTIVITY, &reflection);
+				Material->Metallic = reflection;
 
-				aiColor4D ambientColor = aiColor4D(1, 1, 1, 1);
-				aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_SPECULAR, &specularColor);
-				Material->AmbientColor = vec4(ambientColor.r, ambientColor.g, ambientColor.b, ambientColor.a);
+				float reflection = 0;
+				aiGetMaterialFloat(aiMaterial, AI_MATKEY_REFLECTIVITY, &reflection);
+				Material->Metallic = reflection;*/
 
-				float shinieness = 0;
-				aiGetMaterialFloat(aiMaterial, AI_MATKEY_SHININESS, &shinieness);
-				Material->Shinieness = shinieness;
+
 				Material->ShaderId = CommonShaderHandles::Standard;
 				Mesh->Materials.push_back(Material->Id);
 			}
@@ -155,7 +165,7 @@ namespace Dawn
 		Assimp::Importer Importer;
 
 		const aiScene* scene = Importer.ReadFile(combinedPath.c_str(),
-			aiProcess_Triangulate | aiProcess_GenNormals | aiProcessPreset_TargetRealtime_MaxQuality
+			aiProcess_Triangulate |  aiProcess_GenSmoothNormals | aiProcessPreset_TargetRealtime_MaxQuality
 		);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)

@@ -52,11 +52,13 @@ namespace Dawn
 	struct DAWN_API TransientData
 	{
 		GfxResId RenderBufferId = INVALID_HANDLE;
+		GfxResId FinalBufferId = INVALID_HANDLE;
 	};
 
 	struct DAWN_API PerFrameData
 	{
 		RenderBucket<u64> GeometryBucket;
+		RenderBucket<u64> LightingBucket;
 		RenderBucket<u64> FinalPassBucket;
 	};
 

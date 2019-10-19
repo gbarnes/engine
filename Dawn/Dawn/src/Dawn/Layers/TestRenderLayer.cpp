@@ -13,6 +13,7 @@
 #include "ResourceSystem/Resources.h"
 #include "imgui.h"
 #include "JobSystem/JobSystem.h"
+#include "Core/Config.h"
 
 namespace Dawn
 {
@@ -55,7 +56,7 @@ namespace Dawn
 
 		// mesh loading
 		{
-			auto handle = RS->LoadFile("Model/spaceCraft1.fbx");
+			auto handle = RS->LoadFile("Model/sphere.obj");
 			if (handle.IsValid)
 			{
 				usedModel = RS->FindModel(handle);
@@ -85,57 +86,46 @@ namespace Dawn
 
 		
 		auto MatId = RS->CreateMaterial(&SampleMaterial);
-		SampleMaterial->DiffuseColor = vec4(0.7f, 0.7f, 0.7f, 1.0f);
+		SampleMaterial->Albedo = vec4(0.7f, 0.7f, 0.7f, 1.0f);
 		SampleMaterial->ShaderId = CommonShaderHandles::StandardInstanced;
 
-
-
+		glm::mat4* modelMatrices = new glm::mat4[Size];
+		u32 row = 0;
+		u32 columnCount = 0;
+		u32 index = 0;
+		for (u32 i = 0; i < 10; ++i)
 		{
-			auto handle = RS->LoadFile("Model/cube.obj");
-			if (handle.IsValid)
+			for (u32 y = 0; y < 10; ++y)
 			{
-				auto cube = RS->FindModel(handle);
-				auto mesh = RS->FindMesh(cube->Meshes[0]);
-
-				glm::mat4* modelMatrices = new glm::mat4[Size];
-				u32 row = 0;
-				u32 columnCount = 0;
-				u32 index = 0;
-				for (u32 i = 0; i < 10; ++i)
-				{
-					for (u32 y = 0; y < 10; ++y)
-					{
-						glm::mat4 model = glm::mat4(1.0f);
-						model = glm::translate(model, vec3(i * 2.1f, -1.0f, y * 2.1f));
-						model = glm::scale(model, glm::vec3(2.0f));
-						modelMatrices[index] = (model);
-						++index;
-					}
-				}
-
-				CubeMeshArray = GDI->GetVertexArray(mesh->VertexArrayId);
-
-				GfxBufferLayout Layout =
-				{
-					{ GfxShaderDataType::Float4, "instanceMatrix" },
-					{ GfxShaderDataType::Float4, "instanceMatrix" },
-					{ GfxShaderDataType::Float4, "instanceMatrix" },
-					{ GfxShaderDataType::Float4, "instanceMatrix" }
-				};
-
-				GDI->CreateVertexBuffer(&modelMatrices[0], Size * sizeof(glm::mat4), &ModelMatrixBuffer);
-				ModelMatrixBuffer->SetLayout(Layout);
-				CubeMeshArray->AttachVertexBuffer(ModelMatrixBuffer, 1);
-				delete[] modelMatrices;
+				glm::mat4 model = glm::mat4(1.0f);
+				model = glm::translate(model, vec3(i * 2.1f, -1.0f, y * 2.1f));
+				model = glm::scale(model, glm::vec3(2.0f));
+				modelMatrices[index] = (model);
+				++index;
 			}
 		}
+
+		CubeMeshArray = GfxPrimitiveFactory::AllocateCube(GDI.get());
+
+		GfxBufferLayout Layout =
+		{
+			{ GfxShaderDataType::Float4, "model" },
+			{ GfxShaderDataType::Float4, "model" },
+			{ GfxShaderDataType::Float4, "model" },
+			{ GfxShaderDataType::Float4, "model" }
+		};
+
+		GDI->CreateVertexBuffer(&modelMatrices[0], Size * sizeof(glm::mat4), &ModelMatrixBuffer);
+		ModelMatrixBuffer->SetLayout(Layout);
+		CubeMeshArray->AttachVertexBuffer(ModelMatrixBuffer, 1);
+		delete[] modelMatrices;
 
 		CubeDrawKey = GenDrawKey64(true, SampleMaterial->Id.Index, RenderLayer::StaticGeom, 0.0f);
 	}
 
 	void TestRenderLayer::Update(float InDeltaTime)
 	{
-		Model = glm::scale(mat4(1), vec3(0.1f));//glm::translate(mat4(1), vec3(-2.0f, 0.0f, 0.0f)) * glm::mat4_cast(rotation);
+		Model = glm::translate(mat4(1), vec3(0.0f, 2.0f, 0.0f)) * glm::scale(mat4(1), vec3(1.0f));// glm::mat4_cast(rotation);
 	
 		vec2 mousePosition = Input::GetMousePosition();
 
@@ -211,48 +201,82 @@ namespace Dawn
 
 		auto Renderer = Application->GetRenderer();
 		auto GDI = Application->GetGDI();
+		auto World = Application->GetWorld();
 
-		auto ViewportCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::SetViewportData>(0u);
-		ViewportCmd->Width = g_camera->Width;
-		ViewportCmd->Height = g_camera->Height;
-
-		auto ClearData = Renderer->PerFrameData.GeometryBucket.AppendCommand<Draw::ClearSceneData>(ViewportCmd);
-		ClearData->ClearColor = g_camera->ClearColor;
-
-		auto ClearFinalPass = Renderer->PerFrameData.FinalPassBucket.AddCommand<Draw::ClearSceneData>(0u);
-		ClearFinalPass->ClearColor = g_camera->ClearColor;
-
-		auto FinalPassData = Renderer->PerFrameData.FinalPassBucket.AppendCommand<Draw::FinalPassCombineData>(ClearFinalPass);
-		FinalPassData->ShaderId = CommonShaderHandles::FinalPass;
-		FinalPassData->RenderBufferId = Renderer->TransientData.RenderBufferId;
-		FinalPassData->FSQuadVAOId = FinalPassQuadId;
-
-		const auto ResourceSystem = Application->GetResourceSystem();
-		if (usedModel != nullptr && CommonShaderHandles::Standard.IsValid)
+		// Geometry bucket
 		{
-			for (const auto &id : usedModel->Meshes)
+			auto ViewportCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::SetViewportData>(0u);
+			ViewportCmd->Width = g_camera->Width;
+			ViewportCmd->Height = g_camera->Height;
+
+			auto ClearColor = Renderer->PerFrameData.GeometryBucket.AppendCommand<Draw::ClearSceneWithColorData>(ViewportCmd);
+			ClearColor->ClearColor = vec4(0.0, 0.0, 0.0, 1.0f);
+
+			const auto ResourceSystem = Application->GetResourceSystem();
+			if (usedModel != nullptr && CommonShaderHandles::Standard.IsValid)
 			{
-				const auto Mesh = ResourceSystem->FindMesh(id);
-				if (Mesh)
+				for (const auto &id : usedModel->Meshes)
 				{
-					for (const auto& MaterialId : Mesh->Materials)
+					const auto Mesh = ResourceSystem->FindMesh(id);
+					if (Mesh)
 					{
-						auto Key = GenDrawKey64(true, MaterialId.Index, RenderLayer::StaticGeom, 0.0f);
-						auto DrawCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::DrawIndexedData>(Key);
-						DrawCmd->IndexCount = Mesh->NumIndices;
-						DrawCmd->VertexArrayId = Mesh->VertexArrayId;
-						DrawCmd->Model = Model;
+						for (const auto& MaterialId : Mesh->Materials)
+						{
+							auto Key = GenDrawKey64(true, MaterialId.Index, RenderLayer::StaticGeom, 0.0f);
+							auto DrawCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::DrawIndexedData>(Key);
+							DrawCmd->IndexCount = Mesh->NumIndices;
+							DrawCmd->VertexArrayId = Mesh->VertexArrayId;
+							DrawCmd->Model = Model;
+						}
 					}
 				}
 			}
+
+
+			//JobSystem::CreateJob();
+			auto DrawCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::DrawInstancedData>(CubeDrawKey);
+			DrawCmd->VertexArrayId = CubeMeshArray->GetId();
+			DrawCmd->IndexCount = CubeMeshArray->GetIndexBuffer(GDI.get())->GetSize();
+			DrawCmd->Amount = Size;
+		}
+
+		// Lighting Pass
+		{
+			auto ClearColor = Renderer->PerFrameData.LightingBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
+			ClearColor->ClearColor = g_camera->ClearColor;
+
+			auto LightingPassData = Renderer->PerFrameData.LightingBucket.AppendCommand<Draw::LightingPassData>(ClearColor);
+			LightingPassData->ShaderId = CommonShaderHandles::LightingPass;
+			LightingPassData->RenderBufferId = Renderer->TransientData.RenderBufferId;
+			LightingPassData->FSQuadVAOId = FinalPassQuadId;
+			LightingPassData->ViewPosition = g_camTransform->Position;
+
+			ComponentId Id;
+			Id.Index = 0;
+			Id.Generation = 1;
+			Id.IsValid = true;
+			auto Light = World->GetComponentById<DirectionalLight>(Id);
+			auto LightTransform = World->GetComponentByEntity<Transform>(Light->GetEntity()->Id);
+
+			LightingPassData->LightColor = Light->Color;
+			LightingPassData->LightPos = LightTransform->Position;
+			LightingPassData->LightIntensity = Light->Intensity;
+		}
+		
+		{
+			auto ClearFinalPass = Renderer->PerFrameData.FinalPassBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
+			ClearFinalPass->ClearColor = g_camera->ClearColor;
+
+			auto FinalPassCombine = Renderer->PerFrameData.FinalPassBucket.AppendCommand<Draw::FinalPassCombineData>(ClearFinalPass);
+			FinalPassCombine->ShaderId = CommonShaderHandles::FinalPass;
+			FinalPassCombine->RenderBufferId = Renderer->TransientData.FinalBufferId;
+			FinalPassCombine->FSQuadVAOId = FinalPassQuadId;
+			FinalPassCombine->Gamma = 1.0f;
+			Config::GetFloat("Engine", "Graphic/Gamma", &FinalPassCombine->Gamma);
 		}
 
 
-		//JobSystem::CreateJob();
-		auto DrawCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::DrawInstancedData>(CubeDrawKey);
-		DrawCmd->VertexArrayId = CubeMeshArray->GetId();
-		DrawCmd->IndexCount = CubeMeshArray->GetIndexBuffer(GDI.get())->GetSize();
-		DrawCmd->Amount = Size;
+		
 		/*
 		Primitives->SetCamera(g_camera);
 		Primitives->Grid(vec3(0, 0, 0), vec3(1000, 1000, 1000));

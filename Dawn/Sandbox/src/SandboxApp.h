@@ -26,7 +26,7 @@ Dawn::Application* Dawn::CreateApplication()
 		1280,
 		720,
 		false, // fullscreen
-		false, // vsync 
+		true, // vsync 
 		32,
 		32,
 		8

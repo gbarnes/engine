@@ -81,6 +81,7 @@ namespace Dawn
 		{
 			ImGui::Indent(10.0f);
 			ImGui::ColorEdit4("Color", &InLight->Color[0]);
+			ImGui::DragFloat("Intensity", &InLight->Intensity, 0.1f, 1000.0f);
 			ImGui::Unindent(10.0f);
 		}
 	}

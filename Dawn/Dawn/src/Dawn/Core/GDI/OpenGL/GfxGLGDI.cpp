@@ -147,7 +147,12 @@ namespace Dawn
 
 	void GfxGLGDI::Clear()
 	{
-		glClearColor(ClearColor.r, ClearColor.g, ClearColor.b, ClearColor.a);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
+
+	void GfxGLGDI::ClearWithColor(const vec4& InColor)
+	{
+		glClearColor(InColor.r, InColor.g, InColor.b, InColor.a);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
@@ -158,7 +163,8 @@ namespace Dawn
 
 	void GfxGLGDI::ActivateTextureSlot(u32 InIndex)
 	{
-		glActiveTexture(GL_TEXTURE0 + InIndex);
+		u32 slot = GL_TEXTURE0 + InIndex;
+		glActiveTexture(slot);
 	}
 
 	GfxResId GfxGLGDI::CreateVertexBuffer(void* Vertices, u32 Size, GfxVertexBuffer** OutBuffer)

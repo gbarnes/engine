@@ -52,10 +52,12 @@ namespace Dawn
 	{
 		// todo: make this more generic but for now we will store all the data we need in
 		// this material instead of having a more flexible system depending on the material. 
-		vec4 DiffuseColor;
-		vec4 SpecularColor;
-		vec4 AmbientColor;
-		float Shinieness;
+		std::string Name = "Default Material";
+		vec4 Albedo;
+		vec4 Emissive;
+		float Metallic;
+		float Roughness;
+		float Ao;
 		GfxResId ShaderId;
 		GfxResId DiffuseTexture = INVALID_HANDLE;
 	};

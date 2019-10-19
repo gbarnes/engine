@@ -19,6 +19,7 @@ namespace Dawn
 		void DrawArray(GfxResId VertexArrayId) override;
 		void DrawInstanced(GfxResId VertexArrayId, u32 InAmount) override;
 		void Clear() override;
+		void ClearWithColor(const vec4& InColor) override;
 		void SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom) override;
 
 	public:

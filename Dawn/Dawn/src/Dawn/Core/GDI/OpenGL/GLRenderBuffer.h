@@ -19,6 +19,7 @@ namespace Dawn
 		u32 FrameBufferId;
 		u32 InternalTextureId;
 		u32 InternalDepthBufferId;
+		std::array<u32, 7> ColorTargets;
 	};
 
 }

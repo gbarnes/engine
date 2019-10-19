@@ -15,7 +15,7 @@ namespace Dawn
 			return nullptr;
 
 		Transform* t = InWorld->MakeComponent<Transform>();
-		t->Position = vec3(0, 10, -10);
+		t->Position = vec3(0, 20, -10);
 		t->Rotation = InOrientation;
 		t->Scale = vec3(1, 1, 1);
 		InWorld->AddComponent<Transform>(e, t);

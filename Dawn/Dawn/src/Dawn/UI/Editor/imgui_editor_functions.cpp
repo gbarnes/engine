@@ -77,7 +77,7 @@ namespace Dawn
 	bool g_ShowPropertyWindow = false;
 	void ShowPropertyWindow()
 	{
-		ImGui::Begin(g_SelectedEntity->Name.c_str(), &g_ShowPropertyWindow);
+		ImGui::Begin("Inspector", &g_ShowPropertyWindow);
 
 		ShowEntity(g_SelectedEntity);
 
@@ -116,13 +116,51 @@ namespace Dawn
 				if (ImGui::IsItemClicked())
 				{
 					g_ShowPropertyWindow = true;
-					g_SelectedEntity = const_cast<Entity*>(entity);
+					g_SelectedEntity = entity;
 				}
 			}
 			ImGui::TreePop();
 		}
 
 		ImGui::End();
+	}
+
+
+	bool g_showMaterialBrowserWindow = false;
+	void ShowMaterialBrowserWindow()
+	{
+		auto resources = g_Application->GetResourceSystem();
+		static Material* SelectedMaterial = nullptr;
+
+		ImGui::Begin("Materials", &g_showMaterialBrowserWindow);
+
+		if (ImGui::TreeNode("Root"))
+		{
+			auto  materials = resources->GetMaterials();
+			for (auto material : materials)
+			{
+				ImGui::Text(material->Name.c_str());
+				if (ImGui::IsItemClicked())
+				{
+					SelectedMaterial = material;
+				}
+			}
+			ImGui::TreePop();
+		}
+
+		if (SelectedMaterial)
+		{
+			ImGui::BeginChild("Inspector");
+			
+			ImGui::ColorEdit4("Color", &SelectedMaterial->Albedo[0]);
+			ImGui::SliderFloat("Metallic", &SelectedMaterial->Metallic, 0.0f, 1.0f);
+			ImGui::SliderFloat("Roughness", &SelectedMaterial->Roughness, 0.0f, 1.0f);
+
+			ImGui::EndChild();
+		}
+
+		ImGui::End();
+		//resources->GetAllMaterials();
 	}
 
 	void Dawn::RenderEditorUI()
@@ -177,6 +215,7 @@ namespace Dawn
 			if (ImGui::BeginMenu("Assets"))
 			{
 				if (ImGui::MenuItem("Browser")) { g_showAssetBrowser = !g_showAssetBrowser; }
+				if (ImGui::MenuItem("Materials")) { g_showMaterialBrowserWindow = !g_showMaterialBrowserWindow; }
 				ImGui::EndMenu();
 			}
 
@@ -205,9 +244,13 @@ namespace Dawn
 		if (g_ShowSceneWindow)
 			ShowSceneWindow();
 
+		if (g_showMaterialBrowserWindow)
+			ShowMaterialBrowserWindow();
+
 		//ImGui::End();
 
 	}
+
 
 
 }

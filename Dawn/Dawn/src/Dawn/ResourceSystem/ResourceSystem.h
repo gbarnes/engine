@@ -23,7 +23,7 @@ namespace Dawn
 
 	typedef std::map<FileId, FileMetaData> FileMetaDatabase;
 	typedef std::function<ResourceId(ResourceSystem* InFS, const std::string&, FileMetaData*) > FileLoadDelegate;
-
+	 
 
 	struct DAWN_API FileLoaderDelegates
 	{
@@ -43,6 +43,9 @@ namespace Dawn
 	}\
 	ResourceId Create##className##(##className##** OutResource){\
 	return CreateResource<##className##>(##typeName##, &Resources.##tableName##, OutResource);\
+	}\
+	std::vector<##className##*> Get##tableName##() {\
+		return GetAllResourcesOfType(&Resources.##tableName##);\
 	}
 
 	class DAWN_API ResourceSystem : public std::enable_shared_from_this<ResourceSystem>
@@ -126,6 +129,13 @@ namespace Dawn
 		{
 			assert(InId.IsValid);
 			return InArray->Find(InId);
+		}
+
+		template<typename T, typename = typename std::enable_if<std::is_base_of<Resource, T>::value, T>::type>
+		std::vector<T*> GetAllResourcesOfType(HandleObjectArray<T>* InArray)
+		{
+			assert(InArray);
+			return InArray->GetValues();
 		}
 	};
 

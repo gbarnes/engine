@@ -5,6 +5,7 @@
 namespace Dawn 
 {
 	ResourceId CommonShaderHandles::FinalPass;
+	ResourceId CommonShaderHandles::LightingPass;
 	ResourceId CommonShaderHandles::DebugPrim;
 	ResourceId CommonShaderHandles::Phong;
 	ResourceId CommonShaderHandles::Debug;
@@ -12,9 +13,11 @@ namespace Dawn
 	ResourceId CommonShaderHandles::Standard;
 	ResourceId CommonShaderHandles::StandardInstanced;
 
+
 	void RenderResourceHelper::LoadCommonShaders(ResourceSystem* InResourceSystem)
 	{
 		CommonShaderHandles::FinalPass = InResourceSystem->LoadFile("Shader/final_pass.shader");
+		CommonShaderHandles::LightingPass = InResourceSystem->LoadFile("Shader/lighting_pass.shader");
 		CommonShaderHandles::Standard = InResourceSystem->LoadFile("Shader/standard.shader");
 		CommonShaderHandles::StandardInstanced = InResourceSystem->LoadFile("Shader/standard_instanced.shader");
 		CommonShaderHandles::DebugPrim = InResourceSystem->LoadFile("Shader/debug_prim.shader");

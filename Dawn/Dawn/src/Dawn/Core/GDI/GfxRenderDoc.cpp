@@ -1,5 +1,5 @@
 #include "GfxRenderDoc.h"
-#include "Vendor/RenderDoc/renderdoc_app.h"#
+#include "Vendor/RenderDoc/renderdoc_app.h"
 #include "inc_common.h"
 #include "Core/Config.h"
 
@@ -12,7 +12,7 @@ namespace Dawn
 		void InitRenderDocHook()
 		{
 			bool bShouldHook = false;
-			Config::GetBool("Engine", "HookRenderdoc", &bShouldHook);
+			Config::GetBool("Engine", "Debug/HookRenderdoc", &bShouldHook);
 			if (!bShouldHook)
 				return;
 

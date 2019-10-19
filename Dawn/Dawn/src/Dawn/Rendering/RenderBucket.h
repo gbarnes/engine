@@ -136,25 +136,15 @@ namespace Dawn
 					GfxShader->SetMat4("proj", Projection);
 					GfxShader->SetMat4("view", View);
 
-					GfxShader->SetVec4("material.diffuse", Material->DiffuseColor);
-					GfxShader->SetVec4("material.ambient", Material->AmbientColor);
-					GfxShader->SetVec4("material.specular", Material->SpecularColor);
-					GfxShader->SetFloat("material.shininess", 1.0f);
+					GfxShader->SetVec4("material.albedo", Material->Albedo);
+					GfxShader->SetVec4("material.emissive", Material->Emissive);
+					GfxShader->SetFloat("material.metallic", Material->Metallic);
+					GfxShader->SetFloat("material.roughness", Material->Roughness);
+					GfxShader->SetFloat("material.ao", Material->Ao);
 
 					// remove this again! this is only here as a test
 					// but since we use a deferred renderer later this should really
 					// be set by the lighting pass!
-					
-					ComponentId Id;
-					Id.Index = 0;
-					Id.Generation = 1;
-					Id.IsValid = true;
-					auto Light = World->GetComponentById<DirectionalLight>(Id);
-					auto LightTransform = World->GetComponentByEntity<Transform>(Light->GetEntity()->Id);
-
-					GfxShader->SetVec4("light.diffuse", Light->Color);
-					GfxShader->SetVec3("light.position", LightTransform->Position);
-
 					LastMatId = DecodedKey.MaterialId;
 				}
 

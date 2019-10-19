@@ -38,7 +38,7 @@ void SandboxApp::Load()
 		vec4(0.4f, 0.6f, 0.9f, 1.0f),
 		vec3(0, 3, 10)
 	);
-	g_Camera->GetEntity()->bIsHiddenInEditorHierarchy = true;
+	g_Camera->GetEntity()->bIsHiddenInEditorHierarchy = false;
 	CameraUtils::CalculatePerspective(g_Camera);
 
 	auto Cam1 = CreateCamera(GetWorld().get(),

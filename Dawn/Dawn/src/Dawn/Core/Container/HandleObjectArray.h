@@ -113,6 +113,16 @@ namespace Dawn
 			return &Allocator;
 		}
 
+		std::vector<T*> GetValues()
+		{
+			std::vector<T*> Values;
+			for (auto& Slot : Slots)
+				if (Slot.Element != nullptr)
+					Values.push_back(Slot.Element);
+
+			return Values;
+		}
+
 	private:
 		Allocators::LinearAllocator Allocator;
 		Memory::HeapArea HeapMemory;

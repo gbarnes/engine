@@ -8,11 +8,17 @@ namespace Dawn
 		: GfxRenderBuffer(InId)
 	{
 		glGenFramebuffers(1, &FrameBufferId);
+
+		for (u32 i = 0; i < ColorTargets.size(); ++i)
+			ColorTargets[i] = 0;
 	}
 
 	GLRenderBuffer::~GLRenderBuffer()
 	{
-		glDeleteTextures(1, &InternalTextureId);
+		for(u32 ColorTargetId : ColorTargets)
+			if(ColorTargetId > 0)
+				glDeleteTextures(1, &ColorTargetId);
+
 		glDeleteFramebuffers(1, &FrameBufferId);
 	}
 
@@ -20,16 +26,19 @@ namespace Dawn
 	{
 		Bind();
 
-		glDeleteTextures(1, &InternalTextureId);
-		glGenTextures(1, &InternalTextureId);
-		glBindTexture(GL_TEXTURE_2D, InternalTextureId);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, InWidth, InHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+		u32 RenderId = 0;
+		glDeleteTextures(1, &RenderId);
+		glGenTextures(1, &RenderId);
+		glBindTexture(GL_TEXTURE_2D, RenderId);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, InWidth, InHeight, 0, GL_RGBA, GL_FLOAT, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 		// attach it to currently bound framebuffer object
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + InIndex, GL_TEXTURE_2D, InternalTextureId, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + InIndex, GL_TEXTURE_2D, RenderId, 0);
+
+		ColorTargets[InIndex] = RenderId;
 
 		Unbind();
 	}
@@ -54,6 +63,20 @@ namespace Dawn
 	void GLRenderBuffer::Bind()
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, FrameBufferId);
+
+		u32 buffers = 0;
+		std::vector<u32> Attachments;
+		for (u32 Buffer : ColorTargets)
+		{
+			if (Buffer > 0) 
+			{
+				Attachments.push_back(GL_COLOR_ATTACHMENT0 + buffers);
+				++buffers;
+			}
+		}
+
+		if(buffers > 0)
+			glDrawBuffers(buffers, Attachments.data());
 	}
 
 	void GLRenderBuffer::Unbind()
@@ -63,7 +86,7 @@ namespace Dawn
 
 	void GLRenderBuffer::BindColorTarget(u32 InIndex)
 	{
-		glBindTexture(GL_TEXTURE_2D, InternalTextureId);
+		glBindTexture(GL_TEXTURE_2D, ColorTargets[InIndex]);
 	}
 
 	void GLRenderBuffer::UnbindColorTarget(u32 InIndex)

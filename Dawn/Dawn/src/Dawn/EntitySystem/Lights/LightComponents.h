@@ -10,6 +10,7 @@ namespace Dawn
 	{
 		//REGISTER_TYPE(DirectionalLight)
 		vec4 Color;
+		float Intensity = 1.0f;
 	};
 
 	typedef std::shared_ptr<DirectionalLight> DirectionalLightPtr;
