@@ -51,15 +51,29 @@ namespace Dawn
 
 	struct DAWN_API TransientData
 	{
-		GfxResId RenderBufferId = INVALID_HANDLE;
+		GfxResId GBufferId = INVALID_HANDLE;
 		GfxResId FinalBufferId = INVALID_HANDLE;
+		
+		GfxResId SSAOBufferId = INVALID_HANDLE;
+		
+
 	};
 
 	struct DAWN_API PerFrameData
 	{
 		RenderBucket<u64> GeometryBucket;
+		RenderBucket<u64> SSAOBucket;
 		RenderBucket<u64> LightingBucket;
 		RenderBucket<u64> FinalPassBucket;
+	};
+
+	struct DAWN_API SSAOData
+	{
+		float Radius = 0.55f;
+		float Bias = 0.025f;
+		float Power = 1.0f;
+		GfxResId NoiseTextureId = INVALID_HANDLE;
+		std::vector<vec3> Kernel;
 	};
 
 	class DAWN_API DeferredRenderer : public IRenderer
@@ -67,6 +81,7 @@ namespace Dawn
 	public:
 		TransientData TransientData;
 		PerFrameData PerFrameData;
+		SSAOData SSAOData;
 
 		void AllocateTransientData(Application* InApp) override;
 		void Resize(GfxGDI* InGDI, u32 InWidth, u32 InHeight) override;

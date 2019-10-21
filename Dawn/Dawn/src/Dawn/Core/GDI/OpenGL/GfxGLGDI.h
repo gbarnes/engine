@@ -27,8 +27,7 @@ namespace Dawn
 		GfxResId CreateIndexBuffer(u32* Indices, u32 Size, GfxIndexBuffer** OutBuffer) override;
 		GfxResId CreateVertexArray(GfxVertexArray** OutBuffer) override;
 		GfxResId CreateShader(GfxShader** OutShader) override;
-		GfxResId CreateTexture(u8* Data, u32 Width, u32 Height, u16 ChannelsPerPixel, GfxWrapDesc Wrap,
-			GfxFilterDesc Filter, bool GenerateMipMaps, GfxTexture** OutTexture) override;
+		GfxResId CreateTexture(const GfxTextureDesc& InDesc, GfxTexture** OutTexture) override;
 		GfxResId CreateRenderBuffer(GfxRenderBuffer** OutTexture) override;
 
 		// todo-- move this back to protected (gb, 10/13)

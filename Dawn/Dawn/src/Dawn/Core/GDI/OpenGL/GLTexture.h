@@ -7,15 +7,13 @@ namespace Dawn
 	class GLTexture : public GfxTexture
 	{
 	public:
-		GLTexture(GfxResId Id, u8* Data, u32 Width, u32 Height, u16 ChannelsPerPixel, GfxWrapDesc Wrap,
-			GfxFilterDesc Filter, bool GenerateMipMaps);
+		GLTexture(GfxResId Id, const GfxTextureDesc& InDesc);
 
 		~GLTexture();
 
 		void Bind() override;
 		void Unbind() override;
-		void Reset(u8* Data, u32 Width, u32 Height, u16 ChannelsPerPixel, GfxWrapDesc Wrap,
-			GfxFilterDesc Filter, bool GenerateMipMaps) override;
+		void Reset(const GfxTextureDesc& InDesc) override;
 	private:
 		u32 RendererId;
 		GfxWrapDesc Wrap;

@@ -40,8 +40,7 @@ namespace Dawn
 		virtual GfxResId CreateIndexBuffer(u32* InIndices, u32 InSize, GfxIndexBuffer** OutBuffer) = 0;
 		virtual GfxResId CreateVertexArray(GfxVertexArray** OutBuffer) = 0;
 		virtual GfxResId CreateShader(GfxShader** OutShader) = 0;
-		virtual GfxResId CreateTexture(u8* InData, u32 InWidth, u32 InHeight, u16 InChannelsPerPixel, GfxWrapDesc InWrap,
-			GfxFilterDesc InFilter, bool InGenerateMipMaps, GfxTexture** OutTexture) = 0;
+		virtual GfxResId CreateTexture(const GfxTextureDesc& InDesc, GfxTexture** OutTexture) = 0;
 		virtual GfxResId CreateRenderBuffer(GfxRenderBuffer** OutTexture) = 0;
 
 

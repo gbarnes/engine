@@ -9,9 +9,10 @@ namespace Dawn
 		GLRenderBuffer(GfxResId InId);
 		virtual ~GLRenderBuffer() override;
 
-		void Bind() override;
+		void Bind(bool bAttachTargets = true) override;
 		void Unbind() override;
-		void AttachColorTarget(u32 InIndex, u32 InWidth, u32 InHeight) override;
+		void AttachColorTarget(u32 InIndex, u32 InWidth, u32 InHeight, GfxTextureFormat InFormat = GfxTextureFormat::RGBA16F, 
+			GfxTextureFormat InChannel = GfxTextureFormat::RGBA, GfxMemoryType InMemoryType = GfxMemoryType::Float) override;
 		void AttachDepthStencilTarget(u32 InWidth, u32 InHeight) override;
 		void BindColorTarget(u32 InIndex) override;
 		void UnbindColorTarget(u32 InIndex) override;

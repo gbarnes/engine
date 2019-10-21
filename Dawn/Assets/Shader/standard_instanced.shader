@@ -9,7 +9,7 @@ layout(location = 4) in mat4 model;
  
 out vec2 TexCoord0;
 out vec2 TexCoord1;
-out vec3 FragPos;  
+out vec4 FragPos;  
 out vec3 Normal;
 
 uniform mat4 view;
@@ -17,14 +17,13 @@ uniform mat4 proj;
 
 void main()
 {  
-	vec4 worldPos = model * vec4(position, 1.0);
-	FragPos = worldPos.xyz;
-	TexCoord0 = uv0;
-	TexCoord1 = uv1;  
+	vec4 worldPos = view * model * vec4(position, 1.0);
+	FragPos =  worldPos;  
+	TexCoord0 = uv0;    
+	TexCoord1 = uv1;
 	
-	mat3 normalMatrix = transpose(mat3(model));
-    Normal = normalMatrix * normal;
-	gl_Position = proj * view * worldPos;
+    Normal = normalize(mat3(transpose(inverse(view * model))) * normal); 
+	gl_Position = proj * worldPos;
 }
 
 #pragma frag_begin
@@ -33,7 +32,7 @@ void main()
 
 in vec2 TexCoord0;
 in vec2 TexCoord1;
-in vec3 FragPos;  
+in vec4 FragPos;  
 in vec3 Normal;   
 
 uniform Material material;

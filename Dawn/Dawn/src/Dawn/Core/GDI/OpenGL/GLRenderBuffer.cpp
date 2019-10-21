@@ -22,7 +22,8 @@ namespace Dawn
 		glDeleteFramebuffers(1, &FrameBufferId);
 	}
 
-	void GLRenderBuffer::AttachColorTarget(u32 InIndex, u32 InWidth, u32 InHeight)
+	void GLRenderBuffer::AttachColorTarget(u32 InIndex, u32 InWidth, u32 InHeight, GfxTextureFormat InFormat, GfxTextureFormat InChannel,
+		GfxMemoryType InMemoryType)
 	{
 		Bind();
 
@@ -30,7 +31,7 @@ namespace Dawn
 		glDeleteTextures(1, &RenderId);
 		glGenTextures(1, &RenderId);
 		glBindTexture(GL_TEXTURE_2D, RenderId);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, InWidth, InHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, InFormat, InWidth, InHeight, 0, InChannel, InMemoryType, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -60,23 +61,26 @@ namespace Dawn
 		Unbind();
 	}
 
-	void GLRenderBuffer::Bind()
+	void GLRenderBuffer::Bind(bool bAttachTargets)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, FrameBufferId);
 
-		u32 buffers = 0;
-		std::vector<u32> Attachments;
-		for (u32 Buffer : ColorTargets)
+		if (bAttachTargets)
 		{
-			if (Buffer > 0) 
+			u32 buffers = 0;
+			std::vector<u32> Attachments;
+			for (u32 Buffer : ColorTargets)
 			{
-				Attachments.push_back(GL_COLOR_ATTACHMENT0 + buffers);
-				++buffers;
+				if (Buffer > 0)
+				{
+					Attachments.push_back(GL_COLOR_ATTACHMENT0 + buffers);
+					++buffers;
+				}
 			}
-		}
 
-		if(buffers > 0)
-			glDrawBuffers(buffers, Attachments.data());
+			if (buffers > 0)
+				glDrawBuffers(buffers, Attachments.data());
+		}
 	}
 
 	void GLRenderBuffer::Unbind()

@@ -9,6 +9,7 @@
 #include "EntitySystem/Camera/Camera.h"
 #include "ResourceSystem/Resources.h"
 #include "ResourceSystem/ResourceSystem.h"
+#include "Rendering/Renderer.h"
 #include "Application.h"
 
 namespace Dawn 
@@ -224,11 +225,26 @@ namespace Dawn
 				static bool FpsCheckBoxVariable = false;
 				if (ImGui::Checkbox("FPS", &FpsCheckBoxVariable)) { g_ShowFpsCounter = !g_ShowFpsCounter; }
 				ImGui::Separator();
-				if (ImGui::MenuItem("Profiler")) {}
-				if (ImGui::MenuItem("Console")) {}
+				//if (ImGui::MenuItem("Profiler")) {}
+				//if (ImGui::MenuItem("Console")) {}
 
 				ImGui::EndMenu();
 			}
+
+
+			if (ImGui::BeginMenu("Rendering"))
+			{
+				auto Renderer = g_Application->GetRenderer();
+				// note--- this is only temporary here!
+				ImGui::Text("SSAO");
+				ImGui::InputFloat("Radius", &Renderer->SSAOData.Radius);
+				ImGui::InputFloat("Bias", &Renderer->SSAOData.Bias);
+				ImGui::InputFloat("Power", &Renderer->SSAOData.Power);
+				ImGui::Separator();
+				ImGui::EndMenu();
+			}
+
+
 			ImGui::EndMainMenuBar();
 		}
 		
@@ -246,6 +262,8 @@ namespace Dawn
 
 		if (g_showMaterialBrowserWindow)
 			ShowMaterialBrowserWindow();
+
+	
 
 		//ImGui::End();
 

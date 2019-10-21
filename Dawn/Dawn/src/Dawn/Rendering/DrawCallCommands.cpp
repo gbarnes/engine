@@ -11,6 +11,7 @@ namespace Dawn
 	const DrawDispatchFunction Draw::SetViewportData::DRAW_FUNCTION = &Draw::SetViewport;
 	const DrawDispatchFunction Draw::FinalPassCombineData::DRAW_FUNCTION = &Draw::CombineFinalPass;
 	const DrawDispatchFunction Draw::LightingPassData::DRAW_FUNCTION = &Draw::LightingPass;
+	const DrawDispatchFunction Draw::SSAOComputePassData::DRAW_FUNCTION = &Draw::SSAOComputePass;
 
 	DAWN_API void Draw::DrawIndexed(GfxGDI* InGDI, GfxShader* InShader, const void* data)
 	{
@@ -54,28 +55,34 @@ namespace Dawn
 	{
 		const LightingPassData* RenderData = static_cast<const LightingPassData*>(data);
 		auto LightingPassShader = InGDI->GetShader(RenderData->ShaderId);
-		auto RenderBuffer = InGDI->GetRenderBuffer(RenderData->RenderBufferId);
+		auto GBuffer = InGDI->GetRenderBuffer(RenderData->GBufferId);
+		auto SSAOBuffer = InGDI->GetRenderBuffer(RenderData->SSAOBufferId);
 
 		ScopedGfxBind<GfxShader> Bind(LightingPassShader);
 		{
 			InGDI->ActivateTextureSlot(0);
-			RenderBuffer->BindColorTarget(0);
+			GBuffer->BindColorTarget(0);
 			
 			InGDI->ActivateTextureSlot(1);
-			RenderBuffer->BindColorTarget(1);
+			GBuffer->BindColorTarget(1);
 			
 			InGDI->ActivateTextureSlot(2);
-			RenderBuffer->BindColorTarget(2);
+			GBuffer->BindColorTarget(2);
 
 			InGDI->ActivateTextureSlot(3);
-			RenderBuffer->BindColorTarget(3);
+			GBuffer->BindColorTarget(3);
+
+			InGDI->ActivateTextureSlot(4);
+			SSAOBuffer->BindColorTarget(0);
 
 
 			LightingPassShader->SetInt("gPosition", 0);
 			LightingPassShader->SetInt("gNormal", 1);
 			LightingPassShader->SetInt("gAlbedoAO", 2);
 			LightingPassShader->SetInt("gMetallicRoughness", 3);
+			LightingPassShader->SetInt("gSSAO", 4);
 
+			LightingPassShader->SetMat4("view", RenderData->View);
 			LightingPassShader->SetVec3("viewPos", RenderData->ViewPosition);
 			LightingPassShader->SetVec3("lights[0].position", RenderData->LightPos);
 			LightingPassShader->SetVec3("lights[0].color", RenderData->LightColor);
@@ -83,17 +90,20 @@ namespace Dawn
 
 			InGDI->DrawIndexed(RenderData->FSQuadVAOId);
 
+			InGDI->ActivateTextureSlot(4);
+			SSAOBuffer->UnbindColorTarget(0);
+
 			InGDI->ActivateTextureSlot(3);
-			RenderBuffer->UnbindColorTarget(3);
+			GBuffer->UnbindColorTarget(3);
 
 			InGDI->ActivateTextureSlot(2);
-			RenderBuffer->UnbindColorTarget(2);
+			GBuffer->UnbindColorTarget(2);
 
 			InGDI->ActivateTextureSlot(1);
-			RenderBuffer->UnbindColorTarget(1);
+			GBuffer->UnbindColorTarget(1);
 
 			InGDI->ActivateTextureSlot(0);
-			RenderBuffer->UnbindColorTarget(0);
+			GBuffer->UnbindColorTarget(0);
 		}
 	}
 
@@ -116,6 +126,59 @@ namespace Dawn
 			InGDI->DrawIndexed(RenderData->FSQuadVAOId);
 
 			RenderBuffer->UnbindColorTarget(0);
+		}
+	}
+
+	DAWN_API void Draw::SSAOComputePass(GfxGDI* InGDI, GfxShader* InShader, const void* data)
+	{
+		const SSAOComputePassData* RenderData = static_cast<const SSAOComputePassData*>(data);
+		auto ComputeShader = InGDI->GetShader(RenderData->ShaderId);
+		auto GBuffer = InGDI->GetRenderBuffer(RenderData->GBufferId);
+		auto NoiseTexture = InGDI->GetTexture(RenderData->NoiseTextureId);
+
+		ScopedGfxBind<GfxShader> Bind(ComputeShader);
+		{
+			InGDI->ActivateTextureSlot(0);
+			GBuffer->BindColorTarget(0);
+
+			InGDI->ActivateTextureSlot(1);
+			GBuffer->BindColorTarget(1);
+
+			InGDI->ActivateTextureSlot(2);
+			GBuffer->BindColorTarget(2);
+
+			InGDI->ActivateTextureSlot(3);
+			NoiseTexture->Bind();
+
+
+			ComputeShader->SetInt("gPosition", 0);
+			ComputeShader->SetInt("gNormal", 1);
+			ComputeShader->SetInt("gAlbedo", 2);
+			ComputeShader->SetInt("Noise", 3);
+			ComputeShader->SetFloat("radius", RenderData->Radius);
+			ComputeShader->SetFloat("bias", RenderData->Bias);
+			ComputeShader->SetFloat("power", RenderData->Power);
+
+			for (unsigned int i = 0; i < 64; ++i) {
+				ComputeShader->SetVec3("samples[" + std::to_string(i) + "]", (*RenderData->SSAOKernelData)[i]);
+			}
+			
+			ComputeShader->SetMat4("projection", RenderData->Projection);
+			ComputeShader->SetMat4("view", RenderData->View);
+
+			InGDI->DrawIndexed(RenderData->FSQuadVAOId);
+
+			InGDI->ActivateTextureSlot(3);
+			NoiseTexture->Unbind();
+
+			InGDI->ActivateTextureSlot(2);
+			GBuffer->UnbindColorTarget(2);
+
+			InGDI->ActivateTextureSlot(1);
+			GBuffer->UnbindColorTarget(1);
+
+			InGDI->ActivateTextureSlot(0);
+			GBuffer->UnbindColorTarget(0);
 		}
 	}
 }

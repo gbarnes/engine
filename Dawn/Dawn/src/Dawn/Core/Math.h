@@ -29,6 +29,11 @@ namespace Math
 		return val;
 	}
 
+	inline float Lerp(float a, float b, float f)
+	{
+		return a + f * (b - a);
+	}
+
 	// Normalize a value in the range [min - max]
 	template<typename T, typename U>
 	inline T NormalizeRange(U x, U min, U max)

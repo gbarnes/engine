@@ -21,14 +21,10 @@ in vec2 TexCoords;
 
 uniform float gamma;
 uniform sampler2D screenTexture;
+uniform vec2 inverseScreenSize;
 
 void main()
 {
 	vec3 hdrColor = texture(screenTexture, TexCoords).rgb;
-    // reinhard tone mapping
-    vec3 mapped = hdrColor / (hdrColor + vec3(1.0));
-    // gamma correction 
-    mapped = pow(mapped, vec3(1.0 / gamma));
-  
     FragColor = vec4(hdrColor, 1.0);
 }

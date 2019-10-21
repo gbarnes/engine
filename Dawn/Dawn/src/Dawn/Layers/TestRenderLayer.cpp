@@ -242,14 +242,32 @@ namespace Dawn
 
 		// Lighting Pass
 		{
+
+			auto ClearSSAO = Renderer->PerFrameData.SSAOBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
+			ClearSSAO->ClearColor = vec4(1,1,1,1);
+
+			auto SSAOComputePass = Renderer->PerFrameData.SSAOBucket.AppendCommand< Draw::SSAOComputePassData>(ClearSSAO);
+			SSAOComputePass->GBufferId = Renderer->TransientData.GBufferId;
+			SSAOComputePass->FSQuadVAOId = FinalPassQuadId;
+			SSAOComputePass->ShaderId = CommonShaderHandles::SSAOCompute;
+			SSAOComputePass->SSAOKernelData = &Renderer->SSAOData.Kernel;
+			SSAOComputePass->NoiseTextureId = Renderer->SSAOData.NoiseTextureId;
+			SSAOComputePass->Radius = Renderer->SSAOData.Radius;
+			SSAOComputePass->Bias = Renderer->SSAOData.Bias;
+			SSAOComputePass->Projection = g_camera->GetProjection();
+			SSAOComputePass->View = g_camera->GetView();
+			SSAOComputePass->Power = Renderer->SSAOData.Power;
+
 			auto ClearColor = Renderer->PerFrameData.LightingBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
 			ClearColor->ClearColor = g_camera->ClearColor;
 
 			auto LightingPassData = Renderer->PerFrameData.LightingBucket.AppendCommand<Draw::LightingPassData>(ClearColor);
 			LightingPassData->ShaderId = CommonShaderHandles::LightingPass;
-			LightingPassData->RenderBufferId = Renderer->TransientData.RenderBufferId;
+			LightingPassData->GBufferId = Renderer->TransientData.GBufferId;
 			LightingPassData->FSQuadVAOId = FinalPassQuadId;
 			LightingPassData->ViewPosition = g_camTransform->Position;
+			LightingPassData->SSAOBufferId = Renderer->TransientData.SSAOBufferId;
+			LightingPassData->View = g_camera->GetView();
 
 			ComponentId Id;
 			Id.Index = 0;
@@ -264,8 +282,7 @@ namespace Dawn
 		}
 		
 		{
-			auto ClearFinalPass = Renderer->PerFrameData.FinalPassBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
-			ClearFinalPass->ClearColor = g_camera->ClearColor;
+			auto ClearFinalPass = Renderer->PerFrameData.FinalPassBucket.AddCommand<Draw::ClearSceneData>(0u);
 
 			auto FinalPassCombine = Renderer->PerFrameData.FinalPassBucket.AppendCommand<Draw::FinalPassCombineData>(ClearFinalPass);
 			FinalPassCombine->ShaderId = CommonShaderHandles::FinalPass;

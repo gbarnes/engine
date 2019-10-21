@@ -194,6 +194,44 @@ namespace Dawn
 		virtual void SetName(std::string Name) = 0;
 	};
 
+	// note --- we use the opengl codes for now till we implement another renderer 
+	//			I only do this to speed up development
+	enum GfxTextureFormat
+	{
+		R = 0x1903,
+		G = 0x1904,
+		B = 0x1905,
+		A = 0x1906,
+		RGB = 0x1907,
+		RGBA = 0x1908,
+		RGBA32F = 0x8814,
+		RGB32F = 0x8815,
+		RGBA16F = 0x881A,
+		RGB16F = 0x881B
+	};
+
+	enum GfxMemoryType
+	{
+		UnsignedByte = 0x1401,
+		Float = 0x1406,
+		UnsignedInt = 0x1405
+	};
+
+	struct GfxTextureDesc
+	{
+		GfxTextureFormat Format = GfxTextureFormat::RGBA;
+		GfxMemoryType MemoryType = GfxMemoryType::UnsignedByte;
+		GfxTextureFormat Structure = GfxTextureFormat::RGBA;
+		void* Data;
+		u32 Width = 10;
+		u32 Height = 10;
+		u16 ChannelsPerPixel = 8;
+		GfxWrapDesc Wrap;
+		GfxFilterDesc Filter;
+		bool bGenerateMipMaps = false;
+	};
+
+
 	class GfxTexture : public GfxResource
 	{
 	public:
@@ -202,8 +240,7 @@ namespace Dawn
 
 		virtual void Bind() = 0;
 		virtual void Unbind() = 0;
-		virtual void Reset(u8* Data, u32 Width, u32 Height, u16 ChannelsPerPixel, GfxWrapDesc Wrap,
-			GfxFilterDesc Filter, bool GenerateMipMaps) = 0;
+		virtual void Reset(const GfxTextureDesc& InDesc) = 0;
 
 		inline const GfxResId GetId() const {
 			return Id;
@@ -254,9 +291,10 @@ namespace Dawn
 		GfxRenderBuffer(GfxResId InId) : GfxResource(InId) {};
 		virtual ~GfxRenderBuffer() = default;
 		
-		virtual void Bind() = 0;
+		virtual void Bind(bool bAttachTargets = true) = 0;
 		virtual void Unbind() = 0;
-		virtual void AttachColorTarget(u32 InIndex, u32 InWidth, u32 InHeight) = 0;
+		virtual void AttachColorTarget(u32 InIndex, u32 InWidth, u32 InHeight, GfxTextureFormat InFormat = GfxTextureFormat::RGBA16F, 
+			GfxTextureFormat InChannel = GfxTextureFormat::RGBA, GfxMemoryType InMemoryType = GfxMemoryType::Float) = 0;
 		virtual void AttachDepthStencilTarget(u32 InWidth, u32 InHeight) = 0;
 
 		virtual void BindColorTarget(u32 InIndex) = 0;

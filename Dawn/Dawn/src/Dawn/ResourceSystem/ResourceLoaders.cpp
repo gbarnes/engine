@@ -165,7 +165,7 @@ namespace Dawn
 		Assimp::Importer Importer;
 
 		const aiScene* scene = Importer.ReadFile(combinedPath.c_str(),
-			aiProcess_Triangulate |  aiProcess_GenSmoothNormals | aiProcessPreset_TargetRealtime_MaxQuality
+			aiProcess_Triangulate |  aiProcess_GenNormals | aiProcessPreset_TargetRealtime_MaxQuality
 		);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
@@ -352,19 +352,24 @@ namespace Dawn
 			image->Height = y;
 			image->ChannelsPerPixel = n;
 
-			// these settings will later be filled by meta files
-			// associated to the file
-			image->TextureId = GDI->CreateTexture
-			(
+			GfxTextureDesc Desc = 
+			{
+				GfxTextureFormat::RGBA,
+				GfxMemoryType::UnsignedByte,
+				GfxTextureFormat::RGBA,
 				data, // raw pixel data
 				x, // width of the image
 				y, // height of the image
 				n, // channels per pixel
 				{ GL_REPEAT, GL_REPEAT }, // wrap settings 
 				{ GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR }, // filter settings
-				true, // generate mip maps?
-				nullptr // the output pointer to the created texture!
-			);
+				true
+			};
+
+
+			// these settings will later be filled by meta files
+			// associated to the file
+			image->TextureId = GDI->CreateTexture(Desc, nullptr);
 			
 			// hm is it good to release the data...
 			stbi_image_free(data);
@@ -404,7 +409,21 @@ namespace Dawn
 				unsigned char *data = stbi_load(path.c_str(), &x, &y, &n, 4);
 				if (data)
 				{
-					Texture->Reset(data, x, y, n, { GL_REPEAT, GL_REPEAT }, { GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR }, true);
+					GfxTextureDesc Desc =
+					{
+						GfxTextureFormat::RGBA,
+						GfxMemoryType::UnsignedByte,
+						GfxTextureFormat::RGBA,
+						data, // raw pixel data
+						x, // width of the image
+						y, // height of the image
+						n, // channels per pixel
+						{ GL_REPEAT, GL_REPEAT }, // wrap settings 
+						{ GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR }, // filter settings
+						true
+					};
+
+					Texture->Reset(Desc);
 					stbi_image_free(data);
 				}
 			}

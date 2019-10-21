@@ -3,26 +3,25 @@
 
 namespace Dawn
 {
-	GLTexture::GLTexture(GfxResId Id, u8* Data, u32 Width, u32 Height, u16 ChannelsPerPixel, GfxWrapDesc Wrap,
-		GfxFilterDesc Filter, bool GenerateMipMaps)
+	GLTexture::GLTexture(GfxResId Id, const GfxTextureDesc& InDesc)
 		: GfxTexture(Id)
 	{
-		Reset(Data, Width, Height, ChannelsPerPixel, Wrap, Filter, GenerateMipMaps);
+		Reset(InDesc);
 	}
 
-	void GLTexture::Reset(u8* Data, u32 Width, u32 Height, u16 ChannelsPerPixel, GfxWrapDesc Wrap,
-		GfxFilterDesc Filter, bool GenerateMipMaps)
+	void GLTexture::Reset(const GfxTextureDesc& InDesc)
 	{
 		glDeleteTextures(1, &RendererId);
 		glGenTextures(1, &RendererId);
 		glBindTexture(GL_TEXTURE_2D, RendererId);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, Wrap.WrapS);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, Wrap.WrapT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Filter.Min);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Filter.Mag);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, Data);
+		glTexImage2D(GL_TEXTURE_2D, 0, InDesc.Format, InDesc.Width, InDesc.Height, 0, InDesc.Structure, InDesc.MemoryType, InDesc.Data);
 
-		if (GenerateMipMaps)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, InDesc.Wrap.WrapS);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, InDesc.Wrap.WrapT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, InDesc.Filter.Min);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, InDesc.Filter.Mag);
+
+		if (InDesc.bGenerateMipMaps)
 			glGenerateMipmap(GL_TEXTURE_2D);
 
 		glBindTexture(GL_TEXTURE_2D, 0);

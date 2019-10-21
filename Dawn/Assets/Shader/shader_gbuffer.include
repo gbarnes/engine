@@ -1,13 +1,13 @@
 
-layout (location = 0) out vec3 gPosition;
+layout (location = 0) out vec4 gPosition;
 layout (location = 1) out vec3 gNormal;
 layout (location = 2) out vec4 gAlbedoAO;
 layout (location = 3) out vec4 gMetallicRoughness;
 
-void FillGBuffer(Material material, vec3 WorldPos, vec3 Normal)
+void FillGBuffer(Material material, vec4 WorldPos, vec3 Normal)
 {
 	gPosition = WorldPos;
-	gNormal = Normal;//TransformNormalToColorSpace(Normal);
+	gNormal = Normal;
     gAlbedoAO.rgb = material.albedo.rgb;
     gAlbedoAO.a = material.ao;
 	gMetallicRoughness.r = material.metallic;

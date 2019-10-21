@@ -12,6 +12,7 @@ namespace Dawn
 	ResourceId EditorShaderHandles::Grid;
 	ResourceId CommonShaderHandles::Standard;
 	ResourceId CommonShaderHandles::StandardInstanced;
+	ResourceId CommonShaderHandles::SSAOCompute;
 
 
 	void RenderResourceHelper::LoadCommonShaders(ResourceSystem* InResourceSystem)
@@ -22,7 +23,9 @@ namespace Dawn
 		CommonShaderHandles::StandardInstanced = InResourceSystem->LoadFile("Shader/standard_instanced.shader");
 		CommonShaderHandles::DebugPrim = InResourceSystem->LoadFile("Shader/debug_prim.shader");
 		CommonShaderHandles::Debug = InResourceSystem->LoadFile("Shader/debug_gl.shader");
+		CommonShaderHandles::SSAOCompute = InResourceSystem->LoadFile("Shader/ssao_compute.shader");
 		EditorShaderHandles::Grid = InResourceSystem->LoadFile("Shader/editor_grid.shader");
+
 	}
 
 	void RenderResourceHelper::CreateCommonPipelineStates()

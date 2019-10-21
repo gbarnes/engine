@@ -62,12 +62,30 @@ namespace Dawn
 		{
 			static const DrawDispatchFunction DRAW_FUNCTION;
 			GfxResId ShaderId;
-			GfxResId RenderBufferId;
+			GfxResId GBufferId;
 			GfxResId FSQuadVAOId;
+			GfxResId SSAOBufferId;
 			vec3 ViewPosition;
 			vec3 LightPos;
 			vec4 LightColor;
 			float LightIntensity;
+			mat4 View;
+		};
+		
+
+		struct DAWN_API SSAOComputePassData
+		{
+			static const DrawDispatchFunction DRAW_FUNCTION;
+			GfxResId ShaderId;
+			GfxResId GBufferId;
+			GfxResId NoiseTextureId;
+			GfxResId FSQuadVAOId;
+			float Bias;
+			float Radius;
+			float Power;
+			std::vector<vec3>* SSAOKernelData;
+			mat4 Projection;
+			mat4 View;
 		};
 
 		DAWN_API void DrawIndexed(GfxGDI* InGDI, GfxShader* InShader, const void* data);
@@ -76,6 +94,7 @@ namespace Dawn
 		DAWN_API void Clear(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void ClearWithColor(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void SetViewport(GfxGDI* InGDI, GfxShader* InShader, const void* data);
+		DAWN_API void SSAOComputePass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void CombineFinalPass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void LightingPass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 	}

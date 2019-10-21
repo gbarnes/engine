@@ -216,12 +216,11 @@ namespace Dawn
 		return Slot->GetId();
 	}
 
-	GfxResId GfxGLGDI::CreateTexture(u8* Data, u32 Width, u32 Height, u16 ChannelsPerPixel, GfxWrapDesc Wrap,
-		GfxFilterDesc Filter, bool GenerateMipMaps, GfxTexture** OutTexture)
+	GfxResId GfxGLGDI::CreateTexture(const GfxTextureDesc& InDesc, GfxTexture** OutTexture)
 	{
 		TextureSlot* Slot = TexturePool.Request();
 		Allocators::LinearAllocator* Arena = TexturePool.GetMemArena();
-		Slot->Element = new (Arena->Allocate(sizeof(GLTexture), __alignof(GLTexture), 0)) GLTexture(Slot->GetId(), Data, Width, Height, ChannelsPerPixel, Wrap, Filter, GenerateMipMaps);//D_NEW_ALLOC(GLTexture, 0, Arena)(Slot->GetId(), Data, Width, Height, ChannelsPerPixel, Wrap, Filter, GenerateMipMaps);
+		Slot->Element = new (Arena->Allocate(sizeof(GLTexture), __alignof(GLTexture), 0)) GLTexture(Slot->GetId(), InDesc);//D_NEW_ALLOC(GLTexture, 0, Arena)(Slot->GetId(), Data, Width, Height, ChannelsPerPixel, Wrap, Filter, GenerateMipMaps);
 
 		if(OutTexture != nullptr)
 			*OutTexture = Slot->Element;
