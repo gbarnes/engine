@@ -110,6 +110,7 @@ namespace Dawn
 	void UpdateInput();
 	void ShutdownInput();
 	bool IsKeyDown(KeyCode Code);
+	bool IsKeyPressed(KeyCode InCode);
 	bool IsMouseDown(MouseBtn InCode);
 	vec2 GetMousePosition();
 	

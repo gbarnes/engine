@@ -61,18 +61,7 @@ namespace Dawn
 		ImGui::End();
 	}
 
-	bool g_ShowFpsCounter = false;
-	void ShowFpsCounter()
-	{
-		ImGui::Begin("Stats", nullptr, ImGuiWindowFlags_NoTitleBar |
-			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
-			ImGuiWindowFlags_NoInputs);
-		ImGui::SetWindowPos(ImVec2(10, 30));
-		ImGui::TextColored(ImVec4(0, 1, 0, 1), "%.3f ms/frame (%.1f FPS)", ImGui::GetIO().DeltaTime, ImGui::GetIO().Framerate);
-	//	g_Application->GetDeltaTime();
-		ImGui::End();
-	}
+	
 
 	Entity* g_SelectedEntity = nullptr;
 	bool g_ShowPropertyWindow = false;
@@ -222,18 +211,6 @@ namespace Dawn
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu("Debug"))
-			{
-				static bool FpsCheckBoxVariable = false;
-				if (ImGui::Checkbox("FPS", &FpsCheckBoxVariable)) { g_ShowFpsCounter = !g_ShowFpsCounter; }
-				ImGui::Separator();
-				//if (ImGui::MenuItem("Profiler")) {}
-				//if (ImGui::MenuItem("Console")) {}
-
-				ImGui::EndMenu();
-			}
-
-
 			if (ImGui::BeginMenu("Rendering"))
 			{
 				auto Renderer = g_Application->GetRenderer();
@@ -251,8 +228,7 @@ namespace Dawn
 			ImGui::EndMainMenuBar();
 		}
 		
-		if (g_ShowFpsCounter)
-			ShowFpsCounter();
+		
 
 		if (g_ShowPropertyWindow)
 			ShowPropertyWindow();

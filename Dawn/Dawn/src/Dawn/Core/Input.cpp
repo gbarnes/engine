@@ -9,6 +9,7 @@ namespace Dawn
 
 	struct InputData
 	{
+		unsigned char LastKeyboardStates[256];
 		unsigned char KeyboardStates[256];
 		DIMOUSESTATE MouseState;
 		u32 Width, Height;
@@ -21,6 +22,7 @@ namespace Dawn
 
 	void ReadKeyboard()
 	{
+		std::copy(std::begin(g_InputData.KeyboardStates), std::end(g_InputData.KeyboardStates), std::begin(g_InputData.LastKeyboardStates));
 		GetKeyboardState((PBYTE)&g_InputData.KeyboardStates);
 	}
 
@@ -29,8 +31,8 @@ namespace Dawn
 		POINT Point;
 		if (GetCursorPos(&Point))
 		{
-			g_InputData.MousePos.x = Point.x;
-			g_InputData.MousePos.y = Point.y;
+			g_InputData.MousePos.x = (float)Point.x;
+			g_InputData.MousePos.y = (float)Point.y;
 		}
 	}
 
@@ -70,6 +72,11 @@ namespace Dawn
 	bool IsMouseDown(MouseBtn InCode)
 	{
 		return ((GetAsyncKeyState(InCode)) != 0);
+	}
+
+	bool IsKeyPressed(KeyCode InCode)
+	{
+		return ((g_InputData.LastKeyboardStates[InCode] & 0x80) != 0 && (g_InputData.KeyboardStates[InCode] & 0x80) == 0);
 	}
 
 	vec2 GetMousePosition()

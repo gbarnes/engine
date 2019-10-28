@@ -4,6 +4,7 @@
 #include "EntitySystem/Camera/Camera.h"
 #include "Vendor/ImGui/ImGuiWrapper.h"
 #include "UI/Editor/imgui_editor_functions.h"
+#include "UI/Editor/imgui_debug.h"
 #include <random>
 
 namespace Dawn
@@ -164,11 +165,10 @@ namespace Dawn
 		BROFILER_EVENT("Rendering_EndFrame")
 		// todo --- move this somewhere else in dedicated render calls?!
 		// Render IMGUI!
-		{
-			ImGuiWrapper::BeginNewFrame();
-			RenderEditorUI();
-			ImGuiWrapper::Render();
-		}
+		
+
+		if(OnPostRender)
+			OnPostRender(InGDI, this);
 
 		InGDI->Present();
 

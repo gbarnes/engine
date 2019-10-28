@@ -63,7 +63,7 @@ namespace Dawn
 				ConfigFile Config = {};
 				Config.Name = File;
 
-				u32 Size = -1;
+				u64 Size = -1;
 				bool bIsParsingSection = false;
 				std::string CurrentData;
 				std::string LastSection;
@@ -167,7 +167,7 @@ namespace Dawn
 
 				// Sections and Keys are stored like this SectionName/KeyName
 				// Split these into separate parts.
-				u32 Offset = SectionAndKey.find('/');
+				u64 Offset = SectionAndKey.find('/');
 				std::string SectionPart = SectionAndKey.substr(0, Offset);
 				std::string Key = SectionAndKey.substr(Offset+1, SectionAndKey.size());
 

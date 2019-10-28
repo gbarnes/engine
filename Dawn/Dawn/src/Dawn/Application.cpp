@@ -22,6 +22,9 @@
 #include "EntitySystem/RigidBody/RigidbodySystem.h"
 #include "Core/Config.h"
 #include "Rendering/Renderer.h"
+#include "UI/Editor/imgui_editor_functions.h"
+#include "UI/Editor/imgui_debug.h"
+#include "Vendor/ImGui/ImGuiWrapper.h"
 
 #define USE_OPENGL_GFX
 #include "Core/GDI/inc_gfx.h"
@@ -47,13 +50,34 @@ namespace Dawn
 	{
 	}
 
+	static bool bIsInEditMode = false;
+	static bool bShowGBuffer = false;
+	static bool bShowFPS = false;
+
+	void OnPostRender(GfxGDI* InGDI, DeferredRenderer* InRenderer)
+	{
+		ImGuiWrapper::BeginNewFrame();
+
+		if (bShowFPS)
+			ShowFpsCounter();
+
+		if(bShowGBuffer)
+			ShowGBuffer(InGDI->GetRenderBuffer(InRenderer->TransientData.GBufferId));
+
+
+		if (bIsInEditMode)
+			RenderEditorUI();
+
+		ImGuiWrapper::Render();
+	}
 	
 
 	void Application::Run()
 	{
 		Config::Load({ "Engine" });
 
-		RenderDoc::InitRenderDocHook();
+		// Load Engine related config values and apply them
+		Config::GetBool("Engine", "Debug/ShowFps", &bShowFPS);
 
 		//Memory::HeapArea Heap(_128MB);
 		//SimpleArena Arena(Heap);
@@ -78,17 +102,14 @@ namespace Dawn
 								Settings.Height, Settings.IsFullscreen, 
 								Settings.ColorBits, Settings.DepthBits, 
 								Settings.AlphaBits);
-
-		//this->Window->OnWindowPaint = std::bind(&Application::Tick, this); 
-		this->Window->OnWindowResize = std::bind(&Application::Resize, this, std::placeholders::_1, std::placeholders::_2);
-
-
 		if (Result != EResult_OK)
 		{
 			DWN_CORE_ERROR("Couldn't initialize window");
 			system("pause");
 			return;
 		}
+
+		this->Window->OnWindowResize = std::bind(&Application::Resize, this, std::placeholders::_1, std::placeholders::_2);
 		
 		if (Window->Create() != EResult_OK)
 		{
@@ -96,9 +117,7 @@ namespace Dawn
 			system("pause");
 			return;
 		}
-
 		Settings.Hwnd = Window->GetHwnd();
-		
 		
 		this->GDI = std::shared_ptr<GfxGDI>(GfxGDI::Create());
 		if (!this->GDI->Init(Settings))
@@ -110,13 +129,9 @@ namespace Dawn
 
 		Renderer = std::make_shared<DeferredRenderer>();
 		Renderer->AllocateTransientData(this);
+		Renderer->OnPostRender = std::bind(&OnPostRender, std::placeholders::_1, std::placeholders::_2);
 
-		if (JobSystem::Initialize() != EResult_OK)
-		{
-			DWN_CORE_ERROR("Couldn't initialize job system!\n");
-			system("pause");
-			return;
-		}
+		JobSystem::Initialize();
 
 		// Boot up World!
 		World = std::make_unique<Dawn::World>();
@@ -149,7 +164,6 @@ namespace Dawn
 			InitTime(Time);
 			IsInitialized = true;
 			bool bExit = false;
-
 		
 			while (!bExit)
 			{BROFILER_FRAME("MainThread");
@@ -185,8 +199,14 @@ namespace Dawn
 		UpdateInput();
 		Time.FrameCount++;
 		
+#if DAWN_DEBUG
+		if (IsKeyPressed(KeyCode::KeyCode_F6))
+			bIsInEditMode = !bIsInEditMode;
 
-
+		if (IsKeyPressed(KeyCode::KeyCode_F5))
+			bShowGBuffer = !bShowGBuffer;
+#endif
+		
 		{BROFILER_EVENT("UPDATE")
 
 			Time.AlignedUpdateDeltaTime += Time.FrameDeltaTime;

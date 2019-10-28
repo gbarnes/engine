@@ -14,7 +14,7 @@ out vec3 Normal;
  
 uniform mat4 model;
 uniform mat4 view;
-uniform mat4 proj;
+uniform mat4 proj;  
 
 void main()
 { 

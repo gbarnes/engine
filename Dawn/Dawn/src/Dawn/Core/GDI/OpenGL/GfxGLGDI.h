@@ -21,7 +21,7 @@ namespace Dawn
 		void Clear() override;
 		void ClearWithColor(const vec4& InColor) override;
 		void SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom) override;
-
+	
 	public:
 		GfxResId CreateVertexBuffer(void* Vertices, u32 Size, GfxVertexBuffer** OutBuffer) override;
 		GfxResId CreateIndexBuffer(u32* Indices, u32 Size, GfxIndexBuffer** OutBuffer) override;

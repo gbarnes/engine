@@ -54,8 +54,8 @@ namespace Dawn
 		static unsigned int ThreadCount;
 		thread_local static unsigned int ThreadIndex;
 
-		static EResult Initialize();
-		static EResult Shutdown();
+		static void Initialize();
+		static void Shutdown();
 		static Job* CreateJob(JobFunction InFunction);
 		static Job* CreateJobAsChild(Job* InParent, JobFunction InFunction);
 		static void AddContinuation(Job* InAncestor, Job* InContinuation);

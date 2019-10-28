@@ -7,7 +7,7 @@
 #include <iostream>
 
 
-#define COMPILER_BARRIER _ReadWriteBarrier()
+#define COMPILER_BARRIER() asm volatile("" ::: "memory")
 #define MEMORY_BARRIER MemoryBarrier()
 
 namespace Dawn
@@ -22,12 +22,18 @@ namespace Dawn
 	{
 		long b = Bottom;
 		Jobs[b & MASK] = InJob;
+
+		_ReadWriteBarrier();
+
 		Bottom = b + 1;
 	}
 
 	Job* JobQueue::Steal(void)
 	{
 		long t = Top;
+
+		_ReadWriteBarrier();
+
 		long b = Bottom;
 
 		if (t < b)
@@ -35,7 +41,7 @@ namespace Dawn
 			// non-empty queue
 			Job* Job = Jobs[t & MASK];
 
-			if (!Top.compare_exchange_strong(t, t + 1))
+			if (_InterlockedCompareExchange(&Top, t + 1, t) != t)
 			{
 				// a concurrent steal or pop operation removed an element from the deque in the meantime.
 				return nullptr;
@@ -56,10 +62,11 @@ namespace Dawn
 		long b = Bottom - 1;
 		Bottom = b;
 
+		_mm_mfence();
+
 		long t = Top;
 		if (t <= b)
 		{
-			std::cout << "Found a job to process!" << std::endl;
 			// non-empty queue
 			Job* job = Jobs[b & MASK];
 			if (t != b)
@@ -69,7 +76,7 @@ namespace Dawn
 			}
 
 			// this is the last item in the queue
-			if (!Top.compare_exchange_strong(t, t + 1))
+			if (_InterlockedCompareExchange(&Top, t + 1, t) != t)
 			{
 				// failed race against steal operation
 				job = nullptr;

@@ -107,4 +107,9 @@ namespace Dawn
 	{
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
+
+	void* GLRenderBuffer::GetColorTarget(u32 InIndex)
+	{
+		return (void*)(intptr_t)ColorTargets[InIndex];
+	}
 }

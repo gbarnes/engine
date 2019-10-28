@@ -18,21 +18,17 @@ namespace Dawn
 	thread_local Job JobSystem::JobAllocator[NUMBER_OF_JOBS];
 	thread_local unsigned int JobSystem::AllocatedJobs = 0u;
 
-	EResult JobSystem::Initialize()
+	void JobSystem::Initialize()
 	{
 		ThreadCount = 1;//std::thread::hardware_concurrency();
 		SpawnWorkerThreads();
-
-		return EResult_OK;
 	}
 
-	EResult JobSystem::Shutdown()
+	void JobSystem::Shutdown()
 	{
 		ThreadsRun = false;
 		for (auto& thread : WorkerThreads)
 			thread.detach();
-
-		return EResult_OK;
 	}
 
 	void JobSystem::TickWorkerThread(int InThreadIndex)

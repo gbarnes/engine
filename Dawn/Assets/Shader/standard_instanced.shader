@@ -10,11 +10,11 @@ layout(location = 4) in mat4 model;
 out vec2 TexCoord0;
 out vec2 TexCoord1;
 out vec4 FragPos;  
-out vec3 Normal;
+out vec3 Normal; 
 
 uniform mat4 view;
 uniform mat4 proj;
-
+ 
 void main()
 {  
 	vec4 worldPos = view * model * vec4(position, 1.0);

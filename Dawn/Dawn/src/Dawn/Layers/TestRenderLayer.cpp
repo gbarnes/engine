@@ -292,11 +292,12 @@ namespace Dawn
 
 		// Lighting Pass
 		{
+			
+			auto ClearSSAO = Renderer->PerFrameData.SSAOBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
+			ClearSSAO->ClearColor = vec4(1, 1, 1, 1);
+
 			if (Renderer->SSAOSettings.bIsActive)
 			{
-				auto ClearSSAO = Renderer->PerFrameData.SSAOBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
-				ClearSSAO->ClearColor = vec4(1, 1, 1, 1);
-
 				auto SSAOComputePass = Renderer->PerFrameData.SSAOBucket.AppendCommand<Draw::SSAOComputePassData>(ClearSSAO);
 				SSAOComputePass->GBufferId = Renderer->TransientData.GBufferId;
 				SSAOComputePass->FSQuadVAOId = FinalPassQuadId;

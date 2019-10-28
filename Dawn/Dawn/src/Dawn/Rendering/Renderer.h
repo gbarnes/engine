@@ -75,9 +75,12 @@ namespace Dawn
 		std::vector<vec3> Kernel;
 	};
 
+
 	class DAWN_API DeferredRenderer : public IRenderer
 	{
 	public:
+		std::function<void(GfxGDI*, DeferredRenderer*)> OnPostRender;
+
 		TransientData TransientData;
 		PerFrameData PerFrameData;
 		SSAOSettings SSAOSettings;

@@ -16,6 +16,7 @@ namespace Dawn
 		void AttachDepthStencilTarget(u32 InWidth, u32 InHeight) override;
 		void BindColorTarget(u32 InIndex) override;
 		void UnbindColorTarget(u32 InIndex) override;
+		void* GetColorTarget(u32 InIndex) override;
 
 		void BindDepthBuffer() override;
 		void UnbindDepthBuffer() override;
