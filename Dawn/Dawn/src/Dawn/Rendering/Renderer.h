@@ -65,8 +65,9 @@ namespace Dawn
 		RenderBucket<u64> FinalPassBucket;
 	};
 
-	struct DAWN_API SSAOData
+	struct DAWN_API SSAOSettings
 	{
+		bool bIsActive = true;
 		float Radius = 0.55f;
 		float Bias = 0.025f;
 		float Power = 0.25f;
@@ -79,7 +80,7 @@ namespace Dawn
 	public:
 		TransientData TransientData;
 		PerFrameData PerFrameData;
-		SSAOData SSAOData;
+		SSAOSettings SSAOSettings;
 
 		void AllocateTransientData(Application* InApp) override;
 		void Resize(GfxGDI* InGDI, u32 InWidth, u32 InHeight) override;

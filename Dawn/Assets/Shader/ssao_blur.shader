@@ -35,8 +35,8 @@ void main()
 		}
 	}
 	
-	//result / (4.0 * 4.0)
+	//
 	
 	
-	OutputSSAO.r = texture(gSSAO, TexCoords).r;
+	OutputSSAO.r = result / (4.0 * 4.0);
 }

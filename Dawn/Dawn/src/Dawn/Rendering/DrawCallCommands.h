@@ -86,14 +86,14 @@ namespace Dawn
 			mat4 View;
 		};
 
-		/*struct DAWN_API SSAOBlurPassData
+		struct DAWN_API SSAOBlurPassData
 		{
 			static const DrawDispatchFunction DRAW_FUNCTION;
 			GfxResId ShaderId;
 			GfxResId SSAOBlurBufferId;
 			GfxResId SSAOBufferId;
 			GfxResId FSQuadVAOId;
-		};*/
+		};
 
 		DAWN_API void DrawIndexed(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void DrawInstanced(GfxGDI* InGDI, GfxShader* InShader, const void* data);
@@ -102,6 +102,7 @@ namespace Dawn
 		DAWN_API void ClearWithColor(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void SetViewport(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void SSAOComputePass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
+		DAWN_API void SSAOBlurPass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void FXAAPass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void LightingPass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 	}

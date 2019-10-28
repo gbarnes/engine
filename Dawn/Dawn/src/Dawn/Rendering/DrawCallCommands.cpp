@@ -17,7 +17,7 @@ namespace Dawn
 	const DrawDispatchFunction Draw::FXAAData::DRAW_FUNCTION = &Draw::FXAAPass;
 	const DrawDispatchFunction Draw::LightingPassData::DRAW_FUNCTION = &Draw::LightingPass;
 	const DrawDispatchFunction Draw::SSAOComputePassData::DRAW_FUNCTION = &Draw::SSAOComputePass;
-	//const DrawDispatchFunction Draw::SSAOBlurPassData::DRAW_FUNCTION = &Draw::SSAOBlurPass;
+	const DrawDispatchFunction Draw::SSAOBlurPassData::DRAW_FUNCTION = &Draw::SSAOBlurPass;
 
 	DAWN_API void Draw::DrawIndexed(GfxGDI* InGDI, GfxShader* InShader, const void* data)
 	{
@@ -132,11 +132,32 @@ namespace Dawn
 			RenderBuffer->BindColorTarget(0);
 
 			FinalPassShader->SetInt("screenTexture", 0);
-			//FinalPassShader->SetVec2("inverseScreenSize", vec2(1.0f/ (float)RenderData->ScreenWidth, 1.0f / (float)RenderData->ScreenHeight));
 
 			InGDI->DrawIndexed(RenderData->FSQuadVAOId);
 
 			RenderBuffer->UnbindColorTarget(0);
+		}
+	}
+
+	DAWN_API void Draw::SSAOBlurPass(GfxGDI* InGDI, GfxShader* InShader, const void* data)
+	{
+		BROFILER_EVENT("SSAO Blur Pass")
+		const SSAOBlurPassData* RenderData = static_cast<const SSAOBlurPassData*>(data);
+		auto Shader = InGDI->GetShader(RenderData->ShaderId);
+		auto SSAOBuffer = InGDI->GetRenderBuffer(RenderData->SSAOBufferId);
+		auto SSAOBlurBuffer = InGDI->GetRenderBuffer(RenderData->SSAOBlurBufferId);
+
+		SSAOBlurBuffer->Bind();
+
+		ScopedGfxBind<GfxShader> Bind(Shader);
+		{
+			InGDI->ActivateTextureSlot(0);
+			SSAOBuffer->BindColorTarget(0);
+
+			InGDI->DrawIndexed(RenderData->FSQuadVAOId);
+
+			InGDI->ActivateTextureSlot(0);
+			SSAOBuffer->UnbindColorTarget(0);
 		}
 	}
 

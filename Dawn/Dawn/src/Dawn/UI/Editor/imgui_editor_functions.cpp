@@ -239,9 +239,10 @@ namespace Dawn
 				auto Renderer = g_Application->GetRenderer();
 				// note--- this is only temporary here!
 				ImGui::Text("SSAO");
-				ImGui::InputFloat("Radius", &Renderer->SSAOData.Radius);
-				ImGui::InputFloat("Bias", &Renderer->SSAOData.Bias);
-				ImGui::InputFloat("Power", &Renderer->SSAOData.Power);
+				ImGui::Checkbox("Active", &Renderer->SSAOSettings.bIsActive);
+				ImGui::InputFloat("Radius", &Renderer->SSAOSettings.Radius);
+				ImGui::InputFloat("Bias", &Renderer->SSAOSettings.Bias);
+				ImGui::InputFloat("Power", &Renderer->SSAOSettings.Power);
 				ImGui::Separator();
 				ImGui::EndMenu();
 			}

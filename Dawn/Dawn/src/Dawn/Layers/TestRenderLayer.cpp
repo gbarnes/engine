@@ -185,7 +185,7 @@ namespace Dawn
 			pitch += yoffset * sensitivity * InDeltaTime;
 
 			float velocity = (IsKeyDown(KeyCode_Shift)) ? 15.5f : 10.0f;
-			
+			g_camTransform->Rotation = glm::angleAxis(glm::radians(-yaw), vec3(0, 1, 0)) * glm::angleAxis(glm::radians(pitch), vec3(1, 0, 0));
 
 			if (IsKeyDown(KeyCode_A))
 			{
@@ -217,12 +217,12 @@ namespace Dawn
 				g_camTransform->Position -= g_camera->WorldUp * velocity * InDeltaTime;
 			}
 
-			g_camTransform->Rotation = glm::angleAxis(glm::radians(-yaw), vec3(0, 1, 0)) * glm::angleAxis(glm::radians(pitch), vec3(1, 0, 0));
 			
+
+			CameraUtils::CalculateView(g_camera, g_camTransform);
+			CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(g_World.get()));
 		}
 
-		CameraUtils::CalculateView(g_camera, g_camTransform);
-		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(g_World.get()));
 	}
 
 	void DrawSphere(const mat4& InModelMatrix, const ResourceId& Material, ResourceSystem* ResourceSystem, DeferredRenderer* Renderer, Model* InModel)
@@ -292,28 +292,30 @@ namespace Dawn
 
 		// Lighting Pass
 		{
+			if (Renderer->SSAOSettings.bIsActive)
+			{
+				auto ClearSSAO = Renderer->PerFrameData.SSAOBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
+				ClearSSAO->ClearColor = vec4(1, 1, 1, 1);
 
-			auto ClearSSAO = Renderer->PerFrameData.SSAOBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
-			ClearSSAO->ClearColor = vec4(1,1,1,1);
+				auto SSAOComputePass = Renderer->PerFrameData.SSAOBucket.AppendCommand<Draw::SSAOComputePassData>(ClearSSAO);
+				SSAOComputePass->GBufferId = Renderer->TransientData.GBufferId;
+				SSAOComputePass->FSQuadVAOId = FinalPassQuadId;
+				SSAOComputePass->ShaderId = CommonShaderHandles::SSAOCompute;
+				SSAOComputePass->SSAOKernelData = &Renderer->SSAOSettings.Kernel;
+				SSAOComputePass->NoiseTextureId = Renderer->SSAOSettings.NoiseTextureId;
+				SSAOComputePass->Radius = Renderer->SSAOSettings.Radius;
+				SSAOComputePass->Bias = Renderer->SSAOSettings.Bias;
+				SSAOComputePass->Projection = g_camera->GetProjection();
+				SSAOComputePass->View = g_camera->GetView();
+				SSAOComputePass->Power = Renderer->SSAOSettings.Power;
 
-			auto SSAOComputePass = Renderer->PerFrameData.SSAOBucket.AppendCommand<Draw::SSAOComputePassData>(ClearSSAO);
-			SSAOComputePass->GBufferId = Renderer->TransientData.GBufferId;
-			SSAOComputePass->FSQuadVAOId = FinalPassQuadId;
-			SSAOComputePass->ShaderId = CommonShaderHandles::SSAOCompute;
-			SSAOComputePass->SSAOKernelData = &Renderer->SSAOData.Kernel;
-			SSAOComputePass->NoiseTextureId = Renderer->SSAOData.NoiseTextureId;
-			SSAOComputePass->Radius = Renderer->SSAOData.Radius;
-			SSAOComputePass->Bias = Renderer->SSAOData.Bias;
-			SSAOComputePass->Projection = g_camera->GetProjection();
-			SSAOComputePass->View = g_camera->GetView();
-			SSAOComputePass->Power = Renderer->SSAOData.Power;
-	
 
-			/*auto SSAOBlurPass = Renderer->PerFrameData.SSAOBucket.AppendCommand<Draw::SSAOBlurPassData>(SSAOComputePass);
-			SSAOBlurPass->ShaderId = CommonShaderHandles::SSAOBlur;
-			SSAOBlurPass->SSAOBlurBufferId = Renderer->TransientData.SSAOBlurBufferId;
-			SSAOBlurPass->SSAOBufferId = Renderer->TransientData.SSAOBufferId;
-			SSAOBlurPass->FSQuadVAOId = FinalPassQuadId;*/
+				auto SSAOBlurPass = Renderer->PerFrameData.SSAOBucket.AppendCommand<Draw::SSAOBlurPassData>(SSAOComputePass);
+				SSAOBlurPass->ShaderId = CommonShaderHandles::SSAOBlur;
+				SSAOBlurPass->SSAOBlurBufferId = Renderer->TransientData.SSAOBlurBufferId;
+				SSAOBlurPass->SSAOBufferId = Renderer->TransientData.SSAOBufferId;
+				SSAOBlurPass->FSQuadVAOId = FinalPassQuadId;
+			}
 
 
 			auto ClearColor = Renderer->PerFrameData.LightingBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
@@ -324,7 +326,7 @@ namespace Dawn
 			LightingPassData->GBufferId = Renderer->TransientData.GBufferId;
 			LightingPassData->FSQuadVAOId = FinalPassQuadId;
 			LightingPassData->ViewPosition = g_camTransform->Position;
-			LightingPassData->SSAOBufferId = Renderer->TransientData.SSAOBufferId;
+			LightingPassData->SSAOBufferId = Renderer->TransientData.SSAOBlurBufferId;
 			LightingPassData->View = g_camera->GetView();
 
 		}

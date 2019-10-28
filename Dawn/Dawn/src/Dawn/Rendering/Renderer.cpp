@@ -8,7 +8,7 @@
 
 namespace Dawn
 {
-	void AllocateSSAOResources(GfxGDI* InGDI, SSAOData* InData)
+	void AllocateSSAOResources(GfxGDI* InGDI, SSAOSettings* InData)
 	{
 		std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // random floats between 0.0 - 1.0
 		std::default_random_engine generator;
@@ -87,16 +87,16 @@ namespace Dawn
 			TransientData.SSAOBufferId = SSAOBufferId;
 		}
 
-		AllocateSSAOResources(GDI.get(), &SSAOData);
+		AllocateSSAOResources(GDI.get(), &SSAOSettings);
 
 
-	/*	GfxRenderBuffer* SSAOBlurBuffer;
+		GfxRenderBuffer* SSAOBlurBuffer;
 		IdBuffer = GDI->CreateRenderBuffer(&SSAOBlurBuffer);
 		if (IdBuffer.IsValid)
 		{
 			SSAOBlurBuffer->AttachColorTarget(0, Settings->Width, Settings->Height, RGBA16F, R);
 			TransientData.SSAOBlurBufferId = IdBuffer;
-		}*/
+		}
 	}
 
 	void DeferredRenderer::Resize(GfxGDI* InGDI, u32 InWidth, u32 InHeight)
@@ -121,10 +121,10 @@ namespace Dawn
 			SSAOBuffer->AttachColorTarget(0, InWidth, InHeight, RGBA16F, R);
 		}
 
-		/*if (auto SSAOBlurBuffer = InGDI->GetRenderBuffer(TransientData.SSAOBlurBufferId))
+		if (auto SSAOBlurBuffer = InGDI->GetRenderBuffer(TransientData.SSAOBlurBufferId))
 		{
 			SSAOBlurBuffer->AttachColorTarget(0, InWidth, InHeight, RGBA16F, R);
-		}*/
+		}
 	}
 
 	void DeferredRenderer::BeginFrame(GfxGDI* InGDI, World* InWorld)
