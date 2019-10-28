@@ -49,13 +49,14 @@ namespace Dawn
 			u32 Height;
 		};
 
-		struct DAWN_API FinalPassCombineData
+		struct DAWN_API FXAAData
 		{
 			static const DrawDispatchFunction DRAW_FUNCTION;
 			GfxResId ShaderId;
 			GfxResId RenderBufferId;
 			GfxResId FSQuadVAOId;
-			float Gamma = 2.2f;
+			u32 ScreenWidth;
+			u32 ScreenHeight;
 		};
 
 		struct DAWN_API LightingPassData
@@ -66,9 +67,6 @@ namespace Dawn
 			GfxResId FSQuadVAOId;
 			GfxResId SSAOBufferId;
 			vec3 ViewPosition;
-			vec3 LightPos;
-			vec4 LightColor;
-			float LightIntensity;
 			mat4 View;
 		};
 		
@@ -88,6 +86,15 @@ namespace Dawn
 			mat4 View;
 		};
 
+		/*struct DAWN_API SSAOBlurPassData
+		{
+			static const DrawDispatchFunction DRAW_FUNCTION;
+			GfxResId ShaderId;
+			GfxResId SSAOBlurBufferId;
+			GfxResId SSAOBufferId;
+			GfxResId FSQuadVAOId;
+		};*/
+
 		DAWN_API void DrawIndexed(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void DrawInstanced(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void DrawVertex(GfxGDI* InGDI, GfxShader* InShader, const void* data);
@@ -95,7 +102,7 @@ namespace Dawn
 		DAWN_API void ClearWithColor(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void SetViewport(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void SSAOComputePass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
-		DAWN_API void CombineFinalPass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
+		DAWN_API void FXAAPass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 		DAWN_API void LightingPass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
 	}
 

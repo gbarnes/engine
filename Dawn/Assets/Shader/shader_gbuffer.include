@@ -9,7 +9,7 @@ void FillGBuffer(Material material, vec4 WorldPos, vec3 Normal)
 	gPosition = WorldPos;
 	gNormal = Normal;
     gAlbedoAO.rgb = material.albedo.rgb;
-    gAlbedoAO.a = material.ao;
+    gAlbedoAO.a = 1;
 	gMetallicRoughness.r = material.metallic;
 	gMetallicRoughness.g = material.roughness;
 	gMetallicRoughness.b = 0;

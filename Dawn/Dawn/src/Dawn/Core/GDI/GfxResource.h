@@ -299,6 +299,8 @@ namespace Dawn
 
 		virtual void BindColorTarget(u32 InIndex) = 0;
 		virtual void UnbindColorTarget(u32 InIndex) = 0;
+		virtual void BindDepthBuffer() = 0;
+		virtual void UnbindDepthBuffer() = 0;
 
 		inline const GfxResId GetId() const {
 			return Id;

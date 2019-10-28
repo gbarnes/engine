@@ -35,7 +35,7 @@ in vec2 TexCoords;
 
 int kernelSize = 64;
 
-void main()
+void main() 
 {
 	vec3 fragPos = texture(gPosition, TexCoords).xyz;
     vec3 normal =  normalize(texture(gNormal, TexCoords).rgb);
@@ -45,7 +45,6 @@ void main()
     vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
     vec3 bitangent = cross(normal, tangent);
     mat3 TBN = mat3(tangent, bitangent, normal);
-	
 	
     // iterate over the sample kernel and calculate occlusion factor
     float occlusion = 0.0;
@@ -64,12 +63,12 @@ void main()
         offset.xyz = offset.xyz * 0.5 + vec3(0.5); // transform to range 0.0 - 1.0
 
         // get sample depth
-		float sampleDepth = (texture(gPosition, offset.xy)).b; // get depth value of kernel sample
+		float sampleDepth = (texture(gPosition, offset.xy).b); // get depth value of kernel sample
 		
 		// range check & accumulate
 		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
 		occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck  * power; 	
     }
-	
+
     gSSAO.r = 1.0 - (occlusion / kernelSize);
 }

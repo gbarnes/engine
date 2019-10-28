@@ -16,7 +16,7 @@ namespace Dawn
 
 	struct DAWN_API CommonShaderHandles
 	{
-		static ResourceId FinalPass;
+		static ResourceId FXAA;
 		static ResourceId Standard;
 		static ResourceId StandardInstanced;
 		static ResourceId LightingPass;
@@ -24,6 +24,7 @@ namespace Dawn
 		static ResourceId Debug;
 		static ResourceId DebugPrim;
 		static ResourceId SSAOCompute;
+		static ResourceId SSAOBlur;
 	};
 
 	struct DAWN_API EditorShaderHandles

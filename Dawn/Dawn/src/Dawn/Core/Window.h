@@ -26,9 +26,14 @@ namespace Dawn
 
 		void ToggleFullscreen();
 
-		virtual HWND GetHwnd(void) const
+		HWND GetHwnd(void) const
 		{
 			return HWnd;
+		}
+
+		HINSTANCE GetInstance(void) const
+		{
+			return Instance;
 		}
 	private:
 		HINSTANCE Instance;

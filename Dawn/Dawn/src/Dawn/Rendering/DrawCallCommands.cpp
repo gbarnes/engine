@@ -1,5 +1,10 @@
 #include "DrawCallCommands.h"
 #include "glad.h"
+#include "Application.h"
+#include "EntitySystem/World.h"
+#include "EntitySystem/Lights/LightComponents.h"
+#include "EntitySystem/Transform/Transform.h"
+#include "EntitySystem/Lights/LightSystem.h"
 
 namespace Dawn
 {
@@ -9,9 +14,10 @@ namespace Dawn
 	const DrawDispatchFunction Draw::ClearSceneData::DRAW_FUNCTION = &Draw::Clear;
 	const DrawDispatchFunction Draw::ClearSceneWithColorData::DRAW_FUNCTION = &Draw::ClearWithColor;
 	const DrawDispatchFunction Draw::SetViewportData::DRAW_FUNCTION = &Draw::SetViewport;
-	const DrawDispatchFunction Draw::FinalPassCombineData::DRAW_FUNCTION = &Draw::CombineFinalPass;
+	const DrawDispatchFunction Draw::FXAAData::DRAW_FUNCTION = &Draw::FXAAPass;
 	const DrawDispatchFunction Draw::LightingPassData::DRAW_FUNCTION = &Draw::LightingPass;
 	const DrawDispatchFunction Draw::SSAOComputePassData::DRAW_FUNCTION = &Draw::SSAOComputePass;
+	//const DrawDispatchFunction Draw::SSAOBlurPassData::DRAW_FUNCTION = &Draw::SSAOBlurPass;
 
 	DAWN_API void Draw::DrawIndexed(GfxGDI* InGDI, GfxShader* InShader, const void* data)
 	{
@@ -53,6 +59,7 @@ namespace Dawn
 
 	DAWN_API void Draw::LightingPass(GfxGDI* InGDI, GfxShader* InShader, const void* data)
 	{
+		BROFILER_EVENT("Lighting Pass")
 		const LightingPassData* RenderData = static_cast<const LightingPassData*>(data);
 		auto LightingPassShader = InGDI->GetShader(RenderData->ShaderId);
 		auto GBuffer = InGDI->GetRenderBuffer(RenderData->GBufferId);
@@ -84,10 +91,13 @@ namespace Dawn
 
 			LightingPassShader->SetMat4("view", RenderData->View);
 			LightingPassShader->SetVec3("viewPos", RenderData->ViewPosition);
-			LightingPassShader->SetVec3("lights[0].position", RenderData->LightPos);
-			LightingPassShader->SetVec3("lights[0].color", RenderData->LightColor);
-			LightingPassShader->SetFloat("lights[0].intensity", RenderData->LightIntensity);
 
+			auto World = g_Application->GetWorld();
+			auto PointLightTransformSet = World->GetComponentSets<PointLight, Transform>();
+
+			// todo --- move this out of the draw call thus lights can be checked if active and so on!
+			LightSystem::Update(World.get(), LightingPassShader);
+			
 			InGDI->DrawIndexed(RenderData->FSQuadVAOId);
 
 			InGDI->ActivateTextureSlot(4);
@@ -107,21 +117,22 @@ namespace Dawn
 		}
 	}
 
-	DAWN_API void Draw::CombineFinalPass(GfxGDI* InGDI, GfxShader* InShader, const void* data)
+	DAWN_API void Draw::FXAAPass(GfxGDI* InGDI, GfxShader* InShader, const void* data)
 	{
+		BROFILER_EVENT("FXAA  Pass")
 		// todo --- this might be better of using actual indexed draw call and a more
 		//			generic approach since we for example have a command to clear.
-		const FinalPassCombineData* RenderData = static_cast<const FinalPassCombineData*>(data);
+		const FXAAData* RenderData = static_cast<const FXAAData*>(data);
 		auto FinalPassShader = InGDI->GetShader(RenderData->ShaderId);
 		auto RenderBuffer = InGDI->GetRenderBuffer(RenderData->RenderBufferId);
 
 		ScopedGfxBind<GfxShader> Bind(FinalPassShader);
 		{
 			InGDI->ActivateTextureSlot(0);
-
 			RenderBuffer->BindColorTarget(0);
+
 			FinalPassShader->SetInt("screenTexture", 0);
-			FinalPassShader->SetFloat("gamma", RenderData->Gamma);
+			//FinalPassShader->SetVec2("inverseScreenSize", vec2(1.0f/ (float)RenderData->ScreenWidth, 1.0f / (float)RenderData->ScreenHeight));
 
 			InGDI->DrawIndexed(RenderData->FSQuadVAOId);
 
@@ -131,10 +142,15 @@ namespace Dawn
 
 	DAWN_API void Draw::SSAOComputePass(GfxGDI* InGDI, GfxShader* InShader, const void* data)
 	{
+		BROFILER_EVENT("SSAO Compute Pass")
+
 		const SSAOComputePassData* RenderData = static_cast<const SSAOComputePassData*>(data);
 		auto ComputeShader = InGDI->GetShader(RenderData->ShaderId);
 		auto GBuffer = InGDI->GetRenderBuffer(RenderData->GBufferId);
 		auto NoiseTexture = InGDI->GetTexture(RenderData->NoiseTextureId);
+
+		if (RenderData->Radius <= 0.0f)
+			return;
 
 		ScopedGfxBind<GfxShader> Bind(ComputeShader);
 		{
@@ -150,11 +166,16 @@ namespace Dawn
 			InGDI->ActivateTextureSlot(3);
 			NoiseTexture->Bind();
 
+		//	InGDI->ActivateTextureSlot(4);
+		//	GBuffer->BindDepthBuffer();
+
 
 			ComputeShader->SetInt("gPosition", 0);
 			ComputeShader->SetInt("gNormal", 1);
 			ComputeShader->SetInt("gAlbedo", 2);
 			ComputeShader->SetInt("Noise", 3);
+			ComputeShader->SetInt("gDepth", 4);
+
 			ComputeShader->SetFloat("radius", RenderData->Radius);
 			ComputeShader->SetFloat("bias", RenderData->Bias);
 			ComputeShader->SetFloat("power", RenderData->Power);
@@ -167,6 +188,9 @@ namespace Dawn
 			ComputeShader->SetMat4("view", RenderData->View);
 
 			InGDI->DrawIndexed(RenderData->FSQuadVAOId);
+
+			//InGDI->ActivateTextureSlot(4);
+		//	GBuffer->UnbindDepthBuffer();
 
 			InGDI->ActivateTextureSlot(3);
 			NoiseTexture->Unbind();

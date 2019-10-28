@@ -26,19 +26,22 @@ uniform sampler2D gSSAO;
  
 in vec2 TexCoords;
 
-uniform Light lights[NR_LIGHTS];
-uniform DirectionalLight directionalLight;
+uniform PointLight pointLights[NR_POINT_LIGHTS];
+uniform DirectionalLight directionalLights[NR_DIR_LIGHTS];
+
 uniform vec3 viewPos;
 uniform mat4 view;
 
 void main()
-{
+{ 
     vec3 NormalVP = texture(gNormal, TexCoords).rgb;
 
 	if(NormalVP == vec3(0,0,0)) 
 		discard;
 		
 	vec3 Normal = (inverse(view) * texture(gNormal, TexCoords)).rgb;	
+	
+	
     vec3 WorldPos =  (inverse(view) * texture(gPosition, TexCoords)).rgb;
 	vec3 Albedo = texture(gAlbedoAO, TexCoords).rgb;
 	float AO = texture(gAlbedoAO, TexCoords).a;
@@ -54,30 +57,29 @@ void main()
 	
 	vec3 Lo = vec3(0.0); 
 	
-	for(int i = 0; i < 1; ++i)
+	for(int i = 0; i < NR_DIR_LIGHTS; ++i)
 	{ 
-		Light light = lights[i];
+		DirectionalLight light = directionalLights[i];
 
-		vec3 L = normalize(light.position - WorldPos);
+		vec3 L = normalize(-light.direction);
 		vec3 H = normalize(V + L);
 		
-		float attenuation = CalculateAttenuation(WorldPos, light.position); 
 		vec3 radiance = vec3(light.color) * light.intensity;
 		
-		float NDG = TrowbdrigeDistributionGGX(N, H, Roughness);
-		float G = GeometrySmith(N, V, L, Roughness); 
-		vec3 Fresnel = FresnelSchlick(max(dot(H, V), 0.0), F0);
+		Lo += CalculateIrradiance(radiance, L, V, N, H, F0, Roughness, Metallic, Albedo);
+	}
+	
+	for(int i = 0; i < NR_POINT_LIGHTS; ++i)
+	{ 
+		PointLight light = pointLights[i];
+
+		vec3 L = normalize(light.position - WorldPos);
+		vec3 H = normalize(V + L); 
 		
-		vec3 numerator = NDG * G * Fresnel;
-		float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-		vec3 specular = numerator / max(denominator, 0.001);
+		float attenuation = CalculateAttenuation(WorldPos, light.position) * light.range; 
+		vec3 radiance = vec3(light.color) * light.intensity * attenuation;
 		
-		vec3 kS = Fresnel;
-		vec3 kD = vec3(1.0) - kS;
-		kD *= 1.0 - Metallic;
-		float NdotL = max(dot(N, L), 0.0);    
-		
-		Lo += (kD * Albedo / PI + specular) * radiance * NdotL;
+		Lo += CalculateIrradiance(radiance, L, V, N, H, F0, Roughness, Metallic, Albedo);
 	}
 	
     vec3 ambient = vec3(0.03) * Albedo;

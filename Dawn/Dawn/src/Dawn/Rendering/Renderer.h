@@ -13,7 +13,7 @@ namespace Dawn
 
 	//
 	// The rendering architecture is inspired by the blog posts 
-	// at the https://blog.molecular-matters.com and other 
+	// at the https://blog.molecular-matters.com blog and other 
 	// stateless rendering resources.
 	//
 
@@ -53,10 +53,8 @@ namespace Dawn
 	{
 		GfxResId GBufferId = INVALID_HANDLE;
 		GfxResId FinalBufferId = INVALID_HANDLE;
-		
 		GfxResId SSAOBufferId = INVALID_HANDLE;
-		
-
+		GfxResId SSAOBlurBufferId = INVALID_HANDLE;
 	};
 
 	struct DAWN_API PerFrameData
@@ -71,7 +69,7 @@ namespace Dawn
 	{
 		float Radius = 0.55f;
 		float Bias = 0.025f;
-		float Power = 1.0f;
+		float Power = 0.25f;
 		GfxResId NoiseTextureId = INVALID_HANDLE;
 		std::vector<vec3> Kernel;
 	};

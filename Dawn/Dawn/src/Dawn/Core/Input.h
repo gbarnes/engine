@@ -2,13 +2,20 @@
 #include "inc_common.h"
 #include "glad.h"
 
+#define DIRECTINPUT_VERSION 0x0800
+
+#include <dinput.h>
+
+#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dxguid.lib")
+
 namespace Dawn
 {
 	enum MouseBtn
 	{
-		MouseBtn_Left,
-		MouseBtn_Right,
-		MouseBtn_Middle, 
+		MouseBtn_Left = VK_LBUTTON,
+		MouseBtn_Right = VK_RBUTTON,
+		MouseBtn_Middle = VK_MBUTTON, 
 		MouseBtn_X1,
 		MouseBtn_X2,
 		MouseBtn_Num
@@ -98,54 +105,12 @@ namespace Dawn
 		Pressed
 	};
 
-	class DAWN_API Input
-	{
-		friend class Window;
-	public:
-		static vec2 GetMousePosition()
-		{
-			return MousePos;
-		}
 
-		static bool IsMouseButtonDown(MouseBtn InType)
-		{
-			return MouseBtnMap[InType] == KeyState::Down;
-		}
-
-		static bool IsMouseButtonUp(MouseBtn InType)
-		{
-			return MouseBtnMap[InType] == KeyState::Up;
-		}
-
-		static bool IsMouseButtonPressed(MouseBtn InType)
-		{
-			return MouseBtnMap[InType] == KeyState::Pressed;
-		}
-
-		static bool IsKeyDown(KeyCode InType)
-		{
-			return (GetAsyncKeyState(InType) & 0x8000) != 0; //
-		}
-
-		static bool IsKeyUp(KeyCode InType)
-		{
-			// This should somehow be handled different and a more sophisticated solution needs to be implemented
-		    // instead of relying on windows functions, but then we only target windows anyways, gbarnes 04/04/19
-			return (GetAsyncKeyState(InType) & 0x8000) == 0; 
-		}
-
-		static bool IsKeyPressed(KeyCode InType)
-		{
-			return KeyCodeMap[InType] == KeyState::Pressed;
-		}
-
-		static void Reset();
-
-	private:
-		static vec2 MousePos;
-		static KeyState MouseBtnMap[MouseBtn_Num];
-		static std::map<KeyCode,KeyState> KeyCodeMap;
-	};
-
+	void InitInput(HINSTANCE InHinstance, HWND InHwnd, u32 InWidth, u32 InHeight);
+	void UpdateInput();
+	void ShutdownInput();
+	bool IsKeyDown(KeyCode Code);
+	bool IsMouseDown(MouseBtn InCode);
+	vec2 GetMousePosition();
 	
 }

@@ -79,8 +79,9 @@ namespace Dawn
 								Settings.ColorBits, Settings.DepthBits, 
 								Settings.AlphaBits);
 
-		this->Window->OnWindowPaint = std::bind(&Application::Tick, this); 
+		//this->Window->OnWindowPaint = std::bind(&Application::Tick, this); 
 		this->Window->OnWindowResize = std::bind(&Application::Resize, this, std::placeholders::_1, std::placeholders::_2);
+
 
 		if (Result != EResult_OK)
 		{
@@ -95,8 +96,9 @@ namespace Dawn
 			system("pause");
 			return;
 		}
-		Settings.Hwnd = Window->GetHwnd();
 
+		Settings.Hwnd = Window->GetHwnd();
+		
 		
 		this->GDI = std::shared_ptr<GfxGDI>(GfxGDI::Create());
 		if (!this->GDI->Init(Settings))
@@ -121,6 +123,7 @@ namespace Dawn
 		World->AddTable("Transform", std::make_unique<ComponentTable<Transform>>());
 		World->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
 		World->AddTable("DirectionalLight", std::make_unique<ComponentTable<DirectionalLight>>());
+		World->AddTable("PointLight", std::make_unique<ComponentTable<PointLight>>());
 		World->AddSystem(std::make_unique<RigidbodySystem>());
 
 		Physics = std::make_unique<PhysicsWorld>();
@@ -132,23 +135,34 @@ namespace Dawn
 		}
 
 		{
+			InitInput(Window->GetInstance(), Window->GetHwnd(), Settings.Width, Settings.Height);
 			Load();
 			SetupLayers();
 		}
 
+
 		DWN_CORE_INFO("Core Context initialized.");
-		Input::Reset();
 
 		{
 			// todo --- move this into a custom clock/timer class!
 			// since we only target windows we can use the performance functions.
 			InitTime(Time);
 			IsInitialized = true;
+			bool bExit = false;
 
-			while (true)
-			{
-				if (!Window->PeekMessages())
-					break;
+		
+			while (!bExit)
+			{BROFILER_FRAME("MainThread");
+			
+				MSG msg;
+				while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+				{
+					if (msg.message == WM_QUIT) bExit = true;
+					TranslateMessage(&msg);
+					DispatchMessage(&msg);
+				}
+
+				Tick();
 			}
 		}
 
@@ -160,6 +174,7 @@ namespace Dawn
 			JobSystem::Shutdown();
 			GDI->Shutdown();
 			ResourceSystem->Shutdown();
+			ShutdownInput();
 
 			DWN_CORE_INFO("Core Context shutdown.");
 		}
@@ -167,38 +182,47 @@ namespace Dawn
 
 	void Application::Tick()
 	{
-		if (!IsInitialized)
-			return;
-
+		UpdateInput();
 		Time.FrameCount++;
-		Time.AlignedUpdateDeltaTime += Time.FrameDeltaTime;
-		while (Time.AlignedUpdateDeltaTime >= Time::TargetUpdateRate)
-		{
-			Update(Time.AlignedUpdateDeltaTime * Time.TimeScale);
-			Time.AlignedUpdateDeltaTime -= Time::TargetUpdateRate;
+		
+
+
+		{BROFILER_EVENT("UPDATE")
+
+			Time.AlignedUpdateDeltaTime += Time.FrameDeltaTime;
+			while (Time.AlignedUpdateDeltaTime >= Time::TargetUpdateRate)
+			{
+				Update(Time.AlignedUpdateDeltaTime * Time.TimeScale);
+				Time.AlignedUpdateDeltaTime -= Time::TargetUpdateRate;
+			}
 		}
 
-		Time.AlignedPhysicsDeltaTime += Time.FrameDeltaTime;
-		while (Time.AlignedPhysicsDeltaTime >= Time::TargetPhysicsUpdateRate)
-		{
-			const float FixedTime = Time.AlignedPhysicsDeltaTime * Time.TimeScale;
-			FixedUpdate(FixedTime);
-
-			// Take care of updating the physics engine!
-			auto scene = GetPhysics()->GetScene();
-			if (scene)
+		{BROFILER_EVENT("FIXED UPDATE")
+			
+			Time.AlignedPhysicsDeltaTime += Time.FrameDeltaTime;
+			while (Time.AlignedPhysicsDeltaTime >= Time::TargetPhysicsUpdateRate)
 			{
-				scene->simulate(FixedTime);
-				scene->fetchResults(true);
-			}
+				const float FixedTime = Time.AlignedPhysicsDeltaTime * Time.TimeScale;
+				FixedUpdate(FixedTime);
 
-			Time.AlignedPhysicsDeltaTime -= Time::TargetPhysicsUpdateRate;
+				// Take care of updating the physics engine!
+				auto scene = GetPhysics()->GetScene();
+				if (scene)
+				{
+					scene->simulate(FixedTime);
+					scene->fetchResults(true);
+				}
+
+				ResourceSystem->Refresh();
+				Time.AlignedPhysicsDeltaTime -= Time::TargetPhysicsUpdateRate;
+			}
 		}
 
 		StepTime(Time);
-		
+
 		// Rendering
-		{
+		{BROFILER_EVENT("Rendering")
+
 			Renderer->BeginFrame(GDI.get(), World.get());
 
 			for (auto Layer : Layers)
@@ -207,9 +231,6 @@ namespace Dawn
 			Renderer->Submit(this);
 			Renderer->EndFrame(GDI.get());
 		}
-
-		Input::Reset();
-		ResourceSystem->Refresh();
 	}
 
 	void Application::Render()
@@ -277,5 +298,4 @@ namespace Dawn
 
 		Layers.clear();
 	}
-
 }

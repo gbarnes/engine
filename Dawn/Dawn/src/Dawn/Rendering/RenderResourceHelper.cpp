@@ -4,7 +4,7 @@
 
 namespace Dawn 
 {
-	ResourceId CommonShaderHandles::FinalPass;
+	ResourceId CommonShaderHandles::FXAA;
 	ResourceId CommonShaderHandles::LightingPass;
 	ResourceId CommonShaderHandles::DebugPrim;
 	ResourceId CommonShaderHandles::Phong;
@@ -13,17 +13,19 @@ namespace Dawn
 	ResourceId CommonShaderHandles::Standard;
 	ResourceId CommonShaderHandles::StandardInstanced;
 	ResourceId CommonShaderHandles::SSAOCompute;
+	ResourceId CommonShaderHandles::SSAOBlur;
 
 
 	void RenderResourceHelper::LoadCommonShaders(ResourceSystem* InResourceSystem)
 	{
-		CommonShaderHandles::FinalPass = InResourceSystem->LoadFile("Shader/final_pass.shader");
+		CommonShaderHandles::FXAA = InResourceSystem->LoadFile("Shader/fxaa.shader");
 		CommonShaderHandles::LightingPass = InResourceSystem->LoadFile("Shader/lighting_pass.shader");
 		CommonShaderHandles::Standard = InResourceSystem->LoadFile("Shader/standard.shader");
 		CommonShaderHandles::StandardInstanced = InResourceSystem->LoadFile("Shader/standard_instanced.shader");
 		CommonShaderHandles::DebugPrim = InResourceSystem->LoadFile("Shader/debug_prim.shader");
 		CommonShaderHandles::Debug = InResourceSystem->LoadFile("Shader/debug_gl.shader");
 		CommonShaderHandles::SSAOCompute = InResourceSystem->LoadFile("Shader/ssao_compute.shader");
+		CommonShaderHandles::SSAOBlur = InResourceSystem->LoadFile("Shader/ssao_blur.shader");
 		EditorShaderHandles::Grid = InResourceSystem->LoadFile("Shader/editor_grid.shader");
 
 	}

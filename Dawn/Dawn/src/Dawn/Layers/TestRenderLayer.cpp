@@ -8,7 +8,7 @@
 #include "Rendering/RenderResourceHelper.h"
 #include "EntitySystem/Camera/Camera.h"
 #include "EntitySystem/Transform/Transform.h"
-#include "EntitySystem/Lights/LightComponents.h"
+#include "EntitySystem/Lights/LightSystem.h"
 #include "EntitySystem/Entity.h"
 #include "ResourceSystem/Resources.h"
 #include "imgui.h"
@@ -24,6 +24,8 @@ namespace Dawn
 	Material* SampleMaterial;
 	GfxVertexArray* CubeMeshArray;
 	GfxVertexBuffer* ModelMatrixBuffer;
+
+	std::vector<ResourceId> Materials;
 
 	Shared<World> g_World;
 	Camera* g_camera;
@@ -41,6 +43,8 @@ namespace Dawn
 	vec3 right = vec3(1.0f, 0.0f, 0.0f), forward = vec3(0.0f, 0.0f, -1.0f), up = vec3(0.0f, 1.0f, 0.0f);
 	u64 CubeDrawKey;
 	constexpr u32 Size = 10 * 10;
+	u32 nrRows = 7;
+	u32 nrColumns = 7;
 
 	TestRenderLayer::TestRenderLayer(Shared<Dawn::Application> InApplication)
 		: Layer(InApplication)
@@ -81,13 +85,39 @@ namespace Dawn
 		auto Light = LightUtils::CreateDirectionalLight(World.get(), quat(), vec4(0.9, 0.9, 0.9, 1.0f));
 		DirectionalLightId = Light->Id.Entity;
 
+
+		LightUtils::CreatePointLight(World.get(), glm::vec3(-10.0f, 10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
+		LightUtils::CreatePointLight(World.get(), glm::vec3(10.0f, 10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
+		LightUtils::CreatePointLight(World.get(), glm::vec3(-10.0f, -10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
+		LightUtils::CreatePointLight(World.get(), glm::vec3(10.0f, -10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
+
 		auto Quad = GfxPrimitiveFactory::AllocateQuad(GDI.get(), vec2(1.0f, -1.0f), 1.0f);
 		FinalPassQuadId = Quad->GetId();
 
-		
+		u32 i = 0;
+		for (u32 row = 0; row < nrRows; ++row)
+		{
+			float Metallic = (float)row / (float)nrRows;
+			for (u32 col = 0; col < nrColumns; ++col)
+			{
+				Material* Mat;
+				auto MatId = RS->CreateMaterial(&Mat);
+
+				Mat->Name = "Sphere Mat " + std::to_string(i);
+				Mat->Metallic = Metallic;
+				Mat->Albedo = vec4(0.7f, 0.0f, 0.f, 1.0f);
+				Mat->ShaderId = CommonShaderHandles::Standard;
+				Mat->Roughness = glm::clamp((float)col / (float)nrColumns, 0.05f, 1.0f);
+				Materials.push_back(MatId);
+				++i;
+			}
+		}
+
+
 		auto MatId = RS->CreateMaterial(&SampleMaterial);
 		SampleMaterial->Albedo = vec4(0.7f, 0.7f, 0.7f, 1.0f);
 		SampleMaterial->ShaderId = CommonShaderHandles::StandardInstanced;
+
 
 		glm::mat4* modelMatrices = new glm::mat4[Size];
 		u32 row = 0;
@@ -125,9 +155,10 @@ namespace Dawn
 
 	void TestRenderLayer::Update(float InDeltaTime)
 	{
+		BROFILER_EVENT("TestRenderLayer_Update")
 		Model = glm::translate(mat4(1), vec3(0.0f, 2.0f, 0.0f)) * glm::scale(mat4(1), vec3(1.0f));// glm::mat4_cast(rotation);
 	
-		vec2 mousePosition = Input::GetMousePosition();
+		vec2 mousePosition = GetMousePosition();
 
 		if (firstMouse)
 		{
@@ -142,53 +173,72 @@ namespace Dawn
 		lastX = mousePosition.x;
 		lastY = mousePosition.y;
 
-		
-		if (Input::IsMouseButtonDown(MouseBtn_Right))
+		up = TransformUtils::CalculateUp(g_camTransform);
+		forward = TransformUtils::CalculateForward(g_camTransform);
+		right = TransformUtils::CalculateRight(g_camTransform);
+
+
+		if (IsMouseDown(MouseBtn::MouseBtn_Right))
 		{
 			static float sensitivity = 30.0f;
 			yaw += xoffset * sensitivity * InDeltaTime;
-			pitch += yoffset * sensitivity *InDeltaTime;
+			pitch += yoffset * sensitivity * InDeltaTime;
 
-			up = TransformUtils::CalculateUp(g_camTransform);
-			forward = TransformUtils::CalculateForward(g_camTransform);
-			right = TransformUtils::CalculateRight(g_camTransform);
+			float velocity = (IsKeyDown(KeyCode_Shift)) ? 15.5f : 10.0f;
+			
 
-			float velocity = (Input::IsKeyDown(KeyCode_Shift)) ? 15.5f : 10.0f;
-
-
-			if (Input::IsKeyDown(KeyCode_A))
+			if (IsKeyDown(KeyCode_A))
 			{
-				g_camTransform->Position -=  right *  velocity * InDeltaTime;
+				g_camTransform->Position -= right * velocity * InDeltaTime;
 			}
 
-			if (Input::IsKeyDown(KeyCode_D))
+			if (IsKeyDown(KeyCode_D))
 			{
-				g_camTransform->Position += right *  velocity * InDeltaTime;
+				g_camTransform->Position += right * velocity * InDeltaTime;
 			}
 
-			if (Input::IsKeyDown(KeyCode_W))
+			if (IsKeyDown(KeyCode_W))
 			{
 				g_camTransform->Position -= forward * velocity * InDeltaTime;
 			}
 
-			if (Input::IsKeyDown(KeyCode_S))
+			if (IsKeyDown(KeyCode_S))
 			{
 				g_camTransform->Position += forward * velocity * InDeltaTime;
 			}
-			
-			if (Input::IsKeyDown(KeyCode_Q))
+
+			if (IsKeyDown(KeyCode_Q))
 			{
 				g_camTransform->Position += g_camera->WorldUp * velocity * InDeltaTime;
 			}
 
-			if (Input::IsKeyDown(KeyCode_E))
+			if (IsKeyDown(KeyCode_E))
 			{
 				g_camTransform->Position -= g_camera->WorldUp * velocity * InDeltaTime;
 			}
+
+			g_camTransform->Rotation = glm::angleAxis(glm::radians(-yaw), vec3(0, 1, 0)) * glm::angleAxis(glm::radians(pitch), vec3(1, 0, 0));
+			
 		}
-		
-		quat rot = glm::angleAxis(glm::radians(-yaw), vec3(0, 1, 0)) * glm::angleAxis(glm::radians(pitch), vec3(1, 0, 0));
-		TransformUtils::Rotate(g_camTransform, rot);
+
+		CameraUtils::CalculateView(g_camera, g_camTransform);
+		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(g_World.get()));
+	}
+
+	void DrawSphere(const mat4& InModelMatrix, const ResourceId& Material, ResourceSystem* ResourceSystem, DeferredRenderer* Renderer, Model* InModel)
+	{
+		for (const auto &id : InModel->Meshes)
+		{
+			const auto Mesh = ResourceSystem->FindMesh(id);
+			if (Mesh)
+			{
+				auto Key = GenDrawKey64(true, Material.Index, RenderLayer::StaticGeom, 0.0f);
+				auto DrawCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::DrawIndexedData>(Key);
+				DrawCmd->IndexCount = Mesh->NumIndices;
+				DrawCmd->VertexArrayId = Mesh->VertexArrayId;
+				DrawCmd->Model = InModelMatrix;
+			}
+		}
 	}
 
 
@@ -196,8 +246,6 @@ namespace Dawn
 	{
 		BROFILER_CATEGORY("RenderLayer_Render", Brofiler::Color::AliceBlue);
 
-		CameraUtils::CalculateView(g_camera, g_camTransform);
-		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(g_World.get()));
 
 		auto Renderer = Application->GetRenderer();
 		auto GDI = Application->GetGDI();
@@ -215,19 +263,21 @@ namespace Dawn
 			const auto ResourceSystem = Application->GetResourceSystem();
 			if (usedModel != nullptr && CommonShaderHandles::Standard.IsValid)
 			{
-				for (const auto &id : usedModel->Meshes)
+				u32 i = 0;
+				float spacing = 2.5;
+				for (u32 row = 0; row < nrRows; ++row)
 				{
-					const auto Mesh = ResourceSystem->FindMesh(id);
-					if (Mesh)
+					for (u32 col = 0; col < nrColumns; ++col)
 					{
-						for (const auto& MaterialId : Mesh->Materials)
-						{
-							auto Key = GenDrawKey64(true, MaterialId.Index, RenderLayer::StaticGeom, 0.0f);
-							auto DrawCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::DrawIndexedData>(Key);
-							DrawCmd->IndexCount = Mesh->NumIndices;
-							DrawCmd->VertexArrayId = Mesh->VertexArrayId;
-							DrawCmd->Model = Model;
-						}
+						mat4 model = glm::mat4(1.0f);
+						model = glm::translate(model, glm::vec3(
+							col * spacing,
+							row * spacing + 2.0f,
+							0.0f
+						));
+						
+						DrawSphere(model, Materials[i], ResourceSystem.get(), Renderer.get(), usedModel);
+						++i;
 					}
 				}
 			}
@@ -246,7 +296,7 @@ namespace Dawn
 			auto ClearSSAO = Renderer->PerFrameData.SSAOBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
 			ClearSSAO->ClearColor = vec4(1,1,1,1);
 
-			auto SSAOComputePass = Renderer->PerFrameData.SSAOBucket.AppendCommand< Draw::SSAOComputePassData>(ClearSSAO);
+			auto SSAOComputePass = Renderer->PerFrameData.SSAOBucket.AppendCommand<Draw::SSAOComputePassData>(ClearSSAO);
 			SSAOComputePass->GBufferId = Renderer->TransientData.GBufferId;
 			SSAOComputePass->FSQuadVAOId = FinalPassQuadId;
 			SSAOComputePass->ShaderId = CommonShaderHandles::SSAOCompute;
@@ -257,6 +307,14 @@ namespace Dawn
 			SSAOComputePass->Projection = g_camera->GetProjection();
 			SSAOComputePass->View = g_camera->GetView();
 			SSAOComputePass->Power = Renderer->SSAOData.Power;
+	
+
+			/*auto SSAOBlurPass = Renderer->PerFrameData.SSAOBucket.AppendCommand<Draw::SSAOBlurPassData>(SSAOComputePass);
+			SSAOBlurPass->ShaderId = CommonShaderHandles::SSAOBlur;
+			SSAOBlurPass->SSAOBlurBufferId = Renderer->TransientData.SSAOBlurBufferId;
+			SSAOBlurPass->SSAOBufferId = Renderer->TransientData.SSAOBufferId;
+			SSAOBlurPass->FSQuadVAOId = FinalPassQuadId;*/
+
 
 			auto ClearColor = Renderer->PerFrameData.LightingBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
 			ClearColor->ClearColor = g_camera->ClearColor;
@@ -269,27 +327,17 @@ namespace Dawn
 			LightingPassData->SSAOBufferId = Renderer->TransientData.SSAOBufferId;
 			LightingPassData->View = g_camera->GetView();
 
-			ComponentId Id;
-			Id.Index = 0;
-			Id.Generation = 1;
-			Id.IsValid = true;
-			auto Light = World->GetComponentById<DirectionalLight>(Id);
-			auto LightTransform = World->GetComponentByEntity<Transform>(Light->GetEntity()->Id);
-
-			LightingPassData->LightColor = Light->Color;
-			LightingPassData->LightPos = LightTransform->Position;
-			LightingPassData->LightIntensity = Light->Intensity;
 		}
 		
 		{
-			auto ClearFinalPass = Renderer->PerFrameData.FinalPassBucket.AddCommand<Draw::ClearSceneData>(0u);
-
-			auto FinalPassCombine = Renderer->PerFrameData.FinalPassBucket.AppendCommand<Draw::FinalPassCombineData>(ClearFinalPass);
-			FinalPassCombine->ShaderId = CommonShaderHandles::FinalPass;
-			FinalPassCombine->RenderBufferId = Renderer->TransientData.FinalBufferId;
-			FinalPassCombine->FSQuadVAOId = FinalPassQuadId;
-			FinalPassCombine->Gamma = 1.0f;
-			Config::GetFloat("Engine", "Graphic/Gamma", &FinalPassCombine->Gamma);
+			auto ClearFinalPass = Renderer->PerFrameData.FinalPassBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
+			ClearFinalPass->ClearColor = g_camera->ClearColor;
+			auto FXAAPass = Renderer->PerFrameData.FinalPassBucket.AppendCommand<Draw::FXAAData>(ClearFinalPass);
+			FXAAPass->ShaderId = CommonShaderHandles::FXAA;
+			FXAAPass->RenderBufferId = Renderer->TransientData.FinalBufferId;
+			FXAAPass->FSQuadVAOId = FinalPassQuadId;
+			FXAAPass->ScreenWidth = g_camera->Width;
+			FXAAPass->ScreenHeight = g_camera->Height;
 		}
 
 

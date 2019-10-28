@@ -8,39 +8,8 @@
 
 namespace Dawn
 {
-	void DeferredRenderer::AllocateTransientData(Application* InApp)
+	void AllocateSSAOResources(GfxGDI* InGDI, SSAOData* InData)
 	{
-		auto GDI = InApp->GetGDI();
-		auto Settings = InApp->GetSettings();
-
-		GfxRenderBuffer* Buffer;
-		auto IdBuffer = GDI->CreateRenderBuffer(&Buffer);
-		if (IdBuffer.IsValid)
-		{
-			Buffer->AttachColorTarget(0, Settings->Width, Settings->Height);	// Position
-			Buffer->AttachColorTarget(1, Settings->Width, Settings->Height);	// Normal
-			Buffer->AttachColorTarget(2, Settings->Width, Settings->Height);	// Albedo, AO
-			Buffer->AttachColorTarget(3, Settings->Width, Settings->Height);	// Metallic,Roughness
-			Buffer->AttachDepthStencilTarget(Settings->Width, Settings->Height);
-			TransientData.GBufferId = IdBuffer;
-		}
-
-		GfxRenderBuffer* ScreenBuffer;
-		IdBuffer = GDI->CreateRenderBuffer(&ScreenBuffer);
-		if (IdBuffer.IsValid)
-		{
-			ScreenBuffer->AttachColorTarget(0, Settings->Width, Settings->Height);	// Position
-			TransientData.FinalBufferId = IdBuffer;
-		}
-
-		GfxRenderBuffer* SSAOBuffer;
-		IdBuffer = GDI->CreateRenderBuffer(&SSAOBuffer);
-		if (IdBuffer.IsValid)
-		{
-			SSAOBuffer->AttachColorTarget(0, Settings->Width, Settings->Height, RGBA16F, R);	
-			TransientData.SSAOBufferId = IdBuffer;
-		}
-
 		std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // random floats between 0.0 - 1.0
 		std::default_random_engine generator;
 		float scale = 0;
@@ -55,7 +24,7 @@ namespace Dawn
 			sample *= randomFloats(generator);
 			scale = Math::Lerp(0.1f, 1.0f, scale * scale);
 			sample *= scale;
-			SSAOData.Kernel.push_back(sample);
+			InData->Kernel.push_back(sample);
 		}
 
 		std::vector<vec3> ssaoNoise;
@@ -82,7 +51,52 @@ namespace Dawn
 			false
 		};
 
-		SSAOData.NoiseTextureId = GDI->CreateTexture(Desc, nullptr);
+		InData->NoiseTextureId = InGDI->CreateTexture(Desc, nullptr);
+	}
+
+	void DeferredRenderer::AllocateTransientData(Application* InApp)
+	{
+		auto GDI = InApp->GetGDI();
+		auto Settings = InApp->GetSettings();
+
+		GfxRenderBuffer* GBuffer;
+		auto IdBuffer = GDI->CreateRenderBuffer(&GBuffer);
+		if (IdBuffer.IsValid)
+		{
+			GBuffer->AttachColorTarget(0, Settings->Width, Settings->Height);	// Position
+			GBuffer->AttachColorTarget(1, Settings->Width, Settings->Height);	// Normal
+			GBuffer->AttachColorTarget(2, Settings->Width, Settings->Height);	// Albedo, AO
+			GBuffer->AttachColorTarget(3, Settings->Width, Settings->Height);	// Metallic,Roughness
+			GBuffer->AttachDepthStencilTarget(Settings->Width, Settings->Height);
+			TransientData.GBufferId = IdBuffer;
+		}
+
+		GfxRenderBuffer* ScreenBuffer;
+		auto ScreenBufferId = GDI->CreateRenderBuffer(&ScreenBuffer);
+		if (ScreenBufferId.IsValid)
+		{
+			ScreenBuffer->AttachColorTarget(0, Settings->Width, Settings->Height, GfxTextureFormat::RGBA16F, GfxTextureFormat::RGBA, GfxMemoryType::Float);	// Position
+			TransientData.FinalBufferId = ScreenBufferId;
+		}
+
+		GfxRenderBuffer* SSAOBuffer;
+		auto SSAOBufferId = GDI->CreateRenderBuffer(&SSAOBuffer);
+		if (SSAOBufferId.IsValid)
+		{
+			SSAOBuffer->AttachColorTarget(0, Settings->Width, Settings->Height, RGBA16F, R);	
+			TransientData.SSAOBufferId = SSAOBufferId;
+		}
+
+		AllocateSSAOResources(GDI.get(), &SSAOData);
+
+
+	/*	GfxRenderBuffer* SSAOBlurBuffer;
+		IdBuffer = GDI->CreateRenderBuffer(&SSAOBlurBuffer);
+		if (IdBuffer.IsValid)
+		{
+			SSAOBlurBuffer->AttachColorTarget(0, Settings->Width, Settings->Height, RGBA16F, R);
+			TransientData.SSAOBlurBufferId = IdBuffer;
+		}*/
 	}
 
 	void DeferredRenderer::Resize(GfxGDI* InGDI, u32 InWidth, u32 InHeight)
@@ -106,28 +120,39 @@ namespace Dawn
 		{
 			SSAOBuffer->AttachColorTarget(0, InWidth, InHeight, RGBA16F, R);
 		}
+
+		/*if (auto SSAOBlurBuffer = InGDI->GetRenderBuffer(TransientData.SSAOBlurBufferId))
+		{
+			SSAOBlurBuffer->AttachColorTarget(0, InWidth, InHeight, RGBA16F, R);
+		}*/
 	}
 
 	void DeferredRenderer::BeginFrame(GfxGDI* InGDI, World* InWorld)
 	{
+		BROFILER_EVENT("Rendering_BeginFrame")
+		// todo --- change the way how we obtain the camera ... for now we just use the default one!
+
 		glDisable(GL_BLEND);
 
-		// todo --- change the way how we obtain the camera ... for now we just use the default one!
 		auto Camera = InWorld->GetCamera(0);
 		PerFrameData.GeometryBucket.Reset(2048, TransientData.GBufferId, Camera->GetView(), Camera->GetProjection());
 		PerFrameData.SSAOBucket.Reset(2, TransientData.SSAOBufferId, mat4(), mat4());
 		PerFrameData.LightingBucket.Reset(4, TransientData.FinalBufferId, mat4(), mat4());
 		PerFrameData.FinalPassBucket.Reset(4, INVALID_HANDLE, mat4(), mat4());
+
 	}
 
 	void DeferredRenderer::Submit(Application* InApp)
 	{
+		BROFILER_EVENT("Rendering_Submit")
+
 		// todo --- do this in parallel 
 		PerFrameData.GeometryBucket.Sort();
 		PerFrameData.SSAOBucket.Sort();
 		PerFrameData.LightingBucket.Sort();
 		PerFrameData.FinalPassBucket.Sort();
 		// SortTask.Join();
+
 		PerFrameData.GeometryBucket.Submit(InApp);
 		PerFrameData.SSAOBucket.Submit(InApp);
 		PerFrameData.LightingBucket.Submit(InApp);
@@ -136,6 +161,7 @@ namespace Dawn
 
 	void DeferredRenderer::EndFrame(GfxGDI* InGDI)
 	{
+		BROFILER_EVENT("Rendering_EndFrame")
 		// todo --- move this somewhere else in dedicated render calls?!
 		// Render IMGUI!
 		{

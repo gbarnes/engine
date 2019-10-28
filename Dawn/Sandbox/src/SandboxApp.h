@@ -22,7 +22,7 @@ Dawn::Application* Dawn::CreateApplication()
 {
 	AppSettings Settings = {
 		0, // HWND will be provided by the app later on!
-		L"Sandbox Game", 
+		L"Game", 
 		1280,
 		720,
 		false, // fullscreen

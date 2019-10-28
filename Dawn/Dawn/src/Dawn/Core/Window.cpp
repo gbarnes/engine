@@ -56,6 +56,8 @@ namespace Dawn
 		};
 		this->WndClassEx = wndclass;
 
+		this->Instance = wndclass.hInstance;
+
 		// if we fail to successfully initialize the window ex class
 		// please return an according error result.
 		if (!RegisterClassExW(&this->WndClassEx))
@@ -106,6 +108,9 @@ namespace Dawn
 		}
 
 		SetProp(HWnd, L"Window", (HANDLE)this);
+
+		//this->Instance = (HINSTANCE)GetWindowLong(HWnd, -6);
+
 		ShowWindow(this->HWnd, 1);
 		UpdateWindow(this->HWnd);
 		IsCreated = true;
@@ -236,48 +241,6 @@ namespace Dawn
 			PostQuitMessage(0);
 			break;
 		}
-		case WM_MOUSEMOVE:
-		{
-			int xPos = GET_X_LPARAM(lParam);
-			int yPos = GET_Y_LPARAM(lParam);
-			Input::MousePos = vec2(xPos, yPos);
-			
-		}break;
-		case WM_LBUTTONUP:
-		case WM_RBUTTONUP:
-		case WM_MBUTTONUP:
-		case WM_XBUTTONUP:
-		{
-			int button = 0;
-			if (message == WM_LBUTTONUP) { button = 0; }
-			if (message == WM_RBUTTONUP) { button = 1; }
-			if (message == WM_MBUTTONUP) { button = 2; }
-			if (message == WM_XBUTTONUP) { button = (GET_XBUTTON_WPARAM(wParam) == XBUTTON1) ? 3 : 4; }
-			
-			Input::MouseBtnMap[button] = KeyState::Pressed;
-			
-		}break;
-		case WM_LBUTTONDOWN: 
-		case WM_RBUTTONDOWN: 
-		case WM_MBUTTONDOWN: 
-		case WM_XBUTTONDOWN: 
-		{
-			int button = 0;
-			if (message == WM_LBUTTONDOWN || message == WM_LBUTTONDBLCLK) { button = 0; }
-			if (message == WM_RBUTTONDOWN || message == WM_RBUTTONDBLCLK) { button = 1; }
-			if (message == WM_MBUTTONDOWN || message == WM_MBUTTONDBLCLK) { button = 2; }
-			if (message == WM_XBUTTONDOWN || message == WM_XBUTTONDBLCLK) { button = (GET_XBUTTON_WPARAM(wParam) == XBUTTON1) ? 3 : 4; }
-
-			
-			Input::MouseBtnMap[button] = KeyState::Down;
-			
-		}break;
-		case WM_KEYDOWN: case WM_SYSKEYDOWN: case WM_SYSCHAR:
-			Input::KeyCodeMap[(KeyCode)wParam] = KeyState::Down;
-		break;
-		case WM_KEYUP: case WM_SYSKEYUP: 
-			Input::KeyCodeMap[(KeyCode)wParam] = KeyState::Pressed;
-		break;
 		/*case WM_SYSCHAR: case WM_SYSKEYDOWN: case WM_SYSKEYUP:
 		{
 			bool alt = (::GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
@@ -303,7 +266,7 @@ namespace Dawn
 			break;
 		}*/
 
-		case WM_PAINT:
+		/*case WM_PAINT:
 		{
 			Window* window = (Window*)GetProp(hwnd, L"Window");
 			if (NULL != window)
@@ -312,7 +275,7 @@ namespace Dawn
 					window->OnWindowPaint();
 			}
 			
-		} break;
+		} break;*/
 		default:
 			return DefWindowProc(hwnd, message, wParam, lParam);
 			break;

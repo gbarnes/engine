@@ -68,7 +68,7 @@ namespace Dawn
 			if (InTransform == nullptr) 
 				return vec3(0.0f);
 
-			InTransform->Up = InTransform->Rotation * glm::vec3(0, 1, 0);
+			InTransform->Up = glm::normalize(InTransform->Rotation * glm::vec3(0, 1, 0));
 			return InTransform->Up;
 		}
 
@@ -81,7 +81,7 @@ namespace Dawn
 			if (InTransform == nullptr)
 				return vec3(0.0f);
 
-			InTransform->Forward = InTransform->Rotation * glm::vec3(0, 0, 1);
+			InTransform->Forward = glm::normalize(InTransform->Rotation * glm::vec3(0, 0, 1));
 			return InTransform->Forward;
 		}
 
@@ -94,7 +94,7 @@ namespace Dawn
 			if (InTransform == nullptr)
 				return vec3(0.0f);
 
-			InTransform->Right =  InTransform->Rotation * glm::vec3(1, 0, 0);
+			InTransform->Right = glm::normalize(InTransform->Rotation * glm::vec3(1, 0, 0));
 			return InTransform->Right;
 		}
 	};

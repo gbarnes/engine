@@ -92,6 +92,8 @@ namespace Dawn
 				ShowTransformComponent(world->GetComponentByEntity<Transform>(g_SelectedEntity->Id));
 			else if (component == "DirectionalLight")
 				ShowDirectionalLightComponent(world->GetComponentByEntity<DirectionalLight>(g_SelectedEntity->Id));
+			else if (component == "PointLight")
+				ShowPointLightComponent(world->GetComponentByEntity<PointLight>(g_SelectedEntity->Id));
 		}
 
 		ImGui::End();

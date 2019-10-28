@@ -97,4 +97,14 @@ namespace Dawn
 	{
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
+
+	void GLRenderBuffer::BindDepthBuffer()
+	{
+		glBindTexture(GL_TEXTURE_2D, InternalDepthBufferId);
+	}
+
+	void GLRenderBuffer::UnbindDepthBuffer()
+	{
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
 }

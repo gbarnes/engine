@@ -81,7 +81,19 @@ namespace Dawn
 		{
 			ImGui::Indent(10.0f);
 			ImGui::ColorEdit4("Color", &InLight->Color[0]);
-			ImGui::DragFloat("Intensity", &InLight->Intensity, 0.1f, 1000.0f);
+			ImGui::InputFloat("Intensity", &InLight->Intensity, 0.1f, 200.0f, "%.4f", 0.1f);
+			ImGui::Unindent(10.0f);
+		}
+	}
+
+	void ShowPointLightComponent(PointLight* InLight)
+	{
+		if (ImGui::CollapsingHeader("PointLight"))
+		{
+			ImGui::Indent(10.0f);
+			ImGui::ColorEdit4("Color", &InLight->Color[0]);
+			ImGui::InputFloat("Intensity", &InLight->Intensity, 0.1f, 1000.0f);
+			ImGui::InputFloat("Range", &InLight->Range, 0.1f, 1000.0f);
 			ImGui::Unindent(10.0f);
 		}
 	}
