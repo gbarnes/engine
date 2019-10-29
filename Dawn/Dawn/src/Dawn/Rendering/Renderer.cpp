@@ -61,60 +61,63 @@ namespace Dawn
 		auto Settings = InApp->GetSettings();
 
 		GfxRenderBuffer* GBuffer;
-		auto IdBuffer = GDI->CreateRenderBuffer(&GBuffer);
-		if (IdBuffer.IsValid)
+		TransientData.GBufferId = GDI->CreateRenderBuffer(&GBuffer);
+		if (TransientData.GBufferId.IsValid)
 		{
 			GBuffer->AttachColorTarget(0, Settings->Width, Settings->Height);	// Position
 			GBuffer->AttachColorTarget(1, Settings->Width, Settings->Height);	// Normal
 			GBuffer->AttachColorTarget(2, Settings->Width, Settings->Height);	// Albedo, AO
 			GBuffer->AttachColorTarget(3, Settings->Width, Settings->Height);	// Metallic,Roughness
 			GBuffer->AttachDepthStencilTarget(Settings->Width, Settings->Height);
-			TransientData.GBufferId = IdBuffer;
 		}
 
 		GfxRenderBuffer* ScreenBuffer;
-		auto ScreenBufferId = GDI->CreateRenderBuffer(&ScreenBuffer);
-		if (ScreenBufferId.IsValid)
+		TransientData.FinalBufferId = GDI->CreateRenderBuffer(&ScreenBuffer);
+		if (TransientData.FinalBufferId.IsValid)
 		{
-			ScreenBuffer->AttachColorTarget(0, Settings->Width, Settings->Height, GfxTextureFormat::RGBA16F, GfxTextureFormat::RGBA, GfxMemoryType::Float);	// Position
-			TransientData.FinalBufferId = ScreenBufferId;
+			ScreenBuffer->AttachColorTarget(0, Settings->Width, Settings->Height);	// Position
 		}
 
 		GfxRenderBuffer* SSAOBuffer;
-		auto SSAOBufferId = GDI->CreateRenderBuffer(&SSAOBuffer);
-		if (SSAOBufferId.IsValid)
+		TransientData.SSAOBufferId = GDI->CreateRenderBuffer(&SSAOBuffer);
+		if (TransientData.SSAOBufferId.IsValid)
 		{
-			SSAOBuffer->AttachColorTarget(0, Settings->Width, Settings->Height, RGBA16F, R);	
-			TransientData.SSAOBufferId = SSAOBufferId;
+			SSAOBuffer->AttachColorTarget(0, Settings->Width, Settings->Height, RGBA16F, R);
 		}
 
 		AllocateSSAOResources(GDI.get(), &SSAOSettings);
 
 
 		GfxRenderBuffer* SSAOBlurBuffer;
-		IdBuffer = GDI->CreateRenderBuffer(&SSAOBlurBuffer);
-		if (IdBuffer.IsValid)
+		TransientData.SSAOBlurBufferId = GDI->CreateRenderBuffer(&SSAOBlurBuffer);
+		if (TransientData.SSAOBlurBufferId.IsValid)
 		{
 			SSAOBlurBuffer->AttachColorTarget(0, Settings->Width, Settings->Height, RGBA16F, R);
-			TransientData.SSAOBlurBufferId = IdBuffer;
+		}
+
+		GfxRenderBuffer* ShadowMapBuffer;
+		TransientData.ShadowMapBufferId = GDI->CreateRenderBuffer(&ShadowMapBuffer);
+		if (TransientData.ShadowMapBufferId.IsValid)
+		{
+			ShadowMapBuffer->AttachDepthTarget(ShadowSettings.Width, ShadowSettings.Height);
 		}
 	}
 
 	void DeferredRenderer::Resize(GfxGDI* InGDI, u32 InWidth, u32 InHeight)
 	{
-		if (auto Buffer = InGDI->GetRenderBuffer(TransientData.GBufferId))
+		if (auto GBuffer = InGDI->GetRenderBuffer(TransientData.GBufferId))
 		{
-			Buffer->AttachColorTarget(0, InWidth, InHeight);	// Position
-			Buffer->AttachColorTarget(1, InWidth, InHeight);	// Normal
-			Buffer->AttachColorTarget(2, InWidth, InHeight);	// Albedo
-			Buffer->AttachColorTarget(3, InWidth, InHeight);	// Albedo
-			Buffer->AttachDepthStencilTarget(InWidth, InHeight);
+			GBuffer->AttachColorTarget(0, InWidth, InHeight);	// Position
+			GBuffer->AttachColorTarget(1, InWidth, InHeight);	// Normal
+			GBuffer->AttachColorTarget(2, InWidth, InHeight);	// Albedo
+			GBuffer->AttachColorTarget(3, InWidth, InHeight);	// Albedo
+			GBuffer->AttachDepthStencilTarget(InWidth, InHeight);
 		}
 
-		if (auto Buffer2 = InGDI->GetRenderBuffer(TransientData.FinalBufferId))
+		if (auto FinalBuffer = InGDI->GetRenderBuffer(TransientData.FinalBufferId))
 		{
-			Buffer2->AttachColorTarget(0, InWidth, InHeight);	// Position
-			Buffer2->AttachDepthStencilTarget(InWidth, InHeight);
+			FinalBuffer->AttachColorTarget(0, InWidth, InHeight);	// Position
+			FinalBuffer->AttachDepthStencilTarget(InWidth, InHeight);
 		}
 
 		if (auto SSAOBuffer = InGDI->GetRenderBuffer(TransientData.SSAOBufferId))
@@ -131,11 +134,11 @@ namespace Dawn
 	void DeferredRenderer::BeginFrame(GfxGDI* InGDI, World* InWorld)
 	{
 		BROFILER_EVENT("Rendering_BeginFrame")
+
 		// todo --- change the way how we obtain the camera ... for now we just use the default one!
-
-		glDisable(GL_BLEND);
-
 		auto Camera = InWorld->GetCamera(0);
+
+		PerFrameData.ShadowBucket.Reset(2048, TransientData.ShadowMapBufferId, mat4(), mat4());
 		PerFrameData.GeometryBucket.Reset(2048, TransientData.GBufferId, Camera->GetView(), Camera->GetProjection());
 		PerFrameData.SSAOBucket.Reset(2, TransientData.SSAOBufferId, mat4(), mat4());
 		PerFrameData.LightingBucket.Reset(4, TransientData.FinalBufferId, mat4(), mat4());
@@ -148,12 +151,11 @@ namespace Dawn
 		BROFILER_EVENT("Rendering_Submit")
 
 		// todo --- do this in parallel 
+		PerFrameData.ShadowBucket.Sort();
 		PerFrameData.GeometryBucket.Sort();
-		PerFrameData.SSAOBucket.Sort();
-		PerFrameData.LightingBucket.Sort();
-		PerFrameData.FinalPassBucket.Sort();
 		// SortTask.Join();
 
+		PerFrameData.ShadowBucket.Submit(InApp);
 		PerFrameData.GeometryBucket.Submit(InApp);
 		PerFrameData.SSAOBucket.Submit(InApp);
 		PerFrameData.LightingBucket.Submit(InApp);
@@ -163,9 +165,6 @@ namespace Dawn
 	void DeferredRenderer::EndFrame(GfxGDI* InGDI)
 	{
 		BROFILER_EVENT("Rendering_EndFrame")
-		// todo --- move this somewhere else in dedicated render calls?!
-		// Render IMGUI!
-		
 
 		if(OnPostRender)
 			OnPostRender(InGDI, this);
@@ -176,5 +175,6 @@ namespace Dawn
 		PerFrameData.LightingBucket.Free();
 		PerFrameData.SSAOBucket.Free();
 		PerFrameData.GeometryBucket.Free();
+		PerFrameData.ShadowBucket.Free();
 	}
 }

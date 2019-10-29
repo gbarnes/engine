@@ -35,8 +35,5 @@ void main()
 		}
 	}
 	
-	//
-	
-	
 	OutputSSAO.r = result / (4.0 * 4.0);
 }

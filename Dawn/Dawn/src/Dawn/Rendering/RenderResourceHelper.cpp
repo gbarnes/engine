@@ -14,6 +14,7 @@ namespace Dawn
 	ResourceId CommonShaderHandles::StandardInstanced;
 	ResourceId CommonShaderHandles::SSAOCompute;
 	ResourceId CommonShaderHandles::SSAOBlur;
+	ResourceId CommonShaderHandles::ShadowMapCompute;
 
 
 	void RenderResourceHelper::LoadCommonShaders(ResourceSystem* InResourceSystem)
@@ -27,6 +28,7 @@ namespace Dawn
 		CommonShaderHandles::SSAOCompute = InResourceSystem->LoadFile("Shader/ssao_compute.shader");
 		CommonShaderHandles::SSAOBlur = InResourceSystem->LoadFile("Shader/ssao_blur.shader");
 		EditorShaderHandles::Grid = InResourceSystem->LoadFile("Shader/editor_grid.shader");
+		CommonShaderHandles::ShadowMapCompute = InResourceSystem->LoadFile("Shader/shadowmap_compute.shader");
 
 	}
 

@@ -62,7 +62,7 @@ namespace Dawn
 			ShowFpsCounter();
 
 		if(bShowGBuffer)
-			ShowGBuffer(InGDI->GetRenderBuffer(InRenderer->TransientData.GBufferId));
+			ShowGBuffer(InGDI->GetRenderBuffer(InRenderer->TransientData.GBufferId), InGDI->GetRenderBuffer(InRenderer->TransientData.ShadowMapBufferId));
 
 
 		if (bIsInEditMode)

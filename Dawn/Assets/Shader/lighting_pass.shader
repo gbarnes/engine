@@ -16,21 +16,28 @@ void main()
 #pragma frag_begin
 #pragma include "shader_globals.include"
 
+
 out vec4 FragColor;
 
 uniform sampler2D gPosition; 
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedoAO;
 uniform sampler2D gMetallicRoughness;
-uniform sampler2D gSSAO; 
+uniform sampler2D gSSAO;
+uniform sampler2D gShadowMap; 
  
 in vec2 TexCoords;
 
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 uniform DirectionalLight directionalLights[NR_DIR_LIGHTS];
+uniform int pointLightNum;
+uniform int directionalLightsNum;
 
 uniform vec3 viewPos;
 uniform mat4 view;
+
+#pragma include "shadow.include"
+#pragma include "lighting.include"
 
 void main()
 { 
@@ -39,9 +46,7 @@ void main()
 	if(NormalVP == vec3(0,0,0)) 
 		discard;
 		
-	vec3 Normal = (inverse(view) * texture(gNormal, TexCoords)).rgb;	
-	
-	
+	vec3 Normal = (inverse(view) * texture(gNormal, TexCoords)).rgb;
     vec3 WorldPos =  (inverse(view) * texture(gPosition, TexCoords)).rgb;
 	vec3 Albedo = texture(gAlbedoAO, TexCoords).rgb;
 	float AO = texture(gAlbedoAO, TexCoords).a;
@@ -56,20 +61,22 @@ void main()
 	F0 = mix(F0, Albedo, Metallic);
 	
 	vec3 Lo = vec3(0.0); 
-	
-	for(int i = 0; i < NR_DIR_LIGHTS; ++i)
-	{ 
-		DirectionalLight light = directionalLights[i];
-
+	float Shadow = 1.0; 
+	 
+	for(int i = 0; i < directionalLightsNum; ++i) 
+	{  
+		DirectionalLight light = directionalLights[i];  
+  
 		vec3 L = normalize(-light.direction);
-		vec3 H = normalize(V + L);
+		vec3 H = normalize(V + L); 
 		
 		vec3 radiance = vec3(light.color) * light.intensity;
-		
+		 
 		Lo += CalculateIrradiance(radiance, L, V, N, H, F0, Roughness, Metallic, Albedo);
-	}
-	
-	for(int i = 0; i < NR_POINT_LIGHTS; ++i)
+		Shadow += CalculateShadow(light.shadowColor, light.lightSpace * vec4(WorldPos, 1.0), N, -light.direction); 
+	} 
+	  
+	for(int i = 0; i < pointLightNum; ++i)
 	{ 
 		PointLight light = pointLights[i];
 
@@ -83,10 +90,10 @@ void main()
 	}
 	
     vec3 ambient = vec3(0.03) * Albedo;
-    vec3 color = ambient + Lo;
+    vec3 color = ambient * SampledAO * (1.0 - Shadow)  + Lo ;
 	
     color = color / (color + vec3(1.0));
 	color = pow(color, vec3(1.0/2.2));
    
-    FragColor = vec4(color * SampledAO, 1);
+    FragColor = vec4(color , 1);
 }

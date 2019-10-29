@@ -25,6 +25,7 @@ namespace Dawn
 		static ResourceId DebugPrim;
 		static ResourceId SSAOCompute;
 		static ResourceId SSAOBlur;
+		static ResourceId ShadowMapCompute;
 	};
 
 	struct DAWN_API EditorShaderHandles

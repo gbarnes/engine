@@ -16,11 +16,13 @@ struct PointLight {
 struct DirectionalLight {
     vec3 direction; 
     vec3 color;
+	vec4 shadowColor;
 	float intensity;
+	mat4 lightSpace;
 };
 
 const int NR_POINT_LIGHTS = 32;
-const int NR_DIR_LIGHTS = 8;
+const int NR_DIR_LIGHTS = 1;
 const float PI = 3.14159265359;
 
 const float zNear = 0.1;
@@ -40,68 +42,3 @@ float CalculateAttenuation(vec3 WorldPos, vec3 LightPosition)
 	return attenuation;
 }
 
-
-/// PBR SHADING FUNCTIONS
-
-// this function approximates the relative surface area of the microfacets
-// N is the normal of the surface to measure, H the half vector between view and light 
-// a is the roughness component telling how reflective the surface will be.
-// this is based on the Trowbridge-Reitz GGX used by Epic in UE4
-float TrowbdrigeDistributionGGX(vec3 N, vec3 H, float roughness)
-{
-	float a      = roughness*roughness;
-    float a2     = a*a;
-    float NdotH  = max(dot(N, H), 0.0);
-    float NdotH2 = NdotH*NdotH;
-	
-    float num   = a2;
-    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-    denom = PI * denom * denom;
-	
-    return num / denom;
-}
-
-//
-float SchlickGGX(float NdotV, float roughness)
-{
-	float r = (roughness + 1.0);
-    float k = (r*r) / 8.0;
-
-    float num   = NdotV;
-    float denom = NdotV * (1.0 - k) + k;
-	
-    return num / denom;
-}
-
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float k)
-{
-	float NdotV = max(dot(N, V), 0.0);
-	float NdotL = max(dot(N, L), 0.0);
-	float GGX1 = SchlickGGX(NdotV, k);
-	float GGX2 = SchlickGGX(NdotL, k);
-	
-	return GGX1 * GGX2;
-}
-
-vec3 FresnelSchlick(float NdotV, vec3 F0)
-{
-    return F0 + (1.0 - F0) * pow(1.0 - NdotV, 5.0);
-}
-
-vec3 CalculateIrradiance(vec3 Radiance, vec3 L, vec3 V, vec3 N, vec3 H, vec3 F0, float Roughness, float Metallic, vec3 Albedo)
-{
-	float NDG = TrowbdrigeDistributionGGX(N, H, Roughness);
-	float G = GeometrySmith(N, V, L, Roughness); 
-	vec3 Fresnel = FresnelSchlick(max(dot(H, V), 0.0), F0);
-	
-	vec3 numerator = NDG * G * Fresnel;
-	float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-	vec3 specular = numerator / max(denominator, 0.001);
-	
-	vec3 kS = Fresnel;
-	vec3 kD = vec3(1.0) - kS;
-	kD *= 1.0 - Metallic;
-	float NdotL = max(dot(N, L), 0.0);    
-	
-	return (kD * Albedo / PI + specular) * Radiance * NdotL;
-}

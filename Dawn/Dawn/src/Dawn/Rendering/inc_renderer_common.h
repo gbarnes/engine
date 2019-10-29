@@ -113,10 +113,11 @@ namespace Dawn
 
 	struct DrawKey64
 	{
-		bool bIsValid = false;		//1 Bit
 		RenderLayer Layer;			//3 Bits (9 Layers)
 		float Depth;				//16 Bits
 		u32 MaterialId;				//32 Bits 
+		bool bIsValid = false;		//1 Bit
+		bool _pad[3];				// pad out the struct!
 	};
 
 	static DrawKey64 DecodeDrawKey64(u64 InKey)

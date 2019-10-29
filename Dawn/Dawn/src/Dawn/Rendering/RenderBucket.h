@@ -97,6 +97,7 @@ namespace Dawn
 			const Shared<GfxGDI> GDI = InApp->GetGDI();
 			const Shared<ResourceSystem> Resources = InApp->GetResourceSystem();
 			const Shared<World> World = InApp->GetWorld();
+			const Shared<DeferredRenderer> Renderer = InApp->GetRenderer();
 
 			ScopedGfxBind<GfxRenderBuffer> Binder;
 			if (RenderBufferId.IsValid)
@@ -105,7 +106,7 @@ namespace Dawn
 				Binder.Bind(Buffer);
 			}
 
-			u32 LastMatId = 1232145124;
+			u32 LastMatId = UINT_MAX;
 			GfxShader* GfxShader = nullptr;
 
 			for (u32 i = 0; i < CommandCount; ++i)
@@ -117,9 +118,6 @@ namespace Dawn
 
 				if (DecodedKey.bIsValid && DecodedKey.MaterialId != LastMatId)
 				{
-					if (GfxShader != nullptr)
-						GfxShader->Unbind();
-
 					// note --- uhm we have no way to extract the generation for the material
 					//			think about this - do we need the generation? is this ever going
 					//			to change?! (gb, 10/17/19)
@@ -130,17 +128,21 @@ namespace Dawn
 
 					auto Material = Resources->FindMaterial(ResId);
 					auto Shader = Resources->FindShader(Material->ShaderId);
-					GfxShader = GDI->GetShader(Shader->ResourceId);
-					GfxShader->Bind();
 
-					GfxShader->SetMat4("proj", Projection);
-					GfxShader->SetMat4("view", View);
+					if (Renderer->CurrentShader == nullptr || Renderer->CurrentShader->GetId().Index != Shader->ResourceId.Index)
+					{
+						Renderer->CurrentShader = GDI->GetShader(Shader->ResourceId);
+						Renderer->CurrentShader->Bind();
+					}
 
-					GfxShader->SetVec4("material.albedo", Material->Albedo);
-					GfxShader->SetVec4("material.emissive", Material->Emissive);
-					GfxShader->SetFloat("material.metallic", Material->Metallic);
-					GfxShader->SetFloat("material.roughness", Material->Roughness);
-					GfxShader->SetFloat("material.ao", Material->Ao);
+					Renderer->CurrentShader->SetMat4("proj", Projection);
+					Renderer->CurrentShader->SetMat4("view", View);
+
+					Renderer->CurrentShader->SetVec4("material.albedo", Material->Albedo);
+					Renderer->CurrentShader->SetVec4("material.emissive", Material->Emissive);
+					Renderer->CurrentShader->SetFloat("material.metallic", Material->Metallic);
+					Renderer->CurrentShader->SetFloat("material.roughness", Material->Roughness);
+					Renderer->CurrentShader->SetFloat("material.ao", Material->Ao);
 
 					// remove this again! this is only here as a test
 					// but since we use a deferred renderer later this should really
@@ -152,14 +154,11 @@ namespace Dawn
 				{
 					const DrawDispatchFunction function = commandPacket::LoadBackendDispatchFunction(packet);
 					const void* command = commandPacket::LoadCommand(packet);
-					function(GDI.get(), GfxShader, command);
+					function(GDI.get(), Renderer.get(), command);
 
 					packet = commandPacket::LoadNextCommandPacket(packet);
 				} while (packet != nullptr);
 			}
-
-			if (GfxShader != nullptr)
-				GfxShader->Unbind();
 		}
 
 	private:

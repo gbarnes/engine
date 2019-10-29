@@ -4,7 +4,9 @@
 
 namespace Dawn
 {
-	typedef void(*DrawDispatchFunction)(GfxGDI*, GfxShader*, const void*);
+	class DeferredRenderer;
+
+	typedef void(*DrawDispatchFunction)(GfxGDI*, DeferredRenderer*, const void*);
 
 	namespace Draw
 	{
@@ -34,6 +36,12 @@ namespace Dawn
 		struct DAWN_API ClearSceneData
 		{
 			static const DrawDispatchFunction DRAW_FUNCTION;
+		};
+
+		struct DAWN_API SetStateData
+		{
+			static const DrawDispatchFunction DRAW_FUNCTION;
+			GfxState State;
 		};
 
 		struct DAWN_API ClearSceneWithColorData
@@ -95,16 +103,27 @@ namespace Dawn
 			GfxResId FSQuadVAOId;
 		};
 
-		DAWN_API void DrawIndexed(GfxGDI* InGDI, GfxShader* InShader, const void* data);
-		DAWN_API void DrawInstanced(GfxGDI* InGDI, GfxShader* InShader, const void* data);
-		DAWN_API void DrawVertex(GfxGDI* InGDI, GfxShader* InShader, const void* data);
-		DAWN_API void Clear(GfxGDI* InGDI, GfxShader* InShader, const void* data);
-		DAWN_API void ClearWithColor(GfxGDI* InGDI, GfxShader* InShader, const void* data);
-		DAWN_API void SetViewport(GfxGDI* InGDI, GfxShader* InShader, const void* data);
-		DAWN_API void SSAOComputePass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
-		DAWN_API void SSAOBlurPass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
-		DAWN_API void FXAAPass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
-		DAWN_API void LightingPass(GfxGDI* InGDI, GfxShader* InShader, const void* data);
+		struct DAWN_API ShadowPassData
+		{
+			static const DrawDispatchFunction DRAW_FUNCTION;
+			GfxResId ShaderId;
+			u32 Width;
+			u32 Height;
+			mat4 LightSpace;
+		};
+
+		DAWN_API void DrawIndexed(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data);
+		DAWN_API void DrawInstanced(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data);
+		DAWN_API void DrawVertex(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data);
+		DAWN_API void Clear(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data);
+		DAWN_API void ClearWithColor(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data);
+		DAWN_API void SetViewport(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data);
+		DAWN_API void SSAOComputePass(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data);
+		DAWN_API void SSAOBlurPass(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data);
+		DAWN_API void FXAAPass(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data);
+		DAWN_API void LightingPass(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data);
+		DAWN_API void ShadowPass(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data);
+		DAWN_API void SetState(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data);
 	}
 
 	//static_assert(std::is_pod<DrawIndexed>::value == true, "Draw must be a POD.");

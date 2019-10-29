@@ -11,27 +11,25 @@ namespace Dawn
 		//REGISTER_TYPE(DirectionalLight)
 		vec4 Color;
 		float Intensity = 1.0f;
+		bool bCastShadows = true;
+		mat4 LightSpace;
 	};
-
-	typedef std::shared_ptr<DirectionalLight> DirectionalLightPtr;
 
 	struct DAWN_API PointLight : public Component<PointLight>
 	{
 		vec4 Color;
 		float Range = 1.0f;
 		float Intensity = 1.0f;
+		bool bCastShadows = false;
 	};
-
-	typedef std::shared_ptr<PointLight> PointLightPtr;
 
 	struct DAWN_API SpotLight : public Component<SpotLight>
 	{
 		vec4 Color;
 		float Angle;
 		float Range;
+		bool bCastShadows = false;
 	};
-
-	typedef std::shared_ptr<SpotLight> SpotLightPtr;
 
 	class LightUtils
 	{
@@ -39,5 +37,8 @@ namespace Dawn
 		static DirectionalLight* CreateDirectionalLight(World* InWorld, quat InOrientation, vec4 InColor, float InIntensity = 1.0f);
 		static PointLight* CreatePointLight(World* InWorld, vec3 InPosition, vec4 InColor, float InIntensity, float InRange);
 		static SpotLight* CreateSpotLight(vec3 InPosition, quat InOrientation, vec4 InColor, float InAngle, float InRange);
+
+
+		static void CalculateOrthoLightMatrix(World* InWorld, DirectionalLight* InLight, float InNearPlane, float InFarPlane);
 	};
 }

@@ -6,7 +6,7 @@
 
 namespace Dawn
 {
-	void ShowGBuffer(GfxRenderBuffer* InBuffer)
+	void ShowGBuffer(GfxRenderBuffer* InBuffer, GfxRenderBuffer* InShadowBuffer)
 	{
 		auto Settings = g_Application->GetSettings();
 		auto Renderer = g_Application->GetRenderer();
@@ -34,6 +34,15 @@ namespace Dawn
 			ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration);
 		ImGui::SetWindowPos(ImVec2((Settings->Width / 4) * 2, yOffset));
 		ImGui::Image(InBuffer->GetColorTarget(2), ImVec2(Settings->Width / 4, Settings->Height / 4), ImVec2(0, 0), ImVec2(1, -1));
+		ImGui::End();
+
+
+		ImGui::Begin("Shadowmap", 0, ImGuiWindowFlags_NoTitleBar |
+			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
+			ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration);
+		ImGui::SetWindowPos(ImVec2((Settings->Width / 4) * 3, yOffset));
+		ImGui::Image(InShadowBuffer->GetDepthTarget(), ImVec2(Settings->Width / 4, Settings->Height / 4), ImVec2(0, 0), ImVec2(1, -1));
 		ImGui::End();
 	}
 

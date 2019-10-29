@@ -13,7 +13,7 @@ namespace Dawn
 		std::string Name;
 		bool bIsHiddenInEditorHierarchy = false;
 		bool PersistsThroughLoad = false;
-
+		bool bIsActive = true;
 		Transform* GetTransform(World* InWorld);
 	};
 }

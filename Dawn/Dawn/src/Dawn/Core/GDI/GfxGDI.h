@@ -31,7 +31,7 @@ namespace Dawn
 		virtual void DrawInstanced(GfxResId VertexArrayId, u32 InAmount) = 0;
 		void SetClearColor(const vec4& InColor);
 		virtual void SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom) = 0;
-
+		virtual void SetState(const GfxState& InState) = 0;
 		virtual void ClearWithColor(const vec4& InColor) = 0;
 		virtual void Clear() = 0;
 

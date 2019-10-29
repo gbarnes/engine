@@ -14,9 +14,11 @@ namespace Dawn
 		void AttachColorTarget(u32 InIndex, u32 InWidth, u32 InHeight, GfxTextureFormat InFormat = GfxTextureFormat::RGBA16F, 
 			GfxTextureFormat InChannel = GfxTextureFormat::RGBA, GfxMemoryType InMemoryType = GfxMemoryType::Float) override;
 		void AttachDepthStencilTarget(u32 InWidth, u32 InHeight) override;
+		void AttachDepthTarget(u32 InWidth, u32 InHeight) override;
 		void BindColorTarget(u32 InIndex) override;
 		void UnbindColorTarget(u32 InIndex) override;
 		void* GetColorTarget(u32 InIndex) override;
+		void* GetDepthTarget() override;
 
 		void BindDepthBuffer() override;
 		void UnbindDepthBuffer() override;

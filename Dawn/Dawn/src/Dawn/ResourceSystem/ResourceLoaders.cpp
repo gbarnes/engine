@@ -196,6 +196,10 @@ namespace Dawn
 			file.close();
 			return true;
 		}
+		else
+		{
+			DWN_CORE_ERROR("Couldn't find file at path {0}", File.c_str());
+		}
 	
 
 		return false;

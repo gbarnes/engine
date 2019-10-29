@@ -93,7 +93,7 @@ namespace Dawn
 
 		Primitives = std::make_unique<GLImmediatePrimitives>(GLImmediatePrimitives(this->shared_from_this()));
 
-		RenderDoc::StartFrameCapture();
+		//RenderDoc::StartFrameCapture();
 
 		return true;
 	}
@@ -143,6 +143,16 @@ namespace Dawn
 		u32 Size = vertexArray->GetIndexBuffer(this)->GetSize();
 		glDrawElementsInstanced(GL_TRIANGLES, Size, GL_UNSIGNED_INT, 0, InAmount);
 		vertexArray->Unbind();
+	}
+
+	void GfxGLGDI::SetState(const GfxState& InState)
+	{
+		if(InState.bEnableDepthTest)
+			glEnable(GL_DEPTH_TEST);
+		else 
+			glDisable(GL_DEPTH_TEST);
+
+		glCullFace(InState.FaceCull);
 	}
 
 	void GfxGLGDI::Clear()

@@ -5,6 +5,7 @@
 #include "EntitySystem/Lights/LightComponents.h"
 #include "EntitySystem/Transform/Transform.h"
 #include "EntitySystem/Lights/LightSystem.h"
+#include "Renderer.h"
 
 namespace Dawn
 {
@@ -18,52 +19,55 @@ namespace Dawn
 	const DrawDispatchFunction Draw::LightingPassData::DRAW_FUNCTION = &Draw::LightingPass;
 	const DrawDispatchFunction Draw::SSAOComputePassData::DRAW_FUNCTION = &Draw::SSAOComputePass;
 	const DrawDispatchFunction Draw::SSAOBlurPassData::DRAW_FUNCTION = &Draw::SSAOBlurPass;
+	const DrawDispatchFunction Draw::ShadowPassData::DRAW_FUNCTION = &Draw::ShadowPass;
+	const DrawDispatchFunction Draw::SetStateData::DRAW_FUNCTION = &Draw::SetState;
 
-	DAWN_API void Draw::DrawIndexed(GfxGDI* InGDI, GfxShader* InShader, const void* data)
+	DAWN_API void Draw::DrawIndexed(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		const DrawIndexedData* RenderData = static_cast<const DrawIndexedData*>(data);
-		InShader->SetMat4("model", RenderData->Model);
+		InRenderer->CurrentShader->SetMat4("model", RenderData->Model);
 		InGDI->DrawIndexed(RenderData->VertexArrayId);
 	}
 
-	DAWN_API void Draw::DrawInstanced(GfxGDI* InGDI, GfxShader* InShader, const void* data)
+	DAWN_API void Draw::DrawInstanced(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		const DrawInstancedData* RenderData = static_cast<const DrawInstancedData*>(data);
 		InGDI->DrawInstanced(RenderData->VertexArrayId, RenderData->Amount);
 	}
 
-	DAWN_API void Draw::DrawVertex(GfxGDI* InGDI, GfxShader* InShader, const void* data)
+	DAWN_API void Draw::DrawVertex(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		const DrawVertexData* RenderData = static_cast<const DrawVertexData*>(data);
-		InShader->SetMat4("model", RenderData->Model);
+		InRenderer->CurrentShader->SetMat4("model", RenderData->Model);
 		InGDI->DrawArray(RenderData->VertexArrayId);
 	}
 
-	DAWN_API void Draw::Clear(GfxGDI* InGDI, GfxShader* InShader, const void* data)
+	DAWN_API void Draw::Clear(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		const ClearSceneData* RenderData = static_cast<const ClearSceneData*>(data);
 		InGDI->Clear();
 	}
 
-	DAWN_API void Draw::ClearWithColor(GfxGDI* InGDI, GfxShader* InShader, const void* data)
+	DAWN_API void Draw::ClearWithColor(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		const ClearSceneWithColorData* RenderData = static_cast<const ClearSceneWithColorData*>(data);
 		InGDI->ClearWithColor(RenderData->ClearColor);
 	}
 
-	DAWN_API void Draw::SetViewport(GfxGDI* InGDI, GfxShader* InShader, const void* data)
+	DAWN_API void Draw::SetViewport(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		const SetViewportData* RenderData = static_cast<const SetViewportData*>(data);
 		InGDI->SetViewport(0, 0, RenderData->Width, RenderData->Height);
 	}
 
-	DAWN_API void Draw::LightingPass(GfxGDI* InGDI, GfxShader* InShader, const void* data)
+	DAWN_API void Draw::LightingPass(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		BROFILER_EVENT("Lighting Pass")
 		const LightingPassData* RenderData = static_cast<const LightingPassData*>(data);
 		auto LightingPassShader = InGDI->GetShader(RenderData->ShaderId);
 		auto GBuffer = InGDI->GetRenderBuffer(RenderData->GBufferId);
 		auto SSAOBuffer = InGDI->GetRenderBuffer(RenderData->SSAOBufferId);
+		auto ShadowBuffer = InGDI->GetRenderBuffer(InRenderer->TransientData.ShadowMapBufferId);
 
 		ScopedGfxBind<GfxShader> Bind(LightingPassShader);
 		{
@@ -82,12 +86,19 @@ namespace Dawn
 			InGDI->ActivateTextureSlot(4);
 			SSAOBuffer->BindColorTarget(0);
 
+			InGDI->ActivateTextureSlot(4);
+			SSAOBuffer->BindColorTarget(0);
+
+			InGDI->ActivateTextureSlot(5);
+			ShadowBuffer->BindDepthBuffer();
+
 
 			LightingPassShader->SetInt("gPosition", 0);
 			LightingPassShader->SetInt("gNormal", 1);
 			LightingPassShader->SetInt("gAlbedoAO", 2);
 			LightingPassShader->SetInt("gMetallicRoughness", 3);
 			LightingPassShader->SetInt("gSSAO", 4);
+			LightingPassShader->SetInt("gShadowMap", 5);
 
 			LightingPassShader->SetMat4("view", RenderData->View);
 			LightingPassShader->SetVec3("viewPos", RenderData->ViewPosition);
@@ -99,6 +110,9 @@ namespace Dawn
 			LightSystem::Update(World.get(), LightingPassShader);
 			
 			InGDI->DrawIndexed(RenderData->FSQuadVAOId);
+
+			InGDI->ActivateTextureSlot(5);
+			ShadowBuffer->UnbindDepthBuffer();
 
 			InGDI->ActivateTextureSlot(4);
 			SSAOBuffer->UnbindColorTarget(0);
@@ -117,7 +131,7 @@ namespace Dawn
 		}
 	}
 
-	DAWN_API void Draw::FXAAPass(GfxGDI* InGDI, GfxShader* InShader, const void* data)
+	DAWN_API void Draw::FXAAPass(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		BROFILER_EVENT("FXAA  Pass")
 		// todo --- this might be better of using actual indexed draw call and a more
@@ -139,7 +153,7 @@ namespace Dawn
 		}
 	}
 
-	DAWN_API void Draw::SSAOBlurPass(GfxGDI* InGDI, GfxShader* InShader, const void* data)
+	DAWN_API void Draw::SSAOBlurPass(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		BROFILER_EVENT("SSAO Blur Pass")
 		const SSAOBlurPassData* RenderData = static_cast<const SSAOBlurPassData*>(data);
@@ -161,7 +175,19 @@ namespace Dawn
 		}
 	}
 
-	DAWN_API void Draw::SSAOComputePass(GfxGDI* InGDI, GfxShader* InShader, const void* data)
+	DAWN_API void Draw::ShadowPass(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
+	{
+		BROFILER_EVENT("Shadowmap Pass")
+		const ShadowPassData* RenderData = static_cast<const ShadowPassData*>(data);
+		InRenderer->CurrentShader = InGDI->GetShader(RenderData->ShaderId);
+
+		InGDI->SetViewport(0, 0, RenderData->Width, RenderData->Height);
+		InGDI->ClearWithColor(vec4(1, 1, 1, 1));
+		InRenderer->CurrentShader->Bind();
+		InRenderer->CurrentShader->SetMat4("lightSpace", RenderData->LightSpace);
+	}
+
+	DAWN_API void Draw::SSAOComputePass(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		BROFILER_EVENT("SSAO Compute Pass")
 
@@ -225,5 +251,13 @@ namespace Dawn
 			InGDI->ActivateTextureSlot(0);
 			GBuffer->UnbindColorTarget(0);
 		}
+	}
+
+
+	DAWN_API void Draw::SetState(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
+	{
+		BROFILER_EVENT("Draw - SetState")
+		const SetStateData* RenderData = static_cast<const SetStateData*>(data);
+		InGDI->SetState(RenderData->State);
 	}
 }

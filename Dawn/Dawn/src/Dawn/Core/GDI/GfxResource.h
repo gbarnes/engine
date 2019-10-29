@@ -217,6 +217,19 @@ namespace Dawn
 		UnsignedInt = 0x1405
 	};
 
+	enum GfxCullFace
+	{
+		GCF_Front = 0x0404,
+		GCF_Back= 0x0405,
+		GCF_FrontBack = 0x0408
+	};
+
+	struct GfxState
+	{
+		bool bEnableDepthTest = true;
+		GfxCullFace FaceCull = GCF_Back;
+	};
+
 	struct GfxTextureDesc
 	{
 		GfxTextureFormat Format = GfxTextureFormat::RGBA;
@@ -296,13 +309,13 @@ namespace Dawn
 		virtual void AttachColorTarget(u32 InIndex, u32 InWidth, u32 InHeight, GfxTextureFormat InFormat = GfxTextureFormat::RGBA16F, 
 			GfxTextureFormat InChannel = GfxTextureFormat::RGBA, GfxMemoryType InMemoryType = GfxMemoryType::Float) = 0;
 		virtual void AttachDepthStencilTarget(u32 InWidth, u32 InHeight) = 0;
-
+		virtual void AttachDepthTarget(u32 InWidth, u32 InHeight) = 0;
 		virtual void BindColorTarget(u32 InIndex) = 0;
 		virtual void UnbindColorTarget(u32 InIndex) = 0;
 		virtual void BindDepthBuffer() = 0;
 		virtual void UnbindDepthBuffer() = 0;
 		virtual void* GetColorTarget(u32 InIndex) = 0;
-
+		virtual void* GetDepthTarget() = 0;
 
 		inline const GfxResId GetId() const {
 			return Id;

@@ -1,6 +1,7 @@
 #include "LightComponents.h"
 #include "../World.h"
 #include "../Transform/Transform.h"
+#include "glm.hpp"
 
 namespace Dawn
 {
@@ -50,5 +51,20 @@ namespace Dawn
 	SpotLight* LightUtils::CreateSpotLight(vec3 InPosition, quat InOrientation, vec4 InColor, float InAngle, float InRange)
 	{
 		return nullptr;
+	}
+
+	void LightUtils::CalculateOrthoLightMatrix(World* InWorld, DirectionalLight* InLight, float InNearPlane, float InFarPlane)
+	{
+		auto Transform = InLight->GetEntity()->GetTransform(InWorld);
+
+		glm::mat4 Projection = glm::ortho(-20.0f, 20.0f, 20.0f, -20.0f, InNearPlane, InFarPlane);
+		glm::mat4 lightView = glm::lookAt
+		(
+			Transform->Position - Transform->Forward * 20.0f,
+			Transform->Position + Transform->Forward * -2.0f,
+			Transform->Up
+		);
+
+		InLight->LightSpace = Projection * lightView;
 	}
 }

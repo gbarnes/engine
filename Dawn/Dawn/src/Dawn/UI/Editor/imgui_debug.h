@@ -5,6 +5,6 @@ class GfxRenderBuffer;
 
 namespace Dawn
 {
-	void ShowGBuffer(GfxRenderBuffer* InBuffer);
+	void ShowGBuffer(GfxRenderBuffer* InBuffer, GfxRenderBuffer* InShadowBuffer);
 	void ShowFpsCounter();
 }

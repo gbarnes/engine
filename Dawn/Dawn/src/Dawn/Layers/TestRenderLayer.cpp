@@ -85,7 +85,6 @@ namespace Dawn
 		auto Light = LightUtils::CreateDirectionalLight(World.get(), quat(), vec4(0.9, 0.9, 0.9, 1.0f));
 		DirectionalLightId = Light->Id.Entity;
 
-
 		LightUtils::CreatePointLight(World.get(), glm::vec3(-10.0f, 10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
 		LightUtils::CreatePointLight(World.get(), glm::vec3(10.0f, 10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
 		LightUtils::CreatePointLight(World.get(), glm::vec3(-10.0f, -10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
@@ -237,6 +236,11 @@ namespace Dawn
 				DrawCmd->IndexCount = Mesh->NumIndices;
 				DrawCmd->VertexArrayId = Mesh->VertexArrayId;
 				DrawCmd->Model = InModelMatrix;
+
+				auto ShadowDrawCmd = Renderer->PerFrameData.ShadowBucket.AddCommand<Draw::DrawIndexedData>(0u);
+				ShadowDrawCmd->IndexCount = Mesh->NumIndices;
+				ShadowDrawCmd->VertexArrayId = Mesh->VertexArrayId;
+				ShadowDrawCmd->Model = InModelMatrix;
 			}
 		}
 	}
@@ -253,6 +257,19 @@ namespace Dawn
 
 		// Geometry bucket
 		{
+			auto SetStateCmd = Renderer->PerFrameData.ShadowBucket.AddCommand<Draw::SetStateData>(0u);
+			SetStateCmd->State = { true, GCF_Front };
+
+			auto ShadowPassCmd = Renderer->PerFrameData.ShadowBucket.AppendCommand<Draw::ShadowPassData>(SetStateCmd);
+			ShadowPassCmd->Width = Renderer->ShadowSettings.Width;
+			ShadowPassCmd->Height = Renderer->ShadowSettings.Height;
+			ShadowPassCmd->ShaderId = CommonShaderHandles::ShadowMapCompute;
+
+			auto directionalLight = World->GetComponentByEntity<DirectionalLight>(DirectionalLightId);
+			LightUtils::CalculateOrthoLightMatrix(World.get(), directionalLight, 0.1f, 1000.0f);
+			ShadowPassCmd->LightSpace = directionalLight->LightSpace;
+
+
 			auto ViewportCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::SetViewportData>(0u);
 			ViewportCmd->Width = g_camera->Width;
 			ViewportCmd->Height = g_camera->Height;
@@ -288,6 +305,9 @@ namespace Dawn
 			DrawCmd->VertexArrayId = CubeMeshArray->GetId();
 			DrawCmd->IndexCount = CubeMeshArray->GetIndexBuffer(GDI.get())->GetSize();
 			DrawCmd->Amount = Size;
+
+			auto SetStateBackCmd = Renderer->PerFrameData.ShadowBucket.AddCommand<Draw::SetStateData>(0u);
+			SetStateBackCmd->State = { true, GCF_Front };
 		}
 
 		// Lighting Pass

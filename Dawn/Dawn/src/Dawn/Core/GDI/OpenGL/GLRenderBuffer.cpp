@@ -25,7 +25,7 @@ namespace Dawn
 	void GLRenderBuffer::AttachColorTarget(u32 InIndex, u32 InWidth, u32 InHeight, GfxTextureFormat InFormat, GfxTextureFormat InChannel,
 		GfxMemoryType InMemoryType)
 	{
-		Bind();
+		Bind(false);
 
 		u32 RenderId = 0;
 		glDeleteTextures(1, &RenderId);
@@ -46,7 +46,7 @@ namespace Dawn
 
 	void GLRenderBuffer::AttachDepthStencilTarget(u32 InWidth, u32 InHeight)
 	{
-		Bind();
+		Bind(false);
 
 		glDeleteTextures(1, &InternalDepthBufferId);
 		glGenTextures(1, &InternalDepthBufferId);
@@ -57,6 +57,25 @@ namespace Dawn
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, InternalDepthBufferId, 0);
+
+		Unbind();
+	}
+
+	void GLRenderBuffer::AttachDepthTarget(u32 InWidth, u32 InHeight)
+	{
+		Bind(false);
+
+		glDeleteTextures(1, &InternalDepthBufferId);
+		glGenTextures(1, &InternalDepthBufferId);
+		glBindTexture(GL_TEXTURE_2D, InternalDepthBufferId);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, InWidth, InHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, InternalDepthBufferId, 0);
 
 		Unbind();
 	}
@@ -79,7 +98,15 @@ namespace Dawn
 			}
 
 			if (buffers > 0)
+			{
 				glDrawBuffers(buffers, Attachments.data());
+			}
+			else 
+			{
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, InternalDepthBufferId, 0);
+				glDrawBuffer(GL_NONE);
+				glReadBuffer(GL_NONE);
+			}
 		}
 	}
 
@@ -111,5 +138,10 @@ namespace Dawn
 	void* GLRenderBuffer::GetColorTarget(u32 InIndex)
 	{
 		return (void*)(intptr_t)ColorTargets[InIndex];
+	}
+
+	void* GLRenderBuffer::GetDepthTarget()
+	{
+		return (void*)(intptr_t)InternalDepthBufferId;
 	}
 }

@@ -55,14 +55,16 @@ namespace Dawn
 		GfxResId FinalBufferId = INVALID_HANDLE;
 		GfxResId SSAOBufferId = INVALID_HANDLE;
 		GfxResId SSAOBlurBufferId = INVALID_HANDLE;
+		GfxResId ShadowMapBufferId = INVALID_HANDLE;
 	};
 
 	struct DAWN_API PerFrameData
 	{
+		RenderBucket<u8> ShadowBucket;
 		RenderBucket<u64> GeometryBucket;
-		RenderBucket<u64> SSAOBucket;
-		RenderBucket<u64> LightingBucket;
-		RenderBucket<u64> FinalPassBucket;
+		RenderBucket<u8> SSAOBucket;
+		RenderBucket<u8> LightingBucket;
+		RenderBucket<u8> FinalPassBucket;
 	};
 
 	struct DAWN_API SSAOSettings
@@ -75,15 +77,25 @@ namespace Dawn
 		std::vector<vec3> Kernel;
 	};
 
+	struct DAWN_API ShadowMapSettings
+	{
+		u32 Width = 1024;
+		u32 Height = 1024;
+		float Bias = 0.005f;
+	};
+
 
 	class DAWN_API DeferredRenderer : public IRenderer
 	{
 	public:
 		std::function<void(GfxGDI*, DeferredRenderer*)> OnPostRender;
 
+
+		GfxShader* CurrentShader;
 		TransientData TransientData;
 		PerFrameData PerFrameData;
 		SSAOSettings SSAOSettings;
+		ShadowMapSettings ShadowSettings;
 
 		void AllocateTransientData(Application* InApp) override;
 		void Resize(GfxGDI* InGDI, u32 InWidth, u32 InHeight) override;

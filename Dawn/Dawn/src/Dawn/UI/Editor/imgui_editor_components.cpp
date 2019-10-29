@@ -18,6 +18,7 @@ namespace Dawn
 			ImGui::Indent(10.0f);
 			ImGui::Text("Id: %u", InEntity->Id.Index);
 			ImGui::Text("Name: %s", InEntity->Name.c_str());
+			ImGui::Checkbox("Is Active", &InEntity->bIsActive);
 			ImGui::Unindent(10.0f);
 		}
 	}
