@@ -254,6 +254,7 @@ namespace Dawn
 		virtual void Bind() = 0;
 		virtual void Unbind() = 0;
 		virtual void Reset(const GfxTextureDesc& InDesc) = 0;
+		virtual void* GetGPUAddress() = 0;
 
 		inline const GfxResId GetId() const {
 			return Id;

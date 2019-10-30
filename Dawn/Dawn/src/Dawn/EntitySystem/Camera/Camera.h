@@ -105,21 +105,19 @@ namespace Dawn
 		//
 		FORCEINLINE static const mat4& CalculateOthographic(Camera* InCamera)
 		{
-			InCamera->Projection = glm::ortho<float>(0.0f, (float)InCamera->Width, 0.0f, (float)InCamera->Height, InCamera->NearZ, InCamera->FarZ);
+			InCamera->Projection = glm::ortho<float>(0.0f, (float)InCamera->Width, -(float)InCamera->Height, (float)InCamera->Height, InCamera->NearZ, InCamera->FarZ);
 			return InCamera->Projection;
 		}
 
-		const vec3 WorldToScreenPoint(Camera* InCamera, const vec3& InPoint) const
+		FORCEINLINE static vec2 WorldToScreenPoint(Camera* InCamera, const vec3& InPoint)
 		{
-			//return glm::project(InPoint, mat4(1.0f), GetProjection(), InPoint);
-			return { 0,0,0 };
+			vec2 Pos = glm::project(InPoint, InCamera->GetView(), InCamera->GetProjection(), glm::vec4(0.0f, float(InCamera->Height), float(InCamera->Width), -float(InCamera->Height)));
+			return vec2(Pos.x, Pos.y);
 		}
 
-		const vec3 ScreenToWorldPoint(Camera* InCamera, const vec3& InPoint) const
+		FORCEINLINE static vec3 ScreenToWorldPoint(Camera* InCamera, const vec3& InPoint)
 		{
-			//return DirectX::XMVector3Unproject(InPoint, 0, 0, 0, 0, 0, 1, Projection, CalculateView(), MAT4_IDENTITY);
-			//return glm::unProject(InPoint, InCamera->View, InCamera->Projection, );
-			return { 0,0,0 };
+			return glm::unProject(InPoint, InCamera->GetView(), InCamera->GetProjection(), glm::vec4(0.0f, 0.0f, float(InCamera->Width), float(InCamera->Height)));
 		}
 
 	};

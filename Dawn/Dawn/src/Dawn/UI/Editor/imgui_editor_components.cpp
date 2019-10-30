@@ -23,7 +23,7 @@ namespace Dawn
 		}
 	}
 
-	void ShowTransformComponent(Transform* InTransform)
+	void ShowTransformComponent(Transform* InTransform, ImGuizmo::MODE& InEditSpace)
 	{
 		if (InTransform == nullptr)
 			return;
@@ -36,9 +36,15 @@ namespace Dawn
 			auto up = TransformUtils::CalculateUp(InTransform);
 			auto right = TransformUtils::CalculateRight(InTransform);
 
-			ImGui::Text("Forward %.2f %.2f %.2f", forward.x, forward.y, forward.z);
-			ImGui::Text("Up %.2f %.2f %.2f", up.x, up.y, up.z);
-			ImGui::Text("Right %.2f %.2f %.2f", right.x, right.y, right.z);
+			//ImGui::Text("Forward %.2f %.2f %.2f", forward.x, forward.y, forward.z);
+			//ImGui::Text("Up %.2f %.2f %.2f", up.x, up.y, up.z);
+			//ImGui::Text("Right %.2f %.2f %.2f", right.x, right.y, right.z);
+
+			if (ImGui::RadioButton("Local", InEditSpace == ImGuizmo::LOCAL))
+				InEditSpace = ImGuizmo::LOCAL;
+			ImGui::SameLine();
+			if (ImGui::RadioButton("World", InEditSpace == ImGuizmo::WORLD))
+				InEditSpace = ImGuizmo::WORLD;
 
 			ImGui::Spacing();
 
@@ -52,8 +58,11 @@ namespace Dawn
 
 	void ShowCameraComponent(Camera* InCamera)
 	{
+		
 		if (ImGui::CollapsingHeader("Camera"))
 		{
+			bool bHasChanged = false;
+
 			ImGui::Indent(10.0f);
 
 			ImGui::InputFloat3("World Up", &InCamera->WorldUp[0]);
@@ -61,16 +70,24 @@ namespace Dawn
 			ImGui::ColorEdit4("Clear Color", &InCamera->ClearColor[0]);
 
 			if (ImGui::SliderFloat("Field Of View", &InCamera->FieldOfView, 12.0f, 120.0f))
-				CameraUtils::CalculatePerspective(InCamera);
+				bHasChanged = true;
 
 			if (ImGui::SliderFloat("Aspect Ratio", &InCamera->AspectRatio, 0.0, 20.0f))
-				CameraUtils::CalculatePerspective(InCamera);
+				bHasChanged = true;
 
 			if (ImGui::SliderFloat("NearZ", &InCamera->NearZ, 0.01f, 2.0f))
-				CameraUtils::CalculatePerspective(InCamera);
+				bHasChanged = true;
 
 			if (ImGui::SliderFloat("FarZ", &InCamera->FarZ, 100.0f, 10000.0f))
-				CameraUtils::CalculatePerspective(InCamera);
+				bHasChanged = true;
+
+			if (bHasChanged)
+			{
+				if (InCamera->bIsOrthographic)
+					CameraUtils::CalculateOthographic(InCamera);
+				else if (InCamera->bIsOrthographic)
+					CameraUtils::CalculatePerspective(InCamera);
+			}
 
 			ImGui::Unindent(10.0f);
 		}

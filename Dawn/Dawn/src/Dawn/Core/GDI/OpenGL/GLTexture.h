@@ -14,6 +14,10 @@ namespace Dawn
 		void Bind() override;
 		void Unbind() override;
 		void Reset(const GfxTextureDesc& InDesc) override;
+		void* GetGPUAddress() override
+		{
+			return (void*)(intptr_t)RendererId;
+		}
 	private:
 		u32 RendererId;
 		GfxWrapDesc Wrap;

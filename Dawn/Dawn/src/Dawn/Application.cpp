@@ -25,6 +25,7 @@
 #include "UI/Editor/imgui_editor_functions.h"
 #include "UI/Editor/imgui_debug.h"
 #include "Vendor/ImGui/ImGuiWrapper.h"
+#include "Vendor/ImGuizmo/ImGuizmo.h"
 
 #define USE_OPENGL_GFX
 #include "Core/GDI/inc_gfx.h"
@@ -57,6 +58,7 @@ namespace Dawn
 	void OnPostRender(GfxGDI* InGDI, DeferredRenderer* InRenderer)
 	{
 		ImGuiWrapper::BeginNewFrame();
+		ImGuizmo::BeginFrame();
 
 		if (bShowFPS)
 			ShowFpsCounter();
@@ -155,6 +157,7 @@ namespace Dawn
 			SetupLayers();
 		}
 
+		ImGuizmo::SetOrthographic(false);
 
 		DWN_CORE_INFO("Core Context initialized.");
 
