@@ -3,5 +3,6 @@
 
 namespace Dawn 
 {
-	void RenderEditorUI();
+	void Editor_LoadResources();
+	void Editor_RenderUI();
 }

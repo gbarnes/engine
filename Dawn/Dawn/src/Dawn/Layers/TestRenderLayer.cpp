@@ -90,6 +90,8 @@ namespace Dawn
 		LightUtils::CreatePointLight(World.get(), glm::vec3(-10.0f, -10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
 		LightUtils::CreatePointLight(World.get(), glm::vec3(10.0f, -10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
 
+
+
 		auto Quad = GfxPrimitiveFactory::AllocateQuad(GDI.get(), vec2(1.0f, -1.0f), 1.0f);
 		FinalPassQuadId = Quad->GetId();
 
@@ -154,7 +156,7 @@ namespace Dawn
 
 	void TestRenderLayer::Update(float InDeltaTime)
 	{
-		BROFILER_EVENT("TestRenderLayer_Update")
+		BROFILER_EVENT("TestRenderLayer_Update");
 		Model = glm::translate(mat4(1), vec3(0.0f, 2.0f, 0.0f)) * glm::scale(mat4(1), vec3(1.0f));// glm::mat4_cast(rotation);
 	
 		vec2 mousePosition = GetMousePosition();

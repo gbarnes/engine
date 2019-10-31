@@ -68,7 +68,7 @@ namespace Dawn
 
 
 		if (bIsInEditMode)
-			RenderEditorUI();
+			Editor_RenderUI();
 
 		ImGuiWrapper::Render();
 	}
@@ -215,7 +215,7 @@ namespace Dawn
 			Time.AlignedUpdateDeltaTime += Time.FrameDeltaTime;
 			while (Time.AlignedUpdateDeltaTime >= Time::TargetUpdateRate)
 			{
-				Update(Time.AlignedUpdateDeltaTime * Time.TimeScale);
+				Update(Time.AlignedUpdateDeltaTime * Time.TimeScale); 
 				Time.AlignedUpdateDeltaTime -= Time::TargetUpdateRate;
 			}
 		}
@@ -234,6 +234,7 @@ namespace Dawn
 				{
 					scene->simulate(FixedTime);
 					scene->fetchResults(true);
+				
 				}
 
 				ResourceSystem->Refresh();
