@@ -33,7 +33,7 @@ namespace Dawn
 	Transform* g_camTransform;
 
 	GfxResId FinalPassQuadId;
-	EntityId DirectionalLightId;
+	Entity DirectionalLightId;
 
 	vec3 tempTarget = vec3(0, 0, -1);
 	float lastX, lastY = 0.0f;

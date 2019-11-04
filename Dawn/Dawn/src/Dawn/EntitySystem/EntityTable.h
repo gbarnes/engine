@@ -4,18 +4,20 @@
 
 namespace Dawn
 {
-#define MAX_NUM_OF_ENTITIES 4096  // abritary number of aligned max entities for now?! 
+	constexpr int MaxNumbersOfEntities = 4096;  // abritary number of aligned max entities for now?! 
 
 	class EntityTable
 	{
 	public:
-		static Entity* Get(const EntityId& InId);
-		static EntityId Create(const std::string& InName);
-		static void Remove(const EntityId& InId);
+		static Entity Get(const i32 InId);
+		static EntityMetaData* GetMeta(const Entity& InEntity);
+		static Entity Create(const std::string& InName);
+		static void Remove(const i32 InId);
+		static std::array<Entity, MaxNumbersOfEntities>& GetEntities(u32* OutCount);
 	private:
 		static u32 CurrentId;
 		static u32 TotalCount;
-		static std::array<Entity, MAX_NUM_OF_ENTITIES> Entities;
-		static std::array<EntityId, MAX_NUM_OF_ENTITIES> EntityIds;
+		static std::array<Entity, MaxNumbersOfEntities> Entities;
+		static std::array<EntityMetaData, MaxNumbersOfEntities> MetaData;
 	};
 }

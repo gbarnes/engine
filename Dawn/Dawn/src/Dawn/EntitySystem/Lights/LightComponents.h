@@ -8,7 +8,7 @@ namespace Dawn
 {
 	struct DAWN_API DirectionalLight : public Component<DirectionalLight>
 	{
-		//REGISTER_TYPE(DirectionalLight)
+		REGISTER_TYPE(DirectionalLight)
 		vec4 Color;
 		float Intensity = 1.0f;
 		bool bCastShadows = true;
@@ -17,6 +17,7 @@ namespace Dawn
 
 	struct DAWN_API PointLight : public Component<PointLight>
 	{
+		REGISTER_TYPE(PointLight)
 		vec4 Color;
 		float Range = 1.0f;
 		float Intensity = 1.0f;
@@ -25,6 +26,7 @@ namespace Dawn
 
 	struct DAWN_API SpotLight : public Component<SpotLight>
 	{
+		//REGISTER_TYPE(SpotLight)
 		vec4 Color;
 		float Angle;
 		float Range;

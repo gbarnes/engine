@@ -18,6 +18,7 @@ namespace Dawn
 		ResourceType_AnimatedMesh,
 		ResourceType_EntityDefinition,
 		ResourceType_Image,
+		ResourceType_Scene,
 		ResourceType_Count
 	};
 
@@ -75,5 +76,40 @@ namespace Dawn
 		u32 Height;
 		u16 ChannelsPerPixel;
 		GfxResId TextureId;
+	};
+
+	
+	struct ComponentData
+	{
+		struct ComponentValue
+		{
+			const char* VariableName;
+			void* Data;
+		};
+
+		u32 Id;
+		const char* Type;
+		std::vector<ComponentValue> ComponentValues;
+	};
+
+	struct EntityData
+	{
+		u32 InFileId; // set only if needed!
+		const char* Name;
+		std::vector<u32> IdToComponent;
+	};
+
+	struct DAWN_API EntityDefinition : Resource
+	{
+		EntityData Data;
+		std::vector<ComponentData> Components;
+	};
+
+
+	struct DAWN_API Scene : Resource
+	{
+		const char* Name;
+		std::vector<EntityData> Entities;
+		std::vector<ComponentData> Components;
 	};
 }

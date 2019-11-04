@@ -25,7 +25,7 @@ namespace Dawn
 			return TypeName;
 		}
 
-		virtual bool ComponentForEntityExists(const EntityId& InId) {
+		virtual bool ComponentForEntityExists(const Entity& InId) {
 			return false;
 		}
 
@@ -41,12 +41,12 @@ namespace Dawn
 	template<typename T>
 	class DAWN_API ComponentTable : public BaseComponentTable
 	{
-		typedef u32 EntityRawId;
+		typedef i32 EntityRawId;
 		typedef u32 ComponentRawId;
 
 	public:
 		
-		ComponentId Add(EntityId& InEntity, T* InComponent)
+		ComponentId Add(const Entity& InEntity, T* InComponent)
 		{
 			if (CurrentId == Components.max_size() - 1)
 				return INVALID_HANDLE;
@@ -61,7 +61,7 @@ namespace Dawn
 			baseComponent->Id = id;
 
 			Components[CurrentId] = InComponent;
-			EntityToComponent[InEntity.Index] = CurrentId;
+			EntityToComponent[InEntity.Id] = CurrentId;
 			
 			u32 TempId = CurrentId;
 			CurrentId = TotalCount + 1;
@@ -72,21 +72,21 @@ namespace Dawn
 			return id;
 		}
 
-		void Destroy(const EntityId& InEntity)
+		void Destroy(const Entity& InEntity)
 		{
-			auto it = EntityToComponent.find(InEntity.Index);
+			auto it = EntityToComponent.find(InEntity.Id);
 			if (it == EntityToComponent.end())
 				return nullptr;
 
 			ComponentRawId rawid = it->second;
 
-			if (Components[InEntity.Index] != nullptr) 
+			if (Components[InEntity.Id] != nullptr)
 			{
-				delete Components[InEntity.Index];
-				Components[InEntity.Index] = nullptr;
+				delete Components[InEntity.Id];
+				Components[InEntity.Id] = nullptr;
 			}
 
-			EntityToComponent.erase(InEntity.Index);
+			EntityToComponent.erase(InEntity.Id);
 
 			ComponentId& id = ComponentIds[rawid];
 			id.IsValid = false;
@@ -94,9 +94,9 @@ namespace Dawn
 		}
 
 
-		T* GetByEntityId(const EntityId& InEntity)
+		T* GetByEntityId(const Entity& InEntity)
 		{
-			auto it = EntityToComponent.find(InEntity.Index);
+			auto it = EntityToComponent.find(InEntity.Id);
 			if (it == EntityToComponent.end())
 				return nullptr;
 
@@ -123,9 +123,9 @@ namespace Dawn
 			return Components[InId.Index];
 		}
 
-		bool ComponentForEntityExists(const EntityId& InId) 
+		bool ComponentForEntityExists(const Entity& InId) 
 		{
-			auto it = EntityToComponent.find(InId.Index);
+			auto it = EntityToComponent.find(InId.Id);
 			return (it != EntityToComponent.end());
 		}
 

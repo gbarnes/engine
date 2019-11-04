@@ -6,6 +6,6 @@ namespace Dawn
 {
 	Transform* Entity::GetTransform(World* InWorld)
 	{
-		return InWorld->GetComponentByEntity<Transform>(Id);
+		return InWorld->GetComponentByEntity<Transform>(*this);
 	}
 }

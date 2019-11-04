@@ -16,8 +16,10 @@ namespace Dawn
 	// 
 	struct DAWN_API Camera : public Component<Camera>
 	{
-		friend class CameraUtils;
 		REGISTER_TYPE(Camera)
+
+		friend class CameraUtils;
+		
 		static const u32 Version = 1;
 		float FieldOfView = 65.0f;
 		float NearZ = 0.1f;

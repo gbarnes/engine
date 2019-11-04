@@ -7,7 +7,7 @@ namespace Dawn
 {
 	struct ComponentId : public GenericHandle
 	{
-		EntityId Entity;
+		Entity Entity;
 	};
 
 	struct ComponentIndexCounter
@@ -29,9 +29,14 @@ namespace Dawn
 
 		ComponentId Id;
 
-		Entity* GetEntity()
+		Entity GetEntity()
 		{
-			return Dawn::EntityTable::Get(Id.Entity);
+			return Id.Entity;
+		}
+
+		EntityMetaData* GetEntityMeta()
+		{
+			return EntityTable::GetMeta(GetEntity());
 		}
 	};
 }

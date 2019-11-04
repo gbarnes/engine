@@ -10,7 +10,7 @@ namespace Dawn
 	{
 		auto Settings = g_Application->GetSettings();
 		auto Renderer = g_Application->GetRenderer();
-		static u32 yOffset = 20;
+		static float yOffset = 20.0f;
 
 		ImGui::Begin("GBuffer_Position", 0, ImGuiWindowFlags_NoTitleBar |
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |

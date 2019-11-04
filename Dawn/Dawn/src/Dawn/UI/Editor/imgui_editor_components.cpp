@@ -15,10 +15,12 @@ namespace Dawn
 
 		if (ImGui::CollapsingHeader("Entity"))
 		{
+			auto meta = EntityTable::GetMeta(*InEntity);
+
 			ImGui::Indent(10.0f);
-			ImGui::Text("Id: %u", InEntity->Id.Index);
-			ImGui::Text("Name: %s", InEntity->Name.c_str());
-			ImGui::Checkbox("Is Active", &InEntity->bIsActive);
+			ImGui::Text("Id: %u", InEntity->Id);
+			ImGui::Text("Name: %s", meta->Name.c_str());
+			ImGui::Checkbox("Is Active", &meta->bIsActive);
 			ImGui::Unindent(10.0f);
 		}
 	}

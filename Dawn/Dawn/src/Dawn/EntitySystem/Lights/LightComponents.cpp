@@ -5,14 +5,23 @@
 
 namespace Dawn
 {
-	//MAKE_TYPE_BEGIN(DirectionalLight)
-	//	ADD_MEMBER(DirectionalLight, Color, vec4)
-	//MAKE_TYPE_END()
+	MAKE_TYPE_BEGIN(DirectionalLight)
+		ADD_MEMBER(DirectionalLight, Color, vec4)
+		ADD_MEMBER(DirectionalLight, Intensity, float)
+		ADD_MEMBER(DirectionalLight, bCastShadows, bool)
+	MAKE_TYPE_END()
+
+	MAKE_TYPE_BEGIN(PointLight)
+		ADD_MEMBER(PointLight, Color, vec4)
+		ADD_MEMBER(PointLight, Intensity, float)
+		ADD_MEMBER(PointLight, Range, float)
+		ADD_MEMBER(PointLight, bCastShadows, bool)
+	MAKE_TYPE_END()
 
 	DirectionalLight* LightUtils::CreateDirectionalLight(World* InWorld, quat InOrientation, vec4 InColor, float InIntensity)
 	{
-		EntityId e = InWorld->CreateEntity("Light");
-		if (!e.IsValid)
+		Entity e = InWorld->CreateEntity("Light");
+		if (!e.IsValid())
 			return nullptr;
 
 		Transform* t = InWorld->MakeComponent<Transform>();
@@ -30,8 +39,8 @@ namespace Dawn
 
 	PointLight* LightUtils::CreatePointLight(World* InWorld, vec3 InPosition, vec4 InColor, float InIntensity, float InRange)
 	{
-		EntityId e = InWorld->CreateEntity("Pointlight");
-		if (!e.IsValid)
+		Entity e = InWorld->CreateEntity("Pointlight");
+		if (!e.IsValid())
 			return nullptr;
 
 		Transform* t = InWorld->MakeComponent<Transform>();
@@ -55,7 +64,7 @@ namespace Dawn
 
 	void LightUtils::CalculateOrthoLightMatrix(World* InWorld, DirectionalLight* InLight, float InNearPlane, float InFarPlane)
 	{
-		auto Transform = InLight->GetEntity()->GetTransform(InWorld);
+		auto Transform = InLight->GetEntity().GetTransform(InWorld);
 
 		glm::mat4 Projection = glm::ortho(-20.0f, 20.0f, 20.0f, -20.0f, InNearPlane, InFarPlane);
 		glm::mat4 lightView = glm::lookAt

@@ -33,8 +33,12 @@ namespace Dawn
 
 	void Editor_RenderObjectManipulationGizmo(Camera* InEditorCamera, World* InWorld, EditorSceneData* InSceneData)
 	{
-		if (InSceneData->CurrentSelectedEntity != nullptr && !InSceneData->CurrentSelectedEntity->bIsHiddenInEditorHierarchy)
+		if (InSceneData->CurrentSelectedEntity.IsValid())
 		{
+			auto meta = EntityTable::GetMeta(InSceneData->CurrentSelectedEntity);
+			if (meta->bIsHiddenInEditorHierarchy)
+				return;
+
 			static mat4 ModelMatrix(1);
 			static vec3 LastEuler;
 			const mat4& view = InEditorCamera->GetView();
@@ -42,7 +46,7 @@ namespace Dawn
 
 			ImGuizmo::Enable(true);
 
-			auto transform = InSceneData->CurrentSelectedEntity->GetTransform(InWorld);
+			auto transform = InSceneData->CurrentSelectedEntity.GetTransform(InWorld);
 			auto rotation = InSceneData->LastEulerRotation;
 
 			ImGuizmo::RecomposeMatrixFromComponents(&transform->Position[0], &rotation[0], &transform->Scale[0], &ModelMatrix[0][0]);
@@ -81,7 +85,8 @@ namespace Dawn
 
 		for (auto PointLight : PointLightList)
 		{	
-			if (PointLight.first->GetEntity()->bIsHiddenInEditorHierarchy)
+			auto meta = EntityTable::GetMeta(PointLight.first->GetEntity());
+			if (meta->bIsHiddenInEditorHierarchy)
 				continue;
 
 			vec2 ScreenPos = CameraUtils::WorldToScreenPoint(InEditorCamera, PointLight.second->Position);
@@ -115,8 +120,10 @@ namespace Dawn
 		auto DirLightList = InWorld->GetComponentSets<DirectionalLight, Transform>();
 		for (auto DirLight : DirLightList)
 		{
-			if (DirLight.first->GetEntity()->bIsHiddenInEditorHierarchy)
+			auto meta = EntityTable::GetMeta(DirLight.first->GetEntity());
+			if (meta->bIsHiddenInEditorHierarchy)
 				continue;
+
 			vec2 ScreenPos = CameraUtils::WorldToScreenPoint(InEditorCamera, DirLight.second->Position);
 
 			ImVec2 pos[2] =
@@ -149,7 +156,8 @@ namespace Dawn
 		auto CameraList = InWorld->GetComponentSets<Camera, Transform>();
 		for (auto Camera : CameraList)
 		{
-			if (Camera.first->GetEntity()->bIsHiddenInEditorHierarchy)
+			auto meta = EntityTable::GetMeta(Camera.first->GetEntity());
+			if (meta->bIsHiddenInEditorHierarchy)
 				continue;
 
 			vec2 ScreenPos = CameraUtils::WorldToScreenPoint(InEditorCamera, Camera.second->Position);

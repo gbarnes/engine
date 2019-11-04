@@ -15,6 +15,7 @@
 #include "imgui_editor_types.h"
 #include "Core/Input.h"
 #include "imgui_editor_gizmo.h"
+#include "imgui_editor_assets.h"
 
 namespace Dawn 
 {
@@ -107,20 +108,23 @@ namespace Dawn
 		auto SceneData = Editor_GetSceneData();
 		auto SelectedEntity = SceneData->CurrentSelectedEntity;
 
-		ShowEntity(SelectedEntity);
-
-		auto world = g_Application->GetWorld(); 
-		auto components = world->GetComponentTypesByEntity(SelectedEntity->Id);
-		for (auto component : components)
+		if (SelectedEntity.IsValid())
 		{
-			if (component == "Camera")
-				ShowCameraComponent(world->GetComponentByEntity<Camera>(SelectedEntity->Id));
-			else if(component == "Transform")
-				ShowTransformComponent(world->GetComponentByEntity<Transform>(SelectedEntity->Id), SceneData->EditSpace);
-			else if (component == "DirectionalLight")
-				ShowDirectionalLightComponent(world->GetComponentByEntity<DirectionalLight>(SelectedEntity->Id));
-			else if (component == "PointLight")
-				ShowPointLightComponent(world->GetComponentByEntity<PointLight>(SelectedEntity->Id));
+			ShowEntity(&SelectedEntity);
+
+			auto world = g_Application->GetWorld();
+			auto components = world->GetComponentTypesByEntity(SelectedEntity);
+			for (auto component : components)
+			{
+				if (component == "Camera")
+					ShowCameraComponent(world->GetComponentByEntity<Camera>(SelectedEntity));
+				else if (component == "Transform")
+					ShowTransformComponent(world->GetComponentByEntity<Transform>(SelectedEntity), SceneData->EditSpace);
+				else if (component == "DirectionalLight")
+					ShowDirectionalLightComponent(world->GetComponentByEntity<DirectionalLight>(SelectedEntity));
+				else if (component == "PointLight")
+					ShowPointLightComponent(world->GetComponentByEntity<PointLight>(SelectedEntity));
+			}
 		}
 
 		ImGui::End();
@@ -141,12 +145,16 @@ namespace Dawn
 			for (auto transform : transforms)
 			{
 				auto entity = transform->GetEntity();
-				if (entity->bIsHiddenInEditorHierarchy)
+				auto meta = EntityTable::GetMeta(entity);
+				if (meta->bIsHiddenInEditorHierarchy)
 					continue;
 
-				int selected = (entity == SceneData->CurrentSelectedEntity) ? ImGuiTreeNodeFlags_Selected : 0;
+				int selected = 0;
+				
+				if(SceneData->CurrentSelectedEntity.IsValid())
+					selected = (entity.Id == SceneData->CurrentSelectedEntity.Id) ? ImGuiTreeNodeFlags_Selected : 0;
 
-				if (ImGui::TreeNodeEx(entity->Name.c_str(), selected | ImGuiTreeNodeFlags_Leaf))
+				if (ImGui::TreeNodeEx(meta->Name.c_str(), selected | ImGuiTreeNodeFlags_Leaf))
 				{
 					if (ImGui::IsItemClicked())
 					{
@@ -208,6 +216,8 @@ namespace Dawn
 		auto EditorCamera = World->GetCamera(0);
 		auto GDI = g_Application->GetGDI();
 		auto SceneData = Editor_GetSceneData();
+		SceneData->Name = "Test";
+
 		auto Resources = Editor_GetResources();
 
 		ImGuiIO& io = ImGui::GetIO();
@@ -217,6 +227,14 @@ namespace Dawn
 
 		if (ImGui::BeginMainMenuBar())
 		{
+			if (ImGui::BeginMenu("File"))
+			{
+				if (ImGui::MenuItem("Save Scene")) { Editor_SaveScene(SceneData, World.get()); }
+				//if (ImGui::MenuItem("Camera")) {g_ShowCameraEditWindow = !g_ShowCameraEditWindow;}
+				ImGui::EndMenu();
+			}
+
+
 			if (ImGui::BeginMenu("World"))
 			{
 				if (ImGui::MenuItem("Scene")) { g_ShowSceneWindow = !g_ShowSceneWindow; }

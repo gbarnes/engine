@@ -28,8 +28,8 @@ namespace Dawn
 		float InNearZ, float InFarZ, float InFoV, vec4 InClearColor, 
 		const vec3& InPosition, const quat& InOrientation)
 	{
-		EntityId e = CreateEntity(InName);
-		if (!e.IsValid)
+		Entity e = CreateEntity(InName);
+		if (!e.IsValid())
 			return nullptr;
 
 		Transform* t = this->MakeComponent<Transform>();
@@ -52,20 +52,22 @@ namespace Dawn
 		if (!componentId.IsValid)
 			return nullptr;
 
-		CameraEntities.emplace_back(e);
+		CameraEntities.emplace_back(e.Id);
 		return c;
 	}
 
 	//
 	// Returns the camera by a given index (0-last camera)
 	//
-	Camera* World::GetCamera(u32 InId)
+	Camera* World::GetCamera(const i32 InId)
 	{
-		EntityId e = CameraEntities[InId];
-		if (!e.IsValid)
+		i32 e = CameraEntities[InId];
+		Entity entity = EntityTable::Get(e);
+
+		if (!entity.IsValid())
 			return nullptr;
 
-		return this->GetComponentByEntity<Camera>(e);
+		return this->GetComponentByEntity<Camera>(entity);
 	}
 
 	std::vector<Camera*> World::GetCameras()
@@ -74,7 +76,8 @@ namespace Dawn
 
 		for (auto CamId : CameraEntities)
 		{
-			auto CamRef = GetComponentByEntity<Camera>(CamId);
+			Entity entity = EntityTable::Get(CamId);
+			auto CamRef = GetComponentByEntity<Camera>(entity);
 			if (CamRef)
 				Cams.push_back(CamRef);
 		}
@@ -86,7 +89,7 @@ namespace Dawn
 	// Creates a new Entity with the given name and returns it's 
 	// entity handle.
 	//
-	inline EntityId World::CreateEntity(const std::string &InName) const
+	inline Entity World::CreateEntity(const std::string &InName) const
 	{
 		return EntityTable::Create(InName);
 	}
@@ -95,7 +98,7 @@ namespace Dawn
 	// Returns all the component type names for a specific 
 	// entity! This is mainly used for editor handling.
 	//
-	std::vector<std::string> World::GetComponentTypesByEntity(EntityId& InEntity)
+	std::vector<std::string> World::GetComponentTypesByEntity(const Entity& InEntity)
 	{
 		std::vector<std::string> components;
 
@@ -112,4 +115,5 @@ namespace Dawn
 
 		return components;
 	}
+
 }

@@ -2,6 +2,7 @@
 #include "Vendor/ImGuizmo/ImGuizmo.h"
 #include "Core/GDI/inc_gfx_types.h"
 #include "inc_common.h"
+#include "EntitySystem/Entity.h"
 #include "imgui.h"
 
 namespace Dawn
@@ -18,11 +19,12 @@ namespace Dawn
 
 	struct EditorSceneData
 	{
-		Entity* CurrentSelectedEntity = nullptr;
+		Entity CurrentSelectedEntity = INVALID_ENTITY;
 		ImDrawList* GizmoDrawList;
 		vec3 LastEulerRotation;
 		ImGuizmo::MODE EditSpace = ImGuizmo::WORLD;
 		ImGuizmo::OPERATION EditMethod = ImGuizmo::TRANSLATE;
+		std::string Name = "";
 	};
 
 	struct EditorResources

@@ -1,11 +1,13 @@
 #pragma once
-
+#include <functional>
+#include "inc_common.h"
 
 
 namespace Dawn 
 {
 	class TypeMemberCollection;
 	typedef std::function<void()> TypeInitMethod;
+
 
 	class Type 
 	{
@@ -18,10 +20,18 @@ namespace Dawn
 			: Name(InName), Size(InSize) 
 		{
 			if(InInit != nullptr)
-				InInit();
+				InInit(); 
+
+			if (Types == nullptr)
+				Types = new std::map<std::string, Type*>();
+
+			Types->emplace(std::make_pair(InName, this));
 		}
 
-		virtual ~Type() {};
+		virtual ~Type() 
+		{
+			SafeDelete(Types);
+		};
 		virtual std::string GetName() const { return Name; }
 		virtual std::string ToString() const { return ""; }
 
@@ -37,13 +47,30 @@ namespace Dawn
 		{
 			TypeMember member = { InName, InSize };
 			Members.emplace(std::make_pair(InName, member));
+			
 		}
 
+		static Type* GetType(const std::string& InTypeName)
+		{
+			auto it = Types->find(InTypeName);
+			if (it == Types->end())
+				return nullptr;
+
+		
+
+			return it->second;
+		}
+
+		
+
 	private:
+		static std::map<std::string, Type*>* Types;
+
 		struct TypeMember
 		{
 			std::string Name;
 			u64 Offset;
+			bool bSerialize = true;
 		};
 
 		std::map<std::string, TypeMember> Members;
@@ -67,4 +94,5 @@ public:\
 
 #define MAKE_TYPE_END() }\
 
+#define INIT_TYPE(type) type##::GetType();
 };

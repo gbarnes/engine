@@ -12,13 +12,14 @@ namespace Dawn
 		{
 			BROFILER_EVENT("LightSystem Update");
 
-			
 			u32 i = 0;
 			auto pointLights = InWorld->GetComponentSets<PointLight, Transform>();
 			for (std::pair<PointLight*, Transform*> pair : pointLights)
 			{
 				auto entity = pair.second->GetEntity();
-				if (entity->bIsActive)
+				auto meta = EntityTable::GetMeta(entity);
+
+				if (meta->bIsActive)
 				{
 					InShader->SetVec3("pointLights[" + std::to_string(i) + "].position", pair.second->Position);
 					InShader->SetVec3("pointLights[" + std::to_string(i) + "].color", pair.first->Color);
@@ -35,7 +36,9 @@ namespace Dawn
 			for (std::pair<DirectionalLight*, Transform*> pair : directionalLights)
 			{
 				auto entity = pair.second->GetEntity();
-				if (entity->bIsActive) 
+				auto meta = EntityTable::GetMeta(entity);
+
+				if (meta->bIsActive)
 				{
 					TransformUtils::CalculateForward(pair.second);
 					InShader->SetVec3("directionalLights[" + std::to_string(i) + "].direction", pair.second->Forward);

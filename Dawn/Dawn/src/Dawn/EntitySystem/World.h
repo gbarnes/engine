@@ -23,17 +23,17 @@ namespace Dawn
 		~World();
 
 	public:
-		std::vector<std::string> GetComponentTypesByEntity(EntityId& InEntity);
+		std::vector<std::string> GetComponentTypesByEntity(const Entity& InEntity);
 		
 		Camera* CreateCamera(std::string& InName, u32 Width, u32 Height,
 			float InNearZ, float InFarZ, float InFoV, vec4 InClearColor, 
 			const vec3& InPosition = vec3(0), const quat& InOrientation = quat());
 		
-		Camera* GetCamera(u32 InId);
+		Camera* GetCamera(i32 InId);
 		std::vector<Camera*> GetCameras();
 
-		inline EntityId CreateEntity(const std::string &InName) const;
-
+		inline Entity CreateEntity(const std::string &InName) const;
+		void GetEntityMetaData(const Entity& InEntity);
 		void Shutdown();
 
 	public:
@@ -42,6 +42,8 @@ namespace Dawn
 		{
 			int index = Component<T>::GetTableIndex();
 			
+			INIT_TYPE(T);
+
 			InTable.get()->SetTypeName(InTypeName);
 
 			if(!ComponentTables[index])
@@ -55,21 +57,21 @@ namespace Dawn
 
 
 		template<typename T>
-		ComponentId AddComponent(EntityId& InEntity, T* InComponent)
+		ComponentId AddComponent(const Entity& InEntity, T* InComponent)
 		{
 			ComponentTable<T>* table = GetTable<T>();
 			return table->Add(InEntity, InComponent);
 		}
 
 		template<typename T>
-		T* GetComponentByEntity(EntityId& InEntity)
+		T* GetComponentByEntity(const Entity& InEntity)
 		{
 			ComponentTable<T>* table = GetTable<T>();
 			return table->GetByEntityId(InEntity);
 		}
 
 		template<typename T>
-		T* GetComponentById(ComponentId& InComponent)
+		T* GetComponentById(const ComponentId& InComponent)
 		{
 			ComponentTable<T>* table = GetTable<T>();
 			return table->GetById(InComponent);
@@ -119,7 +121,7 @@ namespace Dawn
 		}
 
 	private:
-		std::vector<EntityId> CameraEntities;
+		std::vector<i32> CameraEntities;
 		std::array<std::unique_ptr<BaseComponentTable>, MAX_NUM_OF_COMPONENT_TYPES> ComponentTables;
 		std::map<std::string, std::unique_ptr<ISystem>> SystemTable;
 

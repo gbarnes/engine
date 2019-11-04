@@ -137,11 +137,12 @@ namespace Dawn
 
 		// Boot up World!
 		World = std::make_unique<Dawn::World>();
+		
 		World->AddTable("Transform", std::make_unique<ComponentTable<Transform>>());
 		World->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
 		World->AddTable("DirectionalLight", std::make_unique<ComponentTable<DirectionalLight>>());
 		World->AddTable("PointLight", std::make_unique<ComponentTable<PointLight>>());
-		World->AddSystem(std::make_unique<RigidbodySystem>());
+		//World->AddSystem(std::make_unique<RigidbodySystem>());
 
 		Physics = std::make_unique<PhysicsWorld>();
 		if(!Physics->Initialize())
