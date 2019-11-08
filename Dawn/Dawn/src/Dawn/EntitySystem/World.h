@@ -16,7 +16,7 @@ namespace Dawn
 	class BaseComponentTable;
 	struct Camera;
 
-	class DAWN_API World
+	class DAWN_API World : public std::enable_shared_from_this<World>
 	{
 	public:
 		World();
@@ -32,8 +32,11 @@ namespace Dawn
 		Camera* GetCamera(i32 InId);
 		std::vector<Camera*> GetCameras();
 
-		inline Entity CreateEntity(const std::string &InName) const;
-		void GetEntityMetaData(const Entity& InEntity);
+		Entity CreateEntity(const std::string &InName);
+		EntityMetaData* GetEntityMetaData(const Entity& InEntity)
+		{
+			return Entities.GetMeta(InEntity);
+		}
 		void Shutdown();
 
 	public:
@@ -101,13 +104,30 @@ namespace Dawn
 		}
 
 		template<typename T>
-		T* GetSystemByType(Type* InType)
+		T* GetSystemByType(DawnType* InType)
 		{
 			auto it = SystemTable.find(InType->GetName());
 			if (it == SystemTable.end())
 				return nullptr;
 
 			return static_cast<T*>(it->second.get());
+		}
+
+		void* GetComponentByName(const Entity& InEntity, const std::string& InName)
+		{
+			BaseComponentTable* ComponentTable = nullptr;
+
+			for (auto& table : ComponentTables)
+			{
+				if (table->GetTypeName() == InName)
+				{
+					ComponentTable = table.get();
+					break;
+				}
+			}
+
+			return ComponentTable->GetComponentByEntity(InEntity);
+			//it->second->
 		}
 
 		void AddSystem(std::unique_ptr<ISystem> InSystem)
@@ -120,7 +140,24 @@ namespace Dawn
 			SystemTable.insert(std::make_pair(type->GetName(), std::move(InSystem)));
 		}
 
+		std::array<Entity, MaxNumbersOfEntities>& GetEntities(u32* OutCount)
+		{
+			return Entities.GetEntities(OutCount);
+		}
+
+		static Camera* GetActiveCamera()
+		{
+			return ActiveCamera;
+		}
+
+		static void SetActiveCamera(Camera* InCamera)
+		{
+			ActiveCamera = InCamera;
+		}
+
 	private:
+		static Camera* ActiveCamera;
+		EntityTable Entities;
 		std::vector<i32> CameraEntities;
 		std::array<std::unique_ptr<BaseComponentTable>, MAX_NUM_OF_COMPONENT_TYPES> ComponentTables;
 		std::map<std::string, std::unique_ptr<ISystem>> SystemTable;

@@ -101,7 +101,7 @@ namespace Dawn
 
 	
 	bool g_ShowPropertyWindow = false;
-	void ShowPropertyWindow()
+	void ShowPropertyWindow(World* InWorld)
 	{
 		ImGui::Begin("Inspector", &g_ShowPropertyWindow);
 
@@ -110,7 +110,7 @@ namespace Dawn
 
 		if (SelectedEntity.IsValid())
 		{
-			ShowEntity(&SelectedEntity);
+			ShowEntity(InWorld, &SelectedEntity);
 
 			auto world = g_Application->GetWorld();
 			auto components = world->GetComponentTypesByEntity(SelectedEntity);
@@ -145,7 +145,7 @@ namespace Dawn
 			for (auto transform : transforms)
 			{
 				auto entity = transform->GetEntity();
-				auto meta = EntityTable::GetMeta(entity);
+				auto meta = world->GetEntityMetaData(entity);
 				if (meta->bIsHiddenInEditorHierarchy)
 					continue;
 
@@ -213,9 +213,11 @@ namespace Dawn
 	{
 		auto World = g_Application->GetWorld();
 		// todo --- implement another way of getting the camera. since not always the editor cam will be at id 0
-		auto EditorCamera = World->GetCamera(0);
+		auto EditorCamera = g_Application->GetEditorWorld()->GetCamera(0);
 		auto GDI = g_Application->GetGDI();
 		auto SceneData = Editor_GetSceneData();
+		auto ResourceSystem = g_Application->GetResourceSystem();
+
 		SceneData->Name = "Test";
 
 		auto Resources = Editor_GetResources();
@@ -229,20 +231,41 @@ namespace Dawn
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Save Scene")) { Editor_SaveScene(SceneData, World.get()); }
+				if (ImGui::MenuItem("New Level")) { //Editor_NewScene(); 
+				}
+				if (ImGui::MenuItem("Save Level")) { Editor_SaveLevel(Paths::ProjectContentDir().append("Scenes/"), SceneData, World.get(), ResourceSystem.get()); }
+				if (ImGui::MenuItem("Load Level")) {}
+				ImGui::Separator();
+				if (ImGui::MenuItem("Exit")) {}
 				//if (ImGui::MenuItem("Camera")) {g_ShowCameraEditWindow = !g_ShowCameraEditWindow;}
 				ImGui::EndMenu();
 			}
 
+			if (ImGui::BeginMenu("Entities"))
+			{
+				if (ImGui::BeginMenu("Primitives"))
+				{
+					if (ImGui::MenuItem("Cube")) {}
+					if (ImGui::MenuItem("Sphere")) {}
+					if (ImGui::MenuItem("Cylinder")) {}
+					ImGui::EndMenu();
+				}
 
-			if (ImGui::BeginMenu("World"))
+				if (ImGui::BeginMenu("Lights"))
+				{
+					if (ImGui::MenuItem("Directional Light")) {}
+					if (ImGui::MenuItem("Point Light")) {}
+					ImGui::EndMenu();
+				}
+				
+				if (ImGui::MenuItem("Camera")) { }
+				//if (ImGui::MenuItem("Camera")) {g_ShowCameraEditWindow = !g_ShowCameraEditWindow;}
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Windows"))
 			{
 				if (ImGui::MenuItem("Scene")) { g_ShowSceneWindow = !g_ShowSceneWindow; }
-				//if (ImGui::MenuItem("Camera")) {g_ShowCameraEditWindow = !g_ShowCameraEditWindow;}
-				ImGui::EndMenu();
-			}
-			if (ImGui::BeginMenu("Assets"))
-			{
 				if (ImGui::MenuItem("Browser")) { g_showAssetBrowser = !g_showAssetBrowser; }
 				if (ImGui::MenuItem("Materials")) { g_showMaterialBrowserWindow = !g_showMaterialBrowserWindow; }
 				ImGui::EndMenu();
@@ -265,7 +288,7 @@ namespace Dawn
 		}
 		
 		if (g_ShowPropertyWindow)
-			ShowPropertyWindow();
+			ShowPropertyWindow(World.get());
 
 		if (g_showAssetBrowser)
 			ShowAssetBrowserWindow();

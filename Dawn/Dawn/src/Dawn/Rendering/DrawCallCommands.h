@@ -63,8 +63,6 @@ namespace Dawn
 			GfxResId ShaderId;
 			GfxResId RenderBufferId;
 			GfxResId FSQuadVAOId;
-			u32 ScreenWidth;
-			u32 ScreenHeight;
 		};
 
 		struct DAWN_API LightingPassData
@@ -75,7 +73,6 @@ namespace Dawn
 			GfxResId FSQuadVAOId;
 			GfxResId SSAOBufferId;
 			vec3 ViewPosition;
-			mat4 View;
 		};
 		
 
@@ -90,8 +87,6 @@ namespace Dawn
 			float Radius;
 			float Power;
 			std::vector<vec3>* SSAOKernelData;
-			mat4 Projection;
-			mat4 View;
 		};
 
 		struct DAWN_API SSAOBlurPassData

@@ -6,6 +6,7 @@
 #include "EntitySystem/Transform/Transform.h"
 #include "EntitySystem/Lights/LightSystem.h"
 #include "Renderer.h"
+#include "EntitySystem/Camera/Camera.h"
 
 namespace Dawn
 {
@@ -100,7 +101,7 @@ namespace Dawn
 			LightingPassShader->SetInt("gSSAO", 4);
 			LightingPassShader->SetInt("gShadowMap", 5);
 
-			LightingPassShader->SetMat4("view", RenderData->View);
+			LightingPassShader->SetMat4("view", InRenderer->PerFrameData.Camera->GetView());
 			LightingPassShader->SetVec3("viewPos", RenderData->ViewPosition);
 
 			auto World = g_Application->GetWorld();
@@ -155,7 +156,7 @@ namespace Dawn
 
 	DAWN_API void Draw::SSAOBlurPass(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
-		BROFILER_EVENT("SSAO Blur Pass")
+		BROFILER_EVENT("SSAO Blur Pass");
 		const SSAOBlurPassData* RenderData = static_cast<const SSAOBlurPassData*>(data);
 		auto Shader = InGDI->GetShader(RenderData->ShaderId);
 		auto SSAOBuffer = InGDI->GetRenderBuffer(RenderData->SSAOBufferId);
@@ -177,11 +178,11 @@ namespace Dawn
 
 	DAWN_API void Draw::ShadowPass(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
-		BROFILER_EVENT("Shadowmap Pass")
+		BROFILER_EVENT("Shadowmap Pass");
 		const ShadowPassData* RenderData = static_cast<const ShadowPassData*>(data);
 		InRenderer->CurrentShader = InGDI->GetShader(RenderData->ShaderId);
 
-		InGDI->SetViewport(0, 0, RenderData->Width, RenderData->Height);
+		InGDI->SetViewport(0, 0, InRenderer->PerFrameData.Camera->Width, InRenderer->PerFrameData.Camera->Height);
 		InGDI->ClearWithColor(vec4(1, 1, 1, 1));
 		InRenderer->CurrentShader->Bind();
 		InRenderer->CurrentShader->SetMat4("lightSpace", RenderData->LightSpace);
@@ -189,7 +190,7 @@ namespace Dawn
 
 	DAWN_API void Draw::SSAOComputePass(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
-		BROFILER_EVENT("SSAO Compute Pass")
+		BROFILER_EVENT("SSAO Compute Pass");
 
 		const SSAOComputePassData* RenderData = static_cast<const SSAOComputePassData*>(data);
 		auto ComputeShader = InGDI->GetShader(RenderData->ShaderId);
@@ -231,8 +232,8 @@ namespace Dawn
 				ComputeShader->SetVec3("samples[" + std::to_string(i) + "]", (*RenderData->SSAOKernelData)[i]);
 			}
 			
-			ComputeShader->SetMat4("projection", RenderData->Projection);
-			ComputeShader->SetMat4("view", RenderData->View);
+			ComputeShader->SetMat4("projection", InRenderer->PerFrameData.Camera->GetProjection());
+			ComputeShader->SetMat4("view", InRenderer->PerFrameData.Camera->GetView());
 
 			InGDI->DrawIndexed(RenderData->FSQuadVAOId);
 

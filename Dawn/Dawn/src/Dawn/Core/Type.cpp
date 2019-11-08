@@ -3,5 +3,5 @@
 
 namespace Dawn
 {
-	std::map<std::string, Type*>* Type::Types = nullptr;
+	std::map<std::string, DawnType*>* DawnType::Types = nullptr;
 }

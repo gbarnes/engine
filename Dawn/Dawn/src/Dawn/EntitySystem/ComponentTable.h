@@ -29,6 +29,8 @@ namespace Dawn
 			return false;
 		}
 
+		virtual void* GetComponentByEntity(const Entity& InId) = 0;
+
 		virtual void ReleaseComponents()
 		{
 
@@ -106,6 +108,20 @@ namespace Dawn
 				return nullptr;
 
 			return Components[id.Index];
+		}
+
+		void* GetComponentByEntity(const Entity& InEntity) override
+		{
+			auto it = EntityToComponent.find(InEntity.Id);
+			if (it == EntityToComponent.end())
+				return nullptr;
+
+			ComponentRawId rawId = it->second;
+			ComponentId id = ComponentIds[rawId];
+			if (!id.IsValid)
+				return nullptr;
+
+			return (void*)Components[id.Index];
 		}
 
 		T* GetById(const ComponentId& InId)

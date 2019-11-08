@@ -35,7 +35,7 @@ namespace Dawn
 	{
 		if (InSceneData->CurrentSelectedEntity.IsValid())
 		{
-			auto meta = EntityTable::GetMeta(InSceneData->CurrentSelectedEntity);
+			auto meta = InWorld->GetEntityMetaData(InSceneData->CurrentSelectedEntity);
 			if (meta->bIsHiddenInEditorHierarchy)
 				return;
 
@@ -57,6 +57,10 @@ namespace Dawn
 			{
 				InSceneData->LastEulerRotation = rotation;
 				transform->Rotation = glm::angleAxis(glm::radians(rotation.y), vec3(0, 1, 0)) * glm::angleAxis(glm::radians(rotation.z), vec3(0, 0, 1)) * glm::angleAxis(glm::radians(rotation.x), vec3(1, 0, 0));
+				
+				TransformUtils::CalculateForward(transform);
+				TransformUtils::CalculateRight(transform);
+				TransformUtils::CalculateUp(transform);
 			}
 
 			if (!IsMouseDown(MouseBtn_Right))
@@ -85,7 +89,7 @@ namespace Dawn
 
 		for (auto PointLight : PointLightList)
 		{	
-			auto meta = EntityTable::GetMeta(PointLight.first->GetEntity());
+			auto meta = InWorld->GetEntityMetaData(PointLight.first->GetEntity());
 			if (meta->bIsHiddenInEditorHierarchy)
 				continue;
 
@@ -120,7 +124,7 @@ namespace Dawn
 		auto DirLightList = InWorld->GetComponentSets<DirectionalLight, Transform>();
 		for (auto DirLight : DirLightList)
 		{
-			auto meta = EntityTable::GetMeta(DirLight.first->GetEntity());
+			auto meta = InWorld->GetEntityMetaData(DirLight.first->GetEntity());
 			if (meta->bIsHiddenInEditorHierarchy)
 				continue;
 
@@ -156,12 +160,11 @@ namespace Dawn
 		auto CameraList = InWorld->GetComponentSets<Camera, Transform>();
 		for (auto Camera : CameraList)
 		{
-			auto meta = EntityTable::GetMeta(Camera.first->GetEntity());
+			auto meta = InWorld->GetEntityMetaData(Camera.first->GetEntity());
 			if (meta->bIsHiddenInEditorHierarchy)
 				continue;
 
 			vec2 ScreenPos = CameraUtils::WorldToScreenPoint(InEditorCamera, Camera.second->Position);
-
 			ImVec2 pos[2] =
 			{
 				ImVec2(ScreenPos.x - size.x * 0.5f, ScreenPos.y - size.y * 0.5f),
@@ -171,6 +174,12 @@ namespace Dawn
 			if (ImGui::IsMouseHoveringRect(pos[0], pos[1], false) && ImGui::IsMouseClicked(0))
 			{
 				InSceneData->CurrentSelectedEntity = Camera.first->GetEntity();
+			}
+
+			if (InSceneData->CurrentSelectedEntity.Id == Camera.first->GetEntity().Id)
+			{
+				vec2 ForwardPos = CameraUtils::WorldToScreenPoint(InEditorCamera, Camera.second->Position + Camera.second->Forward * 5.0f);
+				InSceneData->GizmoDrawList->AddLine(ImVec2(ScreenPos.x, ScreenPos.y), ImVec2(ForwardPos.x, ForwardPos.y), 0xff0000ff, 5.0f);
 			}
 
 			InSceneData->GizmoDrawList->AddImage(Texture->GetGPUAddress(), pos[0], pos[1],

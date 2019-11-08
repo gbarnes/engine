@@ -56,6 +56,7 @@ namespace Dawn
 	{
 		const auto GDI = Application->GetGDI();
 		const auto World = Application->GetWorld();
+		const auto EditorWorld = Application->GetEditorWorld();
 		const auto RS = Application->GetResourceSystem();
 
 		// mesh loading
@@ -75,11 +76,11 @@ namespace Dawn
 
 		g_World = World;
 
-		g_camera = g_World->GetCamera(0);
-		g_camTransform = g_camera->GetTransform(World.get());
+		g_camera = EditorWorld->GetCamera(0);
+		g_camTransform = g_camera->GetTransform(EditorWorld.get());
 		CameraUtils::CalculateView(g_camera, g_camTransform);
 
-		g_camera1 = g_World->GetCamera(1);
+		g_camera1 = g_World->GetCamera(0);
 		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(World.get()));
 
 		auto Light = LightUtils::CreateDirectionalLight(World.get(), quat(), vec4(0.9, 0.9, 0.9, 1.0f));
@@ -89,7 +90,6 @@ namespace Dawn
 		LightUtils::CreatePointLight(World.get(), glm::vec3(10.0f, 10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
 		LightUtils::CreatePointLight(World.get(), glm::vec3(-10.0f, -10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
 		LightUtils::CreatePointLight(World.get(), glm::vec3(10.0f, -10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
-
 
 
 		auto Quad = GfxPrimitiveFactory::AllocateQuad(GDI.get(), vec2(1.0f, -1.0f), 1.0f);
@@ -218,8 +218,6 @@ namespace Dawn
 				g_camTransform->Position -= g_camera->WorldUp * velocity * InDeltaTime;
 			}
 
-			
-
 			CameraUtils::CalculateView(g_camera, g_camTransform);
 			CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(g_World.get()));
 		}
@@ -328,8 +326,6 @@ namespace Dawn
 				SSAOComputePass->NoiseTextureId = Renderer->SSAOSettings.NoiseTextureId;
 				SSAOComputePass->Radius = Renderer->SSAOSettings.Radius;
 				SSAOComputePass->Bias = Renderer->SSAOSettings.Bias;
-				SSAOComputePass->Projection = g_camera->GetProjection();
-				SSAOComputePass->View = g_camera->GetView();
 				SSAOComputePass->Power = Renderer->SSAOSettings.Power;
 
 
@@ -350,7 +346,6 @@ namespace Dawn
 			LightingPassData->FSQuadVAOId = FinalPassQuadId;
 			LightingPassData->ViewPosition = g_camTransform->Position;
 			LightingPassData->SSAOBufferId = Renderer->TransientData.SSAOBlurBufferId;
-			LightingPassData->View = g_camera->GetView();
 
 		}
 		
@@ -361,8 +356,6 @@ namespace Dawn
 			FXAAPass->ShaderId = CommonShaderHandles::FXAA;
 			FXAAPass->RenderBufferId = Renderer->TransientData.FinalBufferId;
 			FXAAPass->FSQuadVAOId = FinalPassQuadId;
-			FXAAPass->ScreenWidth = g_camera->Width;
-			FXAAPass->ScreenHeight = g_camera->Height;
 		}
 
 

@@ -18,7 +18,7 @@ namespace Dawn
 		ResourceType_AnimatedMesh,
 		ResourceType_EntityDefinition,
 		ResourceType_Image,
-		ResourceType_Scene,
+		ResourceType_Level,
 		ResourceType_Count
 	};
 
@@ -106,7 +106,7 @@ namespace Dawn
 	};
 
 
-	struct DAWN_API Scene : Resource
+	struct DAWN_API Level : Resource
 	{
 		const char* Name;
 		std::vector<EntityData> Entities;

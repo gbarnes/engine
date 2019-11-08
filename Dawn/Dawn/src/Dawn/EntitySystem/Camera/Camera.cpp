@@ -3,12 +3,12 @@
 namespace Dawn
 {
 	MAKE_TYPE_BEGIN(Camera)
-		ADD_MEMBER(Camera, FieldOfView, float)
-		ADD_MEMBER(Camera, NearZ, float)
-		ADD_MEMBER(Camera, FarZ, float)
-		ADD_MEMBER(Camera, AspectRatio, float)
-		ADD_MEMBER(Camera, ClearColor, vec4)
-		ADD_MEMBER(Camera, WorldUp, vec3)
-		ADD_MEMBER(Camera, bIsOrthographic, bool)
+		ADD_MEMBER(Camera, FieldOfView, FloatType, true)
+		ADD_MEMBER(Camera, NearZ, FloatType, true)
+		ADD_MEMBER(Camera, FarZ, FloatType, true)
+		ADD_MEMBER(Camera, AspectRatio, FloatType, true)
+		ADD_MEMBER(Camera, ClearColor, ColorType, true)
+		ADD_MEMBER(Camera, WorldUp, Vector3Type, true)
+		ADD_MEMBER(Camera, bIsOrthographic, BoolType, true)
 	MAKE_TYPE_END()
 }

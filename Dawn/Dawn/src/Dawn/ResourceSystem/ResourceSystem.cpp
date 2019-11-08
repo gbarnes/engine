@@ -25,6 +25,9 @@ namespace Dawn
 		if (InExtension == ".shader")
 			return ResourceType_Shader;
 
+		if (InExtension == ".level")
+			return ResourceType_Level;
+
 		return ResourceType_None;
 	}
 
@@ -45,6 +48,7 @@ namespace Dawn
 		Resources.Shaders.Clear();
 		Resources.Images.Clear();
 		Resources.Materials.Clear();
+		Resources.Levels.Clear();
 	}
 
 	bool ResourceSystem::BuildDatabase()

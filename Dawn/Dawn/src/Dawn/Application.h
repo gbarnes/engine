@@ -40,6 +40,11 @@ namespace Dawn
 			return World;
 		}
 
+		Shared<World> GetEditorWorld()
+		{
+			return EditorWorld;
+		}
+
 		Shared<PhysicsWorld> GetPhysics()
 		{
 			return Physics;
@@ -63,6 +68,7 @@ namespace Dawn
 		Shared<DeferredRenderer> Renderer;
 		Shared<GfxGDI> GDI;
 		Shared<World> World;
+		Shared<Dawn::World> EditorWorld;
 		Shared<ResourceSystem> ResourceSystem;
 		Shared<PhysicsWorld> Physics;
 		Unique<Window> Window;

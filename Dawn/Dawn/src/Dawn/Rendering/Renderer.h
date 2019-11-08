@@ -32,7 +32,7 @@ namespace Dawn
 	public:
 		virtual void AllocateTransientData(Application* InApp) = 0;
 		virtual void Resize(GfxGDI* InGDI, u32 InWidth, u32 InHeight) = 0;
-		virtual void BeginFrame(GfxGDI* InGDI, World* InWorld) = 0;
+		virtual void BeginFrame(GfxGDI* InGDI, Camera* InCamera) = 0;
 		virtual void Submit(Application* InApp) = 0;
 		virtual void EndFrame(GfxGDI* InGDI) = 0;
 	};
@@ -42,7 +42,7 @@ namespace Dawn
 	public:
 		void AllocateTransientData(Application* InApp) override {}
 		void Resize(GfxGDI* InGDI, u32 InWidth, u32 InHeight) override {}
-		void BeginFrame(GfxGDI* InGDI, World* InWorld) override {}
+		void BeginFrame(GfxGDI* InGDI, Camera* InCamera) override {}
 		void Submit(Application* InApp) override {}
 		void EndFrame(GfxGDI* InGDI) override {
 			InGDI->Present();
@@ -58,6 +58,7 @@ namespace Dawn
 		GfxResId ShadowMapBufferId = INVALID_HANDLE;
 	};
 
+	struct Camera;
 	struct DAWN_API PerFrameData
 	{
 		RenderBucket<u8> ShadowBucket;
@@ -65,6 +66,7 @@ namespace Dawn
 		RenderBucket<u8> SSAOBucket;
 		RenderBucket<u8> LightingBucket;
 		RenderBucket<u8> FinalPassBucket;
+		Camera* Camera;
 	};
 
 	struct DAWN_API SSAOSettings
@@ -99,7 +101,7 @@ namespace Dawn
 
 		void AllocateTransientData(Application* InApp) override;
 		void Resize(GfxGDI* InGDI, u32 InWidth, u32 InHeight) override;
-		void BeginFrame(GfxGDI* InGDI, World* InWorld) override;
+		void BeginFrame(GfxGDI* InGDI, Camera* InCamera) override;
 		void Submit(Application* InApp) override;
 		void EndFrame(GfxGDI* InGDI) override;
 	};

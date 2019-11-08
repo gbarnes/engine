@@ -6,16 +6,16 @@
 namespace Dawn
 {
 	MAKE_TYPE_BEGIN(DirectionalLight)
-		ADD_MEMBER(DirectionalLight, Color, vec4)
-		ADD_MEMBER(DirectionalLight, Intensity, float)
-		ADD_MEMBER(DirectionalLight, bCastShadows, bool)
+		ADD_MEMBER(DirectionalLight, Color, ColorType, true)
+		ADD_MEMBER(DirectionalLight, Intensity, FloatType, true)
+		ADD_MEMBER(DirectionalLight, bCastShadows, BoolType, true)
 	MAKE_TYPE_END()
 
 	MAKE_TYPE_BEGIN(PointLight)
-		ADD_MEMBER(PointLight, Color, vec4)
-		ADD_MEMBER(PointLight, Intensity, float)
-		ADD_MEMBER(PointLight, Range, float)
-		ADD_MEMBER(PointLight, bCastShadows, bool)
+		ADD_MEMBER(PointLight, Color, ColorType, true)
+		ADD_MEMBER(PointLight, Intensity, FloatType, true)
+		ADD_MEMBER(PointLight, Range, FloatType, true)
+		ADD_MEMBER(PointLight, bCastShadows, BoolType, true)
 	MAKE_TYPE_END()
 
 	DirectionalLight* LightUtils::CreateDirectionalLight(World* InWorld, quat InOrientation, vec4 InColor, float InIntensity)

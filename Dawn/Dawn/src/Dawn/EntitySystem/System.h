@@ -13,7 +13,7 @@ namespace Dawn
 	public:
 		~ISystem() = default;
 
-		virtual Type* AccessType() const = 0;
+		virtual DawnType* AccessType() const = 0;
 		virtual void Update(World* InWorld) = 0;
 	};
 

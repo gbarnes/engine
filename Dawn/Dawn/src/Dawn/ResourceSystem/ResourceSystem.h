@@ -81,6 +81,7 @@ namespace Dawn
 		DECLARE_RESOURCE_TYPE(ResourceType_Material, Material, Materials)
 		DECLARE_RESOURCE_TYPE(ResourceType_Image, Image, Images)
 		DECLARE_RESOURCE_TYPE(ResourceType_Shader, Shader, Shaders)
+		DECLARE_RESOURCE_TYPE(ResourceType_Level, Level, Levels)
 	private:
 		ResourceSystem(Path InPath, std::vector<std::string> InFilter, bool bWatchForChanges);
 
@@ -93,6 +94,7 @@ namespace Dawn
 			HandleObjectArray<Shader> Shaders;
 			HandleObjectArray<Image> Images;
 			HandleObjectArray<Material> Materials;
+			HandleObjectArray<Level> Levels;
 		};
 
 		bool bWatchForChanges;

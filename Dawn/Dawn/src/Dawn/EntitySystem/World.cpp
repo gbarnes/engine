@@ -8,7 +8,10 @@
 
 namespace Dawn
 {
+	Camera* World::ActiveCamera = nullptr;
+
 	World::World()
+		: Entities(Shared<World>(this))
 	{
 	}
 
@@ -18,6 +21,8 @@ namespace Dawn
 
 	void World::Shutdown()
 	{
+	//	Entities.Clear();
+	
 	}
 
 	//
@@ -62,7 +67,7 @@ namespace Dawn
 	Camera* World::GetCamera(const i32 InId)
 	{
 		i32 e = CameraEntities[InId];
-		Entity entity = EntityTable::Get(e);
+		Entity entity = Entities.Get(e);
 
 		if (!entity.IsValid())
 			return nullptr;
@@ -76,7 +81,7 @@ namespace Dawn
 
 		for (auto CamId : CameraEntities)
 		{
-			Entity entity = EntityTable::Get(CamId);
+			Entity entity = Entities.Get(CamId);
 			auto CamRef = GetComponentByEntity<Camera>(entity);
 			if (CamRef)
 				Cams.push_back(CamRef);
@@ -89,9 +94,9 @@ namespace Dawn
 	// Creates a new Entity with the given name and returns it's 
 	// entity handle.
 	//
-	inline Entity World::CreateEntity(const std::string &InName) const
+	Entity World::CreateEntity(const std::string &InName)
 	{
-		return EntityTable::Create(InName);
+		return Entities.Create(InName);
 	}
 
 	//

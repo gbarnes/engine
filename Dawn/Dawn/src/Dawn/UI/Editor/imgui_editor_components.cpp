@@ -8,14 +8,14 @@
 
 namespace Dawn
 {
-	void ShowEntity(Entity* InEntity)
+	void ShowEntity(World* InWorld, Entity* InEntity)
 	{
 		if (InEntity == nullptr)
 			return;
 
 		if (ImGui::CollapsingHeader("Entity"))
 		{
-			auto meta = EntityTable::GetMeta(*InEntity);
+			auto meta = InWorld->GetEntityMetaData(*InEntity);
 
 			ImGui::Indent(10.0f);
 			ImGui::Text("Id: %u", InEntity->Id);
@@ -101,7 +101,7 @@ namespace Dawn
 		{
 			ImGui::Indent(10.0f);
 			ImGui::ColorEdit4("Color", &InLight->Color[0]);
-			ImGui::InputFloat("Intensity", &InLight->Intensity, 0.1f, 200.0f, "%.4f", 0.1f);
+			ImGui::InputFloat("Intensity", &InLight->Intensity, 0.1f, 200.0f, "%.4f");
 			ImGui::Checkbox("Cast Shadows", &InLight->bCastShadows);
 			ImGui::Unindent(10.0f);
 		}

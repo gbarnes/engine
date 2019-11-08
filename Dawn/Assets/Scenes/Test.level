@@ -1,0 +1,80 @@
+---Entity
+  Name: Cam1
+---Component 0
+Transform:
+  Position: {x: 0.000000, y: 0.000000 z: 0.000000}
+  Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}
+  Scale: {x: 1.000000, y: 1.000000 z: 1.000000}
+---Component 1
+Camera:
+  AspectRatio: 1.887906
+  ClearColor: {r: 0.400000, g: 0.600000, b: 0.900000, a: 1.000000}
+  FarZ: 10000.000000
+  FieldOfView: 65.000000
+  NearZ: 0.000000
+  WorldUp: {x: 0.000000, y: 1.000000 z: 0.000000}
+  bIsOrthographic: 1
+---Entity
+  Name: Light
+---Component 2
+Transform:
+  Position: {x: 0.000000, y: 0.000000 z: 0.000000}
+  Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 0.000000}
+  Scale: {x: 1.000000, y: 1.000000 z: 1.000000}
+---Component 3
+DirectionalLight:
+  Color: {r: 0.900000, g: 0.900000, b: 0.900000, a: 1.000000}
+  Intensity: 1.000000
+  bCastShadows: 1
+---Entity
+  Name: Pointlight
+---Component 4
+Transform:
+  Position: {x: -10.000000, y: 10.000000 z: 10.000000}
+  Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}
+  Scale: {x: 1.000000, y: 1.000000 z: 1.000000}
+---Component 5
+PointLight:
+  Color: {r: 1.000000, g: 1.000000, b: 1.000000, a: 1.000000}
+  Intensity: 200.000000
+  Range: 1.000000
+  bCastShadows: 0
+---Entity
+  Name: Pointlight
+---Component 6
+Transform:
+  Position: {x: 10.000000, y: 10.000000 z: 10.000000}
+  Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}
+  Scale: {x: 1.000000, y: 1.000000 z: 1.000000}
+---Component 7
+PointLight:
+  Color: {r: 1.000000, g: 1.000000, b: 1.000000, a: 1.000000}
+  Intensity: 200.000000
+  Range: 1.000000
+  bCastShadows: 0
+---Entity
+  Name: Pointlight
+---Component 8
+Transform:
+  Position: {x: -10.000000, y: -10.000000 z: 10.000000}
+  Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}
+  Scale: {x: 1.000000, y: 1.000000 z: 1.000000}
+---Component 9
+PointLight:
+  Color: {r: 1.000000, g: 1.000000, b: 1.000000, a: 1.000000}
+  Intensity: 200.000000
+  Range: 1.000000
+  bCastShadows: 0
+---Entity
+  Name: Pointlight
+---Component 10
+Transform:
+  Position: {x: 10.000000, y: -10.000000 z: 10.000000}
+  Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}
+  Scale: {x: 1.000000, y: 1.000000 z: 1.000000}
+---Component 11
+PointLight:
+  Color: {r: 1.000000, g: 1.000000, b: 1.000000, a: 1.000000}
+  Intensity: 200.000000
+  Range: 1.000000
+  bCastShadows: 0

@@ -131,15 +131,13 @@ namespace Dawn
 		}
 	}
 
-	void DeferredRenderer::BeginFrame(GfxGDI* InGDI, World* InWorld)
+	void DeferredRenderer::BeginFrame(GfxGDI* InGDI, Camera* InCamera)
 	{
-		BROFILER_EVENT("Rendering_BeginFrame")
+		BROFILER_EVENT("Rendering_BeginFrame");
 
-		// todo --- change the way how we obtain the camera ... for now we just use the default one!
-		auto Camera = InWorld->GetCamera(0);
-
+		PerFrameData.Camera = InCamera;
 		PerFrameData.ShadowBucket.Reset(2048, TransientData.ShadowMapBufferId, mat4(), mat4());
-		PerFrameData.GeometryBucket.Reset(2048, TransientData.GBufferId, Camera->GetView(), Camera->GetProjection());
+		PerFrameData.GeometryBucket.Reset(2048, TransientData.GBufferId, InCamera->GetView(), InCamera->GetProjection());
 		PerFrameData.SSAOBucket.Reset(2, TransientData.SSAOBufferId, mat4(), mat4());
 		PerFrameData.LightingBucket.Reset(4, TransientData.FinalBufferId, mat4(), mat4());
 		PerFrameData.FinalPassBucket.Reset(4, INVALID_HANDLE, mat4(), mat4());

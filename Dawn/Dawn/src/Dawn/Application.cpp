@@ -142,6 +142,12 @@ namespace Dawn
 		World->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
 		World->AddTable("DirectionalLight", std::make_unique<ComponentTable<DirectionalLight>>());
 		World->AddTable("PointLight", std::make_unique<ComponentTable<PointLight>>());
+
+
+		EditorWorld = std::make_unique<Dawn::World>();
+
+		EditorWorld->AddTable("Transform", std::make_unique<ComponentTable<Transform>>());
+		EditorWorld->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
 		//World->AddSystem(std::make_unique<RigidbodySystem>());
 
 		Physics = std::make_unique<PhysicsWorld>();
@@ -190,6 +196,8 @@ namespace Dawn
 			ClearLayers();
 			Physics->Shutdown();
 			JobSystem::Shutdown();
+			World->Shutdown();
+			EditorWorld->Shutdown();
 			GDI->Shutdown();
 			ResourceSystem->Shutdown();
 			ShutdownInput();
@@ -204,8 +212,14 @@ namespace Dawn
 		Time.FrameCount++;
 		
 #if DAWN_DEBUG
-		if (IsKeyPressed(KeyCode::KeyCode_F6))
+		if (IsKeyPressed(KeyCode::KeyCode_F6)) {
 			bIsInEditMode = !bIsInEditMode;
+			
+			if(bIsInEditMode)
+				World::SetActiveCamera(EditorWorld->GetCamera(0));
+			else 
+				World::SetActiveCamera(World->GetCamera(0));
+		}
 
 		if (IsKeyPressed(KeyCode::KeyCode_F5))
 			bShowGBuffer = !bShowGBuffer;
@@ -235,7 +249,6 @@ namespace Dawn
 				{
 					scene->simulate(FixedTime);
 					scene->fetchResults(true);
-				
 				}
 
 				ResourceSystem->Refresh();
@@ -248,7 +261,7 @@ namespace Dawn
 		// Rendering
 		{BROFILER_EVENT("Rendering")
 
-			Renderer->BeginFrame(GDI.get(), World.get());
+			Renderer->BeginFrame(GDI.get(), World::GetActiveCamera());
 
 			for (auto Layer : Layers)
 				Layer->Render();
@@ -277,6 +290,19 @@ namespace Dawn
 			if(Camera->bIsOrthographic)
 				CameraUtils::CalculateOthographic(Camera);
 			else 
+				CameraUtils::CalculatePerspective(Camera);
+		}
+
+		Cameras = EditorWorld->GetCameras();
+		for (auto Camera : Cameras)
+		{
+			Camera->Width = width;
+			Camera->Height = height;
+			Camera->AspectRatio = (float)width / (float)height;
+
+			if (Camera->bIsOrthographic)
+				CameraUtils::CalculateOthographic(Camera);
+			else
 				CameraUtils::CalculatePerspective(Camera);
 		}
 

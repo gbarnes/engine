@@ -8,8 +8,9 @@ namespace Dawn
 	struct Camera;
 	struct DirectionalLight;
 	struct PointLight;
+	class World;
 
-	void ShowEntity(Entity* InEntity);
+	void ShowEntity(World* InWorld, Entity* InEntity);
 	void ShowTransformComponent(Transform* InTransform, ImGuizmo::MODE& InEditSpace);
 	void ShowCameraComponent(Camera* InCamera);
 	void ShowDirectionalLightComponent(DirectionalLight* InLight);

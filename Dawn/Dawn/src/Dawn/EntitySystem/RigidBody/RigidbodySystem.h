@@ -11,7 +11,7 @@ namespace Dawn
 		REGISTER_TYPE(RigidbodySystem)
 
 	public:
-		virtual Type* AccessType() const override
+		virtual DawnType* AccessType() const override
 		{
 			return RigidbodySystem::GetType();
 		}

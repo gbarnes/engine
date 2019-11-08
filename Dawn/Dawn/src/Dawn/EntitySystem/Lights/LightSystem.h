@@ -17,7 +17,7 @@ namespace Dawn
 			for (std::pair<PointLight*, Transform*> pair : pointLights)
 			{
 				auto entity = pair.second->GetEntity();
-				auto meta = EntityTable::GetMeta(entity);
+				auto meta = InWorld->GetEntityMetaData(entity);
 
 				if (meta->bIsActive)
 				{
@@ -36,7 +36,7 @@ namespace Dawn
 			for (std::pair<DirectionalLight*, Transform*> pair : directionalLights)
 			{
 				auto entity = pair.second->GetEntity();
-				auto meta = EntityTable::GetMeta(entity);
+				auto meta = InWorld->GetEntityMetaData(entity);
 
 				if (meta->bIsActive)
 				{

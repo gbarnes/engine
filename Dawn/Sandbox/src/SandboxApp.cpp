@@ -22,7 +22,7 @@ SandboxApp::~SandboxApp()
 }
 
 // note-- these will be removed once we get a better structure into the "game"
-Camera* g_Camera;
+
 GfxRenderBuffer* g_RenderBuffer;
 GfxVertexArray* g_ScreenQuadVAO;
 
@@ -30,7 +30,7 @@ void SandboxApp::Load()
 {
 	RenderResourceHelper::LoadCommonShaders(ResourceSystem.get());
 
-	g_Camera = CreateCamera(GetWorld().get(),
+	auto editorCam = CreateCamera(GetEditorWorld().get(),
 		"EditorCam",
 		Settings.Width,
 		Settings.Height,
@@ -39,22 +39,20 @@ void SandboxApp::Load()
 		vec3(0, 3, 10)
 	);
 
-	auto meta = EntityTable::GetMeta(g_Camera->GetEntity());
+	auto meta = GetEditorWorld()->GetEntityMetaData(editorCam->GetEntity());
 	meta->bIsHiddenInEditorHierarchy = true;
-	CameraUtils::CalculatePerspective(g_Camera);
+	CameraUtils::CalculatePerspective(editorCam);
 
 	auto Cam1 = CreateCamera(GetWorld().get(),
-		"Cam1",
+		"Cam",
 		Settings.Width,
 		Settings.Height,
-		0.0f, 10000.0f, 65.0f,
+		0.0f, 1000.0f, 65.0f,
 		vec4(0.4f, 0.6f, 0.9f, 1.0f),
-		vec3(0, 0, 0),
-		quat(1, 0, 0, 0)
+		vec3(0, 0, 0)
 	);
 
-	Cam1->bIsOrthographic = true;
-	CameraUtils::CalculateOthographic(Cam1);
+	CameraUtils::CalculatePerspective(Cam1);
 
 	auto Id = ResourceSystem->LoadFile("Textures/grid.png");
 	if (auto GridImage = ResourceSystem->FindImage(Id))
@@ -78,7 +76,7 @@ void SandboxApp::Load()
 
 	ImGuiWrapper::Create(this->Settings.Hwnd, this->GetGDI().get());
 
-	
+	World::SetActiveCamera(Cam1);
 }
 
 void SandboxApp::Resize(int InWidth, int InHeight)

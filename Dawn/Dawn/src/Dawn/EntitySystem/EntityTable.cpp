@@ -2,11 +2,6 @@
 
 namespace Dawn
 {
-	std::array<Entity, MaxNumbersOfEntities> EntityTable::Entities;
-	std::array<EntityMetaData, MaxNumbersOfEntities> EntityTable::MetaData;
-	u32 EntityTable::CurrentId = 0;
-	u32 EntityTable::TotalCount = 0;
-
 	Entity EntityTable::Get(const i32 InId)
 	{
 		return Entities[InId];
@@ -31,6 +26,7 @@ namespace Dawn
 		Meta.bIsHiddenInEditorHierarchy = false;
 		Meta.bIsActive = true;
 		Meta.Name = InName;
+		Meta.World = this->World;
 
 		u32 TempId = CurrentId;
 		CurrentId = TotalCount + 1;
