@@ -87,10 +87,11 @@ namespace Dawn
 		//AppSettings* Settings2 = D_NEW(AppSettings, Arena);
 		//Settings2->AlphaBits = 0;
 
-		ResourceSystem = Dawn::ResourceSystem::Create(Paths::ProjectContentDir(), { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx" }, true);
+		ResourceSystem = Dawn::ResourceSystem::Create(Paths::ProjectContentDir(), { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx", ".level" }, true);
 		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadModel), BIND_FS_LOADER(Dawn::RS_ReloadModel), { ".obj", ".fbx" });
 		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadShader), BIND_FS_LOADER(Dawn::RS_LoadShader), { ".shader" });
 		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadImage), BIND_FS_LOADER(Dawn::RS_ReloadImage), { ".jpg", ".png", ".PNG" });
+		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadLevel), BIND_FS_LOADER(Dawn::RS_ReloadLevel), { ".level"});
 
 		if (!ResourceSystem->BuildDatabase())
 		{
@@ -136,21 +137,20 @@ namespace Dawn
 		JobSystem::Initialize();
 
 		// Boot up World!
-		World = std::make_unique<Dawn::World>();
+		World = std::make_shared<Dawn::World>();
 		
 		World->AddTable("Transform", std::make_unique<ComponentTable<Transform>>());
 		World->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
 		World->AddTable("DirectionalLight", std::make_unique<ComponentTable<DirectionalLight>>());
 		World->AddTable("PointLight", std::make_unique<ComponentTable<PointLight>>());
 
-
-		EditorWorld = std::make_unique<Dawn::World>();
+		EditorWorld = std::make_shared<Dawn::World>();
 
 		EditorWorld->AddTable("Transform", std::make_unique<ComponentTable<Transform>>());
 		EditorWorld->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
 		//World->AddSystem(std::make_unique<RigidbodySystem>());
 
-		Physics = std::make_unique<PhysicsWorld>();
+		Physics = std::make_shared<PhysicsWorld>();
 		if(!Physics->Initialize())
 		{
 			DWN_CORE_ERROR("Couldn't initialize physx: {0} !\n", PX_PHYSICS_VERSION);
@@ -201,6 +201,9 @@ namespace Dawn
 			GDI->Shutdown();
 			ResourceSystem->Shutdown();
 			ShutdownInput();
+			
+			World.reset();
+			EditorWorld.reset();
 
 			DWN_CORE_INFO("Core Context shutdown.");
 		}
@@ -293,6 +296,7 @@ namespace Dawn
 				CameraUtils::CalculatePerspective(Camera);
 		}
 
+#if DAWN_DEBUG
 		Cameras = EditorWorld->GetCameras();
 		for (auto Camera : Cameras)
 		{
@@ -305,6 +309,7 @@ namespace Dawn
 			else
 				CameraUtils::CalculatePerspective(Camera);
 		}
+#endif
 
 		Settings.Width = width;
 		Settings.Height = height;

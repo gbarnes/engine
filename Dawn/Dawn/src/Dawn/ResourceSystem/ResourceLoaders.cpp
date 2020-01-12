@@ -15,6 +15,7 @@
 #include "assimp/Importer.hpp"
 #include "glm.hpp"
 #include "pugixml.hpp"
+#include <regex>
 
 #include "Application.h"
 #include "Core/GDI/inc_gfx.h"
@@ -89,7 +90,7 @@ namespace Dawn
 			auto VertexArrayId = GDI->CreateVertexArray(&VertexArray);
 
 			GfxVertexBuffer* VertexBuffer;
-			GDI->CreateVertexBuffer(&VertexData[0], VertexData.size() * sizeof(float), &VertexBuffer);
+			GDI->CreateVertexBuffer(&VertexData[0], (u32)(VertexData.size() * sizeof(float)), &VertexBuffer);
 			VertexBuffer->SetLayout(MeshLayout);
 			VertexArray->AttachVertexBuffer(VertexBuffer);
 
@@ -437,4 +438,96 @@ namespace Dawn
 		return INVALID_HANDLE;
 	}
 
+	ResourceId RS_LoadLevel(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InMetaData)
+	{
+		static std::string EntityKeyword = "---Entity ";
+		static std::string ComponentKeyword = "---Component ";
+
+		ResourceId Id = InResourceSystem->FindResourceIdFromFileId(InMetaData->Id);
+		if (Id.IsValid)
+			return Id;
+
+		bool bIsAtComponent = false;
+
+		EntityData* Entity = nullptr;
+		ComponentData* Component = nullptr;
+		Level* Level;
+		Id = InResourceSystem->CreateLevel(&Level);
+
+		std::string FullPath = ToFullFilePath(InWorkspacePath, InMetaData);
+		bool bIsLevelLoaded = ReadFileLineByLine(FullPath, [&](const std::string& Line)
+		{
+			std::string_view view(Line);
+
+			// Begin Entity Parsing
+			if (view.substr(0, EntityKeyword.size()) == EntityKeyword)
+			{
+				EntityData NewEntity;
+				NewEntity.Name = std::string(view.substr(EntityKeyword.size(), view.size() - EntityKeyword.size()));
+				NewEntity.InFileId = InMetaData->Id;
+
+				Level->Entities.push_back(NewEntity);
+				Entity = &Level->Entities.at(Level->Entities.size() - 1);
+		
+				bIsAtComponent = false;
+			}
+
+			// parse component variable
+			if (bIsAtComponent)
+			{
+				std::regex expression("  ([a-zA-Z]*): (.*)");
+				std::smatch match;
+
+				bool bFound = std::regex_search(Line, match, expression);
+
+				if (bFound)
+				{
+					std::string Name = match.str(1);
+					std::string Data = match.str(2);
+
+
+					ComponentData::ComponentValue ComponentVal;
+					ComponentVal.VariableName = Name;
+					ComponentVal.Data = Data;
+					Component->ComponentValues.push_back(ComponentVal);
+				}
+			}
+
+			// Begin Component Parsing!
+			if (Entity != nullptr && view.substr(0, ComponentKeyword.size()) == ComponentKeyword)
+			{
+				std::regex expression(".* ([a-zA-Z]*)");
+				std::smatch match;
+
+				bool bFound = std::regex_search(Line, match, expression);
+				if (bFound)
+				{
+					std::string type = match.str(1);
+
+					ComponentData NewComponent;
+					NewComponent.Type = type;
+
+					Level->Components.push_back(NewComponent);
+					int id = Level->Components.size() - 1;
+
+					Component = &Level->Components[id];
+					Component->Id = static_cast<u32>(id);
+
+					Entity->IdToComponent.push_back(Component->Id);
+					bIsAtComponent = true;
+				}
+			}
+		});
+
+		if (!bIsLevelLoaded)
+			return INVALID_HANDLE;
+
+		return Id;
+	}
+
+	ResourceId RS_ReloadLevel(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InMetaData)
+	{
+		DWN_CORE_WARN("No implementation to reload a level yet...");
+		return INVALID_HANDLE;
+	}
 }

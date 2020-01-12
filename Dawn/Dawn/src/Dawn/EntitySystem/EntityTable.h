@@ -9,7 +9,7 @@ namespace Dawn
 	class EntityTable
 	{
 	public:
-		EntityTable(Shared<World> InWorld) 
+		EntityTable(World* InWorld) 
 			: World(InWorld) {}
 		
 		Entity Get(const i32 InId);
@@ -17,8 +17,12 @@ namespace Dawn
 		Entity Create(const std::string& InName);
 		void Remove(const i32 InId);
 		std::array<Entity, MaxNumbersOfEntities>& GetEntities(u32* OutCount);
+		void Clear()
+		{
+		}
+
 	private:
-		Shared<World> World;
+		World* World;
 		u32 CurrentId = 0;
 		u32 TotalCount = 0;
 		std::array<Entity, MaxNumbersOfEntities> Entities;

@@ -30,6 +30,7 @@ namespace Dawn
 		}
 
 		virtual void* GetComponentByEntity(const Entity& InId) = 0;
+		virtual ComponentId AddByVoid(const Entity& InEntity, void* InComponent) = 0;
 
 		virtual void ReleaseComponents()
 		{
@@ -72,6 +73,12 @@ namespace Dawn
 				TotalCount++;
 
 			return id;
+		}
+
+		ComponentId AddByVoid(const Entity& InEntity, void* InComponent) override
+		{
+			T* CastedComponent = static_cast<T*>(InComponent);
+			return Add(InEntity, CastedComponent);
 		}
 
 		void Destroy(const Entity& InEntity)

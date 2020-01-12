@@ -43,17 +43,6 @@ void SandboxApp::Load()
 	meta->bIsHiddenInEditorHierarchy = true;
 	CameraUtils::CalculatePerspective(editorCam);
 
-	auto Cam1 = CreateCamera(GetWorld().get(),
-		"Cam",
-		Settings.Width,
-		Settings.Height,
-		0.0f, 1000.0f, 65.0f,
-		vec4(0.4f, 0.6f, 0.9f, 1.0f),
-		vec3(0, 0, 0)
-	);
-
-	CameraUtils::CalculatePerspective(Cam1);
-
 	auto Id = ResourceSystem->LoadFile("Textures/grid.png");
 	if (auto GridImage = ResourceSystem->FindImage(Id))
 	{
@@ -76,7 +65,10 @@ void SandboxApp::Load()
 
 	ImGuiWrapper::Create(this->Settings.Hwnd, this->GetGDI().get());
 
-	World::SetActiveCamera(Cam1);
+
+	auto LevelId = ResourceSystem->LoadFile("Scenes/Test.level");
+	auto Level = ResourceSystem->FindLevel(LevelId);
+	World::LoadLevel(GetWorld().get(), Level);
 }
 
 void SandboxApp::Resize(int InWidth, int InHeight)

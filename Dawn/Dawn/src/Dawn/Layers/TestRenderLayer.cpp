@@ -81,15 +81,16 @@ namespace Dawn
 		CameraUtils::CalculateView(g_camera, g_camTransform);
 
 		g_camera1 = g_World->GetCamera(0);
+		World->SetActiveCamera(g_camera1);
 		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(World.get()));
 
-		auto Light = LightUtils::CreateDirectionalLight(World.get(), quat(), vec4(0.9, 0.9, 0.9, 1.0f));
+		/*auto Light = LightUtils::CreateDirectionalLight(World.get(), quat(), vec4(0.9, 0.9, 0.9, 1.0f));
 		DirectionalLightId = Light->Id.Entity;
 
 		LightUtils::CreatePointLight(World.get(), glm::vec3(-10.0f, 10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
 		LightUtils::CreatePointLight(World.get(), glm::vec3(10.0f, 10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
 		LightUtils::CreatePointLight(World.get(), glm::vec3(-10.0f, -10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
-		LightUtils::CreatePointLight(World.get(), glm::vec3(10.0f, -10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);
+		LightUtils::CreatePointLight(World.get(), glm::vec3(10.0f, -10.0f, 10.0f), vec4(1.0, 1.0, 1.0, 1.0), 200.0f, 1.0f);*/
 
 
 		auto Quad = GfxPrimitiveFactory::AllocateQuad(GDI.get(), vec2(1.0f, -1.0f), 1.0f);
@@ -254,6 +255,7 @@ namespace Dawn
 		auto Renderer = Application->GetRenderer();
 		auto GDI = Application->GetGDI();
 		auto World = Application->GetWorld();
+		auto ActiveCam = World->GetActiveCamera();
 
 		// Geometry bucket
 		{
@@ -265,14 +267,15 @@ namespace Dawn
 			ShadowPassCmd->Height = Renderer->ShadowSettings.Height;
 			ShadowPassCmd->ShaderId = CommonShaderHandles::ShadowMapCompute;
 
-			auto directionalLight = World->GetComponentByEntity<DirectionalLight>(DirectionalLightId);
-			LightUtils::CalculateOrthoLightMatrix(World.get(), directionalLight, 0.1f, 1000.0f);
-			ShadowPassCmd->LightSpace = directionalLight->LightSpace;
+			TODO("this should really be done differently...");
+			auto directionalLights = World->GetComponentsByType<DirectionalLight>();
+			LightUtils::CalculateOrthoLightMatrix(World.get(), directionalLights[0], 0.1f, 1000.0f);
+			ShadowPassCmd->LightSpace = directionalLights[0]->LightSpace;
 
 
 			auto ViewportCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::SetViewportData>(0u);
-			ViewportCmd->Width = g_camera->Width;
-			ViewportCmd->Height = g_camera->Height;
+			ViewportCmd->Width = ActiveCam->Width;
+			ViewportCmd->Height = ActiveCam->Height;
 
 			auto ClearColor = Renderer->PerFrameData.GeometryBucket.AppendCommand<Draw::ClearSceneWithColorData>(ViewportCmd);
 			ClearColor->ClearColor = vec4(0.0, 0.0, 0.0, 1.0f);
@@ -338,7 +341,7 @@ namespace Dawn
 
 
 			auto ClearColor = Renderer->PerFrameData.LightingBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
-			ClearColor->ClearColor = g_camera->ClearColor;
+			ClearColor->ClearColor = ActiveCam->ClearColor;
 
 			auto LightingPassData = Renderer->PerFrameData.LightingBucket.AppendCommand<Draw::LightingPassData>(ClearColor);
 			LightingPassData->ShaderId = CommonShaderHandles::LightingPass;
@@ -351,7 +354,7 @@ namespace Dawn
 		
 		{
 			auto ClearFinalPass = Renderer->PerFrameData.FinalPassBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
-			ClearFinalPass->ClearColor = g_camera->ClearColor;
+			ClearFinalPass->ClearColor = ActiveCam->ClearColor;
 			auto FXAAPass = Renderer->PerFrameData.FinalPassBucket.AppendCommand<Draw::FXAAData>(ClearFinalPass);
 			FXAAPass->ShaderId = CommonShaderHandles::FXAA;
 			FXAAPass->RenderBufferId = Renderer->TransientData.FinalBufferId;
@@ -371,5 +374,9 @@ namespace Dawn
 
 	void TestRenderLayer::Free()
 	{
+		g_World.reset();
+		g_camera = nullptr;
+		g_camera1 = nullptr;
+		g_camTransform = nullptr;
 	}
 }

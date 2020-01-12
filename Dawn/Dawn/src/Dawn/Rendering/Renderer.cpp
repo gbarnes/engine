@@ -134,6 +134,7 @@ namespace Dawn
 	void DeferredRenderer::BeginFrame(GfxGDI* InGDI, Camera* InCamera)
 	{
 		BROFILER_EVENT("Rendering_BeginFrame");
+		D_ASSERT(InCamera != nullptr, "There is no active camera to use for rendering!");
 
 		PerFrameData.Camera = InCamera;
 		PerFrameData.ShadowBucket.Reset(2048, TransientData.ShadowMapBufferId, mat4(), mat4());

@@ -34,6 +34,7 @@ using namespace Microsoft::WRL;
 #define GLM_GTC_half_float
 #include "glm.hpp"
 #include "gtx/quaternion.hpp"
+#include "spdlog/fmt/fmt.h"
 
 // The min/max macros conflict with like-named member functions.
 // Only use std::min and std::max defined in <algorithm>.
@@ -101,12 +102,39 @@ namespace Dawn
 #define _128MB _MB(128)
 #define _256MB _MB(256)
 
-#define TODO(x) __pragma(message("==========> TODO: "_STR(x) " :: " __FILE__ "@"STR(__LINE__)))
+#define TODO(x) __pragma(message("todo: "_STR(x) " :: " __FILE__ "@"STR(__LINE__)))
 #define HAS_FLAG(x,m) (x & m)
 
 inline DAWN_API void Print(std::string InMessage)
 {
 	std::cout << InMessage.c_str();
+}
+
+
+#ifdef _DEBUG
+#ifndef D_ASSERT
+#   define D_ASSERT(Expr, Msg) \
+    __D_Assert(#Expr, Expr, __FILE__, __LINE__, Msg)
+#endif
+#else
+#ifndef D_ASSERT
+#   define D_ASSERT(Expr, Msg) ;
+#endif
+#endif
+
+static std::wstring stringToWString(std::string& val)
+{
+	return std::wstring(val.begin(), val.end());
+}
+
+static void __D_Assert(const char* expr_str, bool expr, const char* file, int line, const char* msg)
+{
+	if (!expr)
+	{
+		std::string err = fmt::format("Assert failed:\t {0}\nExpected:\t {1}\nSource:\t\t {2}, line {3}\n", msg, expr_str, file, line);
+		OutputDebugString(stringToWString(err).c_str());
+		abort();
+	}
 }
 
 template<typename T> 

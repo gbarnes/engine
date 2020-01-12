@@ -13,6 +13,12 @@ namespace Dawn
 		float Intensity = 1.0f;
 		bool bCastShadows = true;
 		mat4 LightSpace;
+
+		static void InitFromLoad(World* InWorld, void* Component)
+		{
+			auto light = static_cast<DirectionalLight*>(Component);
+			light->WorldRef = InWorld;
+		}
 	};
 
 	struct DAWN_API PointLight : public Component<PointLight>
@@ -22,6 +28,12 @@ namespace Dawn
 		float Range = 1.0f;
 		float Intensity = 1.0f;
 		bool bCastShadows = false;
+
+		static void InitFromLoad(World* InWorld, void* Component)
+		{
+			auto light = static_cast<PointLight*>(Component);
+			light->WorldRef = InWorld;
+		}
 	};
 
 	struct DAWN_API SpotLight : public Component<SpotLight>
@@ -31,6 +43,12 @@ namespace Dawn
 		float Angle;
 		float Range;
 		bool bCastShadows = false;
+
+		static void InitFromLoad(World* InWorld, void* Component)
+		{
+			auto light = static_cast<SpotLight*>(Component);
+			light->WorldRef = InWorld;
+		}
 	};
 
 	class LightUtils

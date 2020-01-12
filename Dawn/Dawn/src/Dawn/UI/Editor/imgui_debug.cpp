@@ -17,23 +17,23 @@ namespace Dawn
 			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
 			ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration);
 		ImGui::SetWindowPos(ImVec2(0, yOffset));
-		ImGui::Image(InBuffer->GetColorTarget(0), ImVec2(Settings->Width / 4, Settings->Height / 4), ImVec2(0,0), ImVec2(1, -1));
+		ImGui::Image(InBuffer->GetColorTarget(0), ImVec2((float)Settings->Width / 4, (float)Settings->Height / 4), ImVec2(0,0), ImVec2(1, -1));
 		ImGui::End();
 
 		ImGui::Begin("GBuffer_Normal", 0, ImGuiWindowFlags_NoTitleBar |
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
 			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
 			ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration);
-		ImGui::SetWindowPos(ImVec2(Settings->Width / 4, yOffset));
-		ImGui::Image(InBuffer->GetColorTarget(1), ImVec2(Settings->Width / 4, Settings->Height / 4), ImVec2(0, 0), ImVec2(1, -1));
+		ImGui::SetWindowPos(ImVec2((float)Settings->Width / 4, yOffset));
+		ImGui::Image(InBuffer->GetColorTarget(1), ImVec2((float)Settings->Width / 4, (float)Settings->Height / 4), ImVec2(0, 0), ImVec2(1, -1));
 		ImGui::End();
 
 		ImGui::Begin("GBuffer_Albedo", 0, ImGuiWindowFlags_NoTitleBar |
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
 			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
 			ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration);
-		ImGui::SetWindowPos(ImVec2((Settings->Width / 4) * 2, yOffset));
-		ImGui::Image(InBuffer->GetColorTarget(2), ImVec2(Settings->Width / 4, Settings->Height / 4), ImVec2(0, 0), ImVec2(1, -1));
+		ImGui::SetWindowPos(ImVec2(((float)Settings->Width / 4) * 2, yOffset));
+		ImGui::Image(InBuffer->GetColorTarget(2), ImVec2((float)Settings->Width / 4, (float)Settings->Height / 4), ImVec2(0, 0), ImVec2(1, -1));
 		ImGui::End();
 
 
@@ -41,8 +41,8 @@ namespace Dawn
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
 			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
 			ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration);
-		ImGui::SetWindowPos(ImVec2((Settings->Width / 4) * 3, yOffset));
-		ImGui::Image(InShadowBuffer->GetDepthTarget(), ImVec2(Settings->Width / 4, Settings->Height / 4), ImVec2(0, 0), ImVec2(1, -1));
+		ImGui::SetWindowPos(ImVec2(((float)Settings->Width / 4) * 3, yOffset));
+		ImGui::Image(InShadowBuffer->GetDepthTarget(), ImVec2((float)Settings->Width / 4, (float)Settings->Height / 4), ImVec2(0, 0), ImVec2(1, -1));
 		ImGui::End();
 	}
 

@@ -13,7 +13,7 @@ namespace Dawn
 		bool bIsHiddenInEditorHierarchy = false;
 		bool PersistsThroughLoad = false;
 		bool bIsActive = true;
-		Shared<World> World = nullptr;
+		World* World = nullptr;
 	};
 
 	struct DAWN_API Entity

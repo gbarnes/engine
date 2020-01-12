@@ -34,6 +34,7 @@ namespace Dawn
 
 		Transform* GetTransform(World* InWorld)
 		{
+			D_ASSERT(InWorld != nullptr, "World cannot be null!");
 			return InWorld->GetComponentByEntity<Transform>(this->Id.Entity);
 		}
 
@@ -47,10 +48,13 @@ namespace Dawn
 			return View;
 		}
 
+		static void InitFromLoad(World* InWorld, void* Component);
+
 	private:
 		mat4 Projection = mat4(1);
 		mat4 View = mat4(1);
 	};
+
 
 	//
 	// Helper function to get a camera from the world!

@@ -26,6 +26,8 @@ namespace Dawn
 		vec3 Up = vec3(0, 1, 0);
 		vec3 Right = vec3(1, 0, 0);
 
+		static void InitFromLoad(World* InWorld, void* Component);
+
 	private:
 		SceneNodeId SceneId;
 

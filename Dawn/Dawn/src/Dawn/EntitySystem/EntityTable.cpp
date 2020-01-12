@@ -24,7 +24,6 @@ namespace Dawn
 		EntityMetaData& Meta = MetaData[CurrentId];
 		Meta.bIsActive = true;
 		Meta.bIsHiddenInEditorHierarchy = false;
-		Meta.bIsActive = true;
 		Meta.Name = InName;
 		Meta.World = this->World;
 

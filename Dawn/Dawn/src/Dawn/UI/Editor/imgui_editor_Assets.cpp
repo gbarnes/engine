@@ -49,8 +49,7 @@ namespace  Dawn
 			EntityData data = {};
 			data.Name = meta->Name.c_str();
 
-			fputs(std::string("---Entity\n").c_str(), LevelFile);
-			fputs(std::string("  Name: " + std::string(data.Name) + "\n").c_str(), LevelFile);
+			fputs(std::string("---Entity "+ data.Name + "\n").c_str(), LevelFile);
 			
 			auto componentNames = InWorld->GetComponentTypesByEntity(entity);
 			for (const auto& componentName : componentNames)
@@ -63,8 +62,7 @@ namespace  Dawn
 				auto members = type->GetMembers();
 				auto componentInstance = InWorld->GetComponentByName(entity, componentName);
 				
-				fputs(std::string("---Component " + std::to_string(id) + "\n").c_str(), LevelFile);
-				fputs((componentName + ":\n").c_str(), LevelFile);
+				fputs(std::string("---Component " + componentName + "\n").c_str(), LevelFile);
 
 				for (auto& member : members)
 				{
@@ -72,11 +70,10 @@ namespace  Dawn
 						continue;
 
 					ComponentData::ComponentValue Value = {};
-					Value.VariableName = member.Name.c_str();
-					Value.Data = type->GetAsVoid(componentInstance, member.Name);
+					Value.VariableName = member.Name;
 					compData.ComponentValues.push_back(Value);
 
-					fputs(("  " + member.Name + ": " + member.Type->ToString(Value.Data).append("\n")).c_str(), LevelFile);
+					fputs(("  " + member.Name + ": " + member.Type->ToString(type->GetAsVoid(componentInstance, member.Name)).append("\n")).c_str(), LevelFile);
 					
 					DWN_CORE_INFO("Member: {0}", member.Name.c_str());
 				}

@@ -5,7 +5,7 @@
 #include "ComponentTable.h"
 #include "Entity.h"
 #include "System.h"
-
+#include <functional>
 
 namespace Dawn
 {
@@ -15,6 +15,12 @@ namespace Dawn
 
 	class BaseComponentTable;
 	struct Camera;
+	class World;
+
+	typedef std::function<void(World*,void*)> ComponentInitFunc;
+
+#define COMP_INIT_LOAD_DEL(name, type, table) table.insert(std::make_pair<std::string, ComponentInitFunc>(std::string(name), std::bind(&##type##::InitFromLoad, std::placeholders::_1, std::placeholders::_2)));
+
 
 	class DAWN_API World : public std::enable_shared_from_this<World>
 	{
@@ -28,7 +34,7 @@ namespace Dawn
 		Camera* CreateCamera(std::string& InName, u32 Width, u32 Height,
 			float InNearZ, float InFarZ, float InFoV, vec4 InClearColor, 
 			const vec3& InPosition = vec3(0), const quat& InOrientation = quat());
-		
+		void AddCamera(Camera* Cam);
 		Camera* GetCamera(i32 InId);
 		std::vector<Camera*> GetCameras();
 
@@ -38,6 +44,13 @@ namespace Dawn
 			return Entities.GetMeta(InEntity);
 		}
 		void Shutdown();
+		
+		void ExecuteComponentInitFunc(void* InComponent, const std::string& InString)
+		{
+			auto it = this->InitFuncTable.find(InString);
+			if (it != InitFuncTable.end())
+				(it->second)(this, InComponent);
+		}
 
 	public:
 		template <typename T>
@@ -46,6 +59,7 @@ namespace Dawn
 			int index = Component<T>::GetTableIndex();
 			
 			INIT_TYPE(T);
+			COMP_INIT_LOAD_DEL(InTypeName.c_str(), T, this->InitFuncTable);
 
 			InTable.get()->SetTypeName(InTypeName);
 
@@ -55,7 +69,13 @@ namespace Dawn
 
 		template<typename T>
 		T* MakeComponent() {
-			return new T;
+
+			T* comp = new T();
+			Component<T>* baseComp = static_cast<Component<T>*>(comp);
+			if (baseComp)
+				baseComp->WorldRef = this;
+
+			return comp;
 		}
 
 
@@ -64,6 +84,12 @@ namespace Dawn
 		{
 			ComponentTable<T>* table = GetTable<T>();
 			return table->Add(InEntity, InComponent);
+		}
+
+		ComponentId AddComponentByString(const Entity& InEntity, const std::string& InType, void* InComponent)
+		{
+			auto Table = GetTableByString(InType);
+			return Table->AddByVoid(InEntity, InComponent);
 		}
 
 		template<typename T>
@@ -130,14 +156,14 @@ namespace Dawn
 			//it->second->
 		}
 
-		void AddSystem(std::unique_ptr<ISystem> InSystem)
+		void AddSystem(ISystem* InSystem)
 		{
 			auto type = InSystem->AccessType();
 			auto it = SystemTable.find(type->GetName());
 			if (it != SystemTable.end())
 				return;
 
-			SystemTable.insert(std::make_pair(type->GetName(), std::move(InSystem)));
+			SystemTable.insert(std::make_pair(type->GetName(), InSystem));
 		}
 
 		std::array<Entity, MaxNumbersOfEntities>& GetEntities(u32* OutCount)
@@ -155,12 +181,15 @@ namespace Dawn
 			ActiveCamera = InCamera;
 		}
 
+		static bool LoadLevel(World* InWorld, struct Level* InLevel);
+
 	private:
 		static Camera* ActiveCamera;
 		EntityTable Entities;
 		std::vector<i32> CameraEntities;
 		std::array<std::unique_ptr<BaseComponentTable>, MAX_NUM_OF_COMPONENT_TYPES> ComponentTables;
-		std::map<std::string, std::unique_ptr<ISystem>> SystemTable;
+		std::map<std::string, ISystem*> SystemTable;
+		std::map<std::string, ComponentInitFunc> InitFuncTable;
 
 		template<typename T>
 		ComponentTable<T>* GetTable()
@@ -171,6 +200,15 @@ namespace Dawn
 				ComponentTables[index] = std::move(std::make_unique<ComponentTable<T>>(ComponentTable<T>()));
 
 			return static_cast<ComponentTable<T>*>(ComponentTables[index].get());
+		}
+
+		BaseComponentTable* GetTableByString(const std::string& InName)
+		{
+			for (auto& Table : ComponentTables)
+				if (Table->GetTypeName() == InName)
+					return Table.get();
+
+			return nullptr;
 		}
 	};
 }

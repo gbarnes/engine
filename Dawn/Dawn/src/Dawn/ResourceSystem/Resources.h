@@ -83,19 +83,19 @@ namespace Dawn
 	{
 		struct ComponentValue
 		{
-			const char* VariableName;
-			void* Data;
+			std::string VariableName;
+			std::string Data;
 		};
 
 		u32 Id;
-		const char* Type;
+		std::string Type;
 		std::vector<ComponentValue> ComponentValues;
 	};
 
 	struct EntityData
 	{
 		u32 InFileId; // set only if needed!
-		const char* Name;
+		std::string Name;
 		std::vector<u32> IdToComponent;
 	};
 

@@ -4,6 +4,7 @@
 #include "Camera/Camera.h"
 #include "Transform/Transform.h"
 #include "Lights/LightComponents.h"
+#include "ResourceSystem/Resources.h"
 #include "EntityTable.h"
 
 namespace Dawn
@@ -11,7 +12,7 @@ namespace Dawn
 	Camera* World::ActiveCamera = nullptr;
 
 	World::World()
-		: Entities(Shared<World>(this))
+		: Entities(this)
 	{
 	}
 
@@ -21,8 +22,11 @@ namespace Dawn
 
 	void World::Shutdown()
 	{
+		ActiveCamera = nullptr;
+		Entities.Clear();
+		InitFuncTable.clear();
 	//	Entities.Clear();
-	
+		SystemTable.clear();
 	}
 
 	//
@@ -61,11 +65,21 @@ namespace Dawn
 		return c;
 	}
 
+	void World::AddCamera(Camera* Cam)
+	{
+		// todo (gb, 01/11/20) - add checks if camera is already added!
+		auto entity = Cam->GetEntity();
+		CameraEntities.push_back(entity.Id);
+	}
+
 	//
 	// Returns the camera by a given index (0-last camera)
 	//
 	Camera* World::GetCamera(const i32 InId)
 	{
+		if (CameraEntities.size() == 0)
+			return nullptr;
+
 		i32 e = CameraEntities[InId];
 		Entity entity = Entities.Get(e);
 
@@ -120,5 +134,42 @@ namespace Dawn
 
 		return components;
 	}
+
+
+	bool World::LoadLevel(World* InWorld, Level* InLevel)
+	{
+		if (!InLevel->Id.IsValid)
+			return false;
+
+
+		// unloading should be done here
+
+		for (i32 i = 0; i < InLevel->Entities.size(); ++i)
+		{
+			auto EntityData = &InLevel->Entities[i];
+			auto Entity = InWorld->CreateEntity(EntityData->Name);
+
+			for (i32 x = 0; x < EntityData->IdToComponent.size(); ++x)
+			{
+				u32 id = EntityData->IdToComponent[x];
+				auto CompData = &InLevel->Components[id];
+				auto Type = DawnType::GetType(CompData->Type);
+				if (Type != nullptr)
+				{
+					auto Component = Type->CreateInstance();
+					auto CompId = InWorld->AddComponentByString(Entity, CompData->Type, Component);
+
+					for(auto& CompVal : CompData->ComponentValues)
+						Type->DeserializeMember(Component, CompVal.VariableName, CompVal.Data);
+
+					InWorld->ExecuteComponentInitFunc(Component, CompData->Type);
+				}
+			}
+		}
+
+
+		return true;
+	}
+
 
 }

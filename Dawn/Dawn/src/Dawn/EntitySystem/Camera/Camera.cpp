@@ -11,4 +11,20 @@ namespace Dawn
 		ADD_MEMBER(Camera, WorldUp, Vector3Type, true)
 		ADD_MEMBER(Camera, bIsOrthographic, BoolType, true)
 	MAKE_TYPE_END()
+
+	void Camera::InitFromLoad(World* World, void* Component)
+	{
+		Camera* cam = static_cast<Camera*>(Component);
+		D_ASSERT(cam != nullptr, "Camera is null when init");
+		World->AddCamera(cam);
+		
+		cam->WorldRef = World;
+
+		if (cam->bIsOrthographic)
+			CameraUtils::CalculateOthographic(cam);
+		else
+			CameraUtils::CalculatePerspective(cam);
+
+		CameraUtils::CalculateView(cam, cam->GetTransform(World));
+	}
 }
