@@ -77,11 +77,21 @@ namespace Dawn
 			if (ImGui::SliderFloat("Aspect Ratio", &InCamera->AspectRatio, 0.0, 20.0f))
 				bHasChanged = true;
 
-			if (ImGui::SliderFloat("NearZ", &InCamera->NearZ, 0.01f, 2.0f))
+			if (ImGui::SliderFloat("NearZ", &InCamera->NearZ, 0.01f, 2.0f)) 
+			{
 				bHasChanged = true;
+				
+				if (InCamera->NearZ <= 0)
+					InCamera->NearZ = 0.1f;
+			}
 
-			if (ImGui::SliderFloat("FarZ", &InCamera->FarZ, 100.0f, 10000.0f))
+			if (ImGui::SliderFloat("FarZ", &InCamera->FarZ, 100.0f, 10000.0f)) 
+			{
 				bHasChanged = true;
+				
+				if (InCamera->FarZ <= 0)
+					InCamera->NearZ = 1000.0f;
+			}
 
 			if (bHasChanged)
 			{

@@ -160,71 +160,82 @@ namespace Dawn
 	void TestRenderLayer::Update(float InDeltaTime)
 	{
 		BROFILER_EVENT("TestRenderLayer_Update");
-		Model = glm::translate(mat4(1), vec3(0.0f, 2.0f, 0.0f)) * glm::scale(mat4(1), vec3(1.0f));// glm::mat4_cast(rotation);
-	
-		vec2 mousePosition = GetMousePosition();
 
-		if (firstMouse)
+		if (Parent->GetIsInEditMode())
 		{
+			Model = glm::translate(mat4(1), vec3(0.0f, 2.0f, 0.0f)) * glm::scale(mat4(1), vec3(1.0f));// glm::mat4_cast(rotation);
+
+			vec2 mousePosition = GetMousePosition();
+
+			if (firstMouse)
+			{
+				lastX = mousePosition.x;
+				lastY = mousePosition.y;
+				firstMouse = false;
+			}
+
+			float xoffset = mousePosition.x - lastX;
+			float yoffset = lastY - mousePosition.y;
+
 			lastX = mousePosition.x;
 			lastY = mousePosition.y;
-			firstMouse = false;
+
+			up = TransformUtils::CalculateUp(g_camTransform);
+			forward = TransformUtils::CalculateForward(g_camTransform);
+			right = TransformUtils::CalculateRight(g_camTransform);
+
+
+			if (IsMouseDown(MouseBtn::MouseBtn_Right))
+			{
+				static float sensitivity = 30.0f;
+				yaw += xoffset * sensitivity * InDeltaTime;
+				pitch += yoffset * sensitivity * InDeltaTime;
+
+				float velocity = (IsKeyDown(KeyCode_Shift)) ? 15.5f : 10.0f;
+				g_camTransform->Rotation = glm::angleAxis(glm::radians(-yaw), vec3(0, 1, 0)) * glm::angleAxis(glm::radians(pitch), vec3(1, 0, 0));
+
+				if (IsKeyDown(KeyCode_A))
+				{
+					g_camTransform->Position -= right * velocity * InDeltaTime;
+				}
+
+				if (IsKeyDown(KeyCode_D))
+				{
+					g_camTransform->Position += right * velocity * InDeltaTime;
+				}
+
+				if (IsKeyDown(KeyCode_W))
+				{
+					g_camTransform->Position -= forward * velocity * InDeltaTime;
+				}
+
+				if (IsKeyDown(KeyCode_S))
+				{
+					g_camTransform->Position += forward * velocity * InDeltaTime;
+				}
+
+				if (IsKeyDown(KeyCode_Q))
+				{
+					g_camTransform->Position += g_camera->WorldUp * velocity * InDeltaTime;
+				}
+
+				if (IsKeyDown(KeyCode_E))
+				{
+					g_camTransform->Position -= g_camera->WorldUp * velocity * InDeltaTime;
+				}
+
+				CameraUtils::CalculateView(g_camera, g_camTransform);
+			}
 		}
-
-		float xoffset = mousePosition.x - lastX;
-		float yoffset = lastY - mousePosition.y;
-
-		lastX = mousePosition.x;
-		lastY = mousePosition.y;
-
-		up = TransformUtils::CalculateUp(g_camTransform);
-		forward = TransformUtils::CalculateForward(g_camTransform);
-		right = TransformUtils::CalculateRight(g_camTransform);
-
-
-		if (IsMouseDown(MouseBtn::MouseBtn_Right))
+		else
 		{
-			static float sensitivity = 30.0f;
-			yaw += xoffset * sensitivity * InDeltaTime;
-			pitch += yoffset * sensitivity * InDeltaTime;
-
-			float velocity = (IsKeyDown(KeyCode_Shift)) ? 15.5f : 10.0f;
-			g_camTransform->Rotation = glm::angleAxis(glm::radians(-yaw), vec3(0, 1, 0)) * glm::angleAxis(glm::radians(pitch), vec3(1, 0, 0));
-
-			if (IsKeyDown(KeyCode_A))
-			{
-				g_camTransform->Position -= right * velocity * InDeltaTime;
-			}
-
-			if (IsKeyDown(KeyCode_D))
-			{
-				g_camTransform->Position += right * velocity * InDeltaTime;
-			}
-
-			if (IsKeyDown(KeyCode_W))
-			{
-				g_camTransform->Position -= forward * velocity * InDeltaTime;
-			}
-
-			if (IsKeyDown(KeyCode_S))
-			{
-				g_camTransform->Position += forward * velocity * InDeltaTime;
-			}
-
-			if (IsKeyDown(KeyCode_Q))
-			{
-				g_camTransform->Position += g_camera->WorldUp * velocity * InDeltaTime;
-			}
-
-			if (IsKeyDown(KeyCode_E))
-			{
-				g_camTransform->Position -= g_camera->WorldUp * velocity * InDeltaTime;
-			}
-
-			CameraUtils::CalculateView(g_camera, g_camTransform);
-			CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(g_World.get()));
+			auto transform = g_camera1->GetTransform(g_World.get());
+			TransformUtils::CalculateUp(transform);
+			TransformUtils::CalculateForward(transform);
+			TransformUtils::CalculateRight(transform);
+			CameraUtils::CalculatePerspective(g_camera1);
+			CameraUtils::CalculateView(g_camera1, transform);
 		}
-
 	}
 
 	void DrawSphere(const mat4& InModelMatrix, const ResourceId& Material, ResourceSystem* ResourceSystem, DeferredRenderer* Renderer, Model* InModel)

@@ -30,11 +30,13 @@ namespace Dawn
 		Shared<PhysicsWorld> GetPhysics();
 		Shared<ResourceSystem> GetResourceSystem();
 		Window* GetWindow() const;
+		bool GetIsInEditMode() const { return bIsInEditMode;}
 
 	protected:
 		std::vector<Layer*> Layers;
 		std::vector<Layer*>::iterator LayerInsertCount;
 		bool IsInitialized = false;
+		bool bIsInEditMode = false;
 		Time Time;
 		Shared<DeferredRenderer> Renderer;
 		Shared<GfxGDI> GDI;

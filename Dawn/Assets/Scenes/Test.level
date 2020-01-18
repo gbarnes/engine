@@ -1,14 +1,14 @@
 ---Entity Cam
 ---Component Transform
-  Position: {x: 0.000000, y: 3.000000, z: 10.000000}
-  Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}
-  Scale: {x: 0.999915, y: 0.999989, z: 0.999953}
+  Position: {x: 4.631735, y: 5.454161, z: 14.069269}
+  Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 0.000000}
+  Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
 ---Component Camera
   AspectRatio: 1.777778
-  ClearColor: {r: 0.780000, g: 0.600000, b: 0.900000, a: 1.000000}
+  ClearColor: {r: 0.271146, g: 0.545159, b: 0.892157, a: 1.000000}
   FarZ: 1000.000000
   FieldOfView: 65.000000
-  NearZ: 0.000000
+  NearZ: 0.100000
   WorldUp: {x: 0.000000, y: 1.000000, z: 0.000000}
   bIsOrthographic: 0
 ---Entity Light

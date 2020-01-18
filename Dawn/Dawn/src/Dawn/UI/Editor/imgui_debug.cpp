@@ -74,7 +74,8 @@ namespace Dawn
 		ImGui::Begin("DebugOutput", nullptr, ImGuiWindowFlags_NoTitleBar |
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
 			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
-			ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration);
+			ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground | 
+			ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking);
 
 		ImGui::SetWindowSize(ImVec2(500, 500));
 		ImGui::SetWindowPos(ImVec2(10, 50));

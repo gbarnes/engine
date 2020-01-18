@@ -2,6 +2,7 @@
 #include "Camera.h"
 #include "../Transform/Transform.h"
 #include "../World.h"
+#include "Application.h"
 
 namespace Dawn
 {
@@ -38,6 +39,8 @@ namespace Dawn
 		World->AddCamera(cam);
 		
 		cam->WorldRef = World;
+		cam->Width = g_Application->GetSettings()->Width;
+		cam->Height = g_Application->GetSettings()->Height;
 
 		if (cam->bIsOrthographic)
 			CameraUtils::CalculateOthographic(cam);

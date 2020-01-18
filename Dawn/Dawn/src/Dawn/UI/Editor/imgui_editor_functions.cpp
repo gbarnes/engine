@@ -216,6 +216,7 @@ namespace Dawn
 	void Dawn::Editor_RenderUI()
 	{
 		auto World = g_Application->GetWorld();
+		auto EditorWorld = g_Application->GetEditorWorld();
 		// todo --- implement another way of getting the camera. since not always the editor cam will be at id 0
 		auto EditorCamera = g_Application->GetEditorWorld()->GetCamera(0);
 		auto GDI = g_Application->GetGDI();
@@ -315,7 +316,4 @@ namespace Dawn
 		Editor_RenderPointLightGizmos(GDI.get(), EditorCamera, World.get(), SceneData, Resources);
 		Editor_RenderCameraGizmos(GDI.get(), EditorCamera, World.get(), SceneData, Resources);
 	}
-
-
-
 }

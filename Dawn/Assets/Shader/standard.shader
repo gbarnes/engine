@@ -18,7 +18,7 @@ uniform mat4 proj;
 
 void main()
 { 
-	vec4 worldPos = view * model * vec4(position, 1.0);
+	vec4 worldPos =view *  model * vec4(position, 1.0);
 	FragPos =  worldPos;  
 	TexCoord0 = uv0;    
 	TexCoord1 = uv1;

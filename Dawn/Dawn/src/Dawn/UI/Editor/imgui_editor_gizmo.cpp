@@ -168,8 +168,7 @@ namespace Dawn
 				continue;
 
 			vec2 ScreenPos = CameraUtils::WorldToScreenPoint(InEditorCamera, Camera.second->Position);
-			OutputDebugText(fmt::format("ScreenPos: {0}, {1}", ScreenPos.x, ScreenPos.y));
-
+			
 			ImVec2 pos[2] =
 			{
 				ImVec2(ScreenPos.x - size.x * 0.5f, ScreenPos.y - size.y * 0.5f),
@@ -183,7 +182,7 @@ namespace Dawn
 
 			if (InSceneData->CurrentSelectedEntity.Id == Camera.first->GetEntity().Id)
 			{
-				vec2 ForwardPos = CameraUtils::WorldToScreenPoint(InEditorCamera, Camera.second->Position + Camera.second->Forward * 5.0f);
+				vec2 ForwardPos = CameraUtils::WorldToScreenPoint(InEditorCamera, Camera.second->Position - Camera.second->Forward * 5.0f);
 				InSceneData->GizmoDrawList->AddLine(ImVec2(ScreenPos.x, ScreenPos.y), ImVec2(ForwardPos.x, ForwardPos.y), 0xff0000ff, 5.0f);
 			}
 

@@ -56,7 +56,6 @@ namespace Dawn
 	{
 	}
 
-	static bool bIsInEditMode = false;
 	static bool bShowGBuffer = false;
 	static bool bShowFPS = false;
 
@@ -74,7 +73,7 @@ namespace Dawn
 			ShowGBuffer(InGDI->GetRenderBuffer(InRenderer->TransientData.GBufferId), InGDI->GetRenderBuffer(InRenderer->TransientData.ShadowMapBufferId));
 
 
-		if (bIsInEditMode)
+		if (g_Application->GetIsInEditMode())
 			Editor_RenderUI();
 
 		ImGuiWrapper::Render();
@@ -271,7 +270,8 @@ namespace Dawn
 		// Rendering
 		{BROFILER_EVENT("Rendering")
 
-			Renderer->BeginFrame(GDI.get(), World::GetActiveCamera());
+			auto* Camera = World::GetActiveCamera();
+			Renderer->BeginFrame(GDI.get(), Camera);
 
 			for (auto Layer : Layers)
 				Layer->Render();
