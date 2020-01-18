@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "GLShaders.h"
 #include "Core/Logging/Log.h"
 #include <glad.h>

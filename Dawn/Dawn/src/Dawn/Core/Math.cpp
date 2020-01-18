@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Math.h"
 
 // Branch-free implementation of half-precision (16 bit) floating point

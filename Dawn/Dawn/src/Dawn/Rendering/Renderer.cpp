@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Renderer.h"
 #include "Application.h"
 #include "EntitySystem/World.h"
@@ -6,6 +7,7 @@
 #include "UI/Editor/imgui_editor_functions.h"
 #include "UI/Editor/imgui_debug.h"
 #include <random>
+#include <glad.h>
 
 namespace Dawn
 {

@@ -1,6 +1,5 @@
+#include "stdafx.h"
 #include "Window.h"
-#include <windows.h>
-#include <windowsx.h>
 #include "Vendor/ImGui/ImGuiWrapper.h"
 #include "imgui.h"
 #include "Input.h"

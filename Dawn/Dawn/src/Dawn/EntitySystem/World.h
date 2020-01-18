@@ -1,26 +1,24 @@
 #pragma once
-#include "inc_common.h"
-#include "inc_core.h"
+
 #include "Component.h"
 #include "ComponentTable.h"
 #include "Entity.h"
 #include "System.h"
-#include <functional>
+#include "Core/Type.h"
+
+
+#define MAX_NUM_OF_COMPONENT_TYPES 48
+#define MAX_NUM_OF_SYSTEM_TYPES 48
+#define COMP_INIT_LOAD_DEL(name, type, table) table.insert(std::make_pair<std::string, ComponentInitFunc>(std::string(name), std::bind(&##type##::InitFromLoad, std::placeholders::_1, std::placeholders::_2)));
+
 
 namespace Dawn
 {
-#define WorldLocatorId std::string("World")
-#define MAX_NUM_OF_COMPONENT_TYPES 48
-#define MAX_NUM_OF_SYSTEM_TYPES 48
-
 	class BaseComponentTable;
 	struct Camera;
 	class World;
 
 	typedef std::function<void(World*,void*)> ComponentInitFunc;
-
-#define COMP_INIT_LOAD_DEL(name, type, table) table.insert(std::make_pair<std::string, ComponentInitFunc>(std::string(name), std::bind(&##type##::InitFromLoad, std::placeholders::_1, std::placeholders::_2)));
-
 
 	class DAWN_API World : public std::enable_shared_from_this<World>
 	{
@@ -39,18 +37,9 @@ namespace Dawn
 		std::vector<Camera*> GetCameras();
 
 		Entity CreateEntity(const std::string &InName);
-		EntityMetaData* GetEntityMetaData(const Entity& InEntity)
-		{
-			return Entities.GetMeta(InEntity);
-		}
+		EntityMetaData* GetEntityMetaData(const Entity& InEntity);
 		void Shutdown();
-		
-		void ExecuteComponentInitFunc(void* InComponent, const std::string& InString)
-		{
-			auto it = this->InitFuncTable.find(InString);
-			if (it != InitFuncTable.end())
-				(it->second)(this, InComponent);
-		}
+		void ExecuteComponentInitFunc(void* InComponent, const std::string& InString);
 
 	public:
 		template <typename T>
@@ -139,48 +128,11 @@ namespace Dawn
 			return static_cast<T*>(it->second.get());
 		}
 
-		void* GetComponentByName(const Entity& InEntity, const std::string& InName)
-		{
-			BaseComponentTable* ComponentTable = nullptr;
-
-			for (auto& table : ComponentTables)
-			{
-				if (table->GetTypeName() == InName)
-				{
-					ComponentTable = table.get();
-					break;
-				}
-			}
-
-			return ComponentTable->GetComponentByEntity(InEntity);
-			//it->second->
-		}
-
-		void AddSystem(ISystem* InSystem)
-		{
-			auto type = InSystem->AccessType();
-			auto it = SystemTable.find(type->GetName());
-			if (it != SystemTable.end())
-				return;
-
-			SystemTable.insert(std::make_pair(type->GetName(), InSystem));
-		}
-
-		std::array<Entity, MaxNumbersOfEntities>& GetEntities(u32* OutCount)
-		{
-			return Entities.GetEntities(OutCount);
-		}
-
-		static Camera* GetActiveCamera()
-		{
-			return ActiveCamera;
-		}
-
-		static void SetActiveCamera(Camera* InCamera)
-		{
-			ActiveCamera = InCamera;
-		}
-
+		void* GetComponentByName(const Entity& InEntity, const std::string& InName);
+		void AddSystem(ISystem* InSystem);
+		std::array<Entity, MaxNumbersOfEntities>& GetEntities(u32* OutCount);
+		static Camera* GetActiveCamera();
+		static void SetActiveCamera(Camera* InCamera);
 		static bool LoadLevel(World* InWorld, struct Level* InLevel);
 
 	private:
@@ -202,13 +154,6 @@ namespace Dawn
 			return static_cast<ComponentTable<T>*>(ComponentTables[index].get());
 		}
 
-		BaseComponentTable* GetTableByString(const std::string& InName)
-		{
-			for (auto& Table : ComponentTables)
-				if (Table->GetTypeName() == InName)
-					return Table.get();
-
-			return nullptr;
-		}
+		BaseComponentTable* GetTableByString(const std::string& InName);
 	};
 }

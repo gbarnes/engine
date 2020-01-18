@@ -1,7 +1,5 @@
 #pragma once
 #include <cstdint>
-#include "inc_common.h"
-#include "glm.hpp"
 
 // Taken from https://www.3dgep.com/ - Source Code: https://github.com/jpvanoosten/LearningDirectX12/blob/v0.0.3/DX12Lib/inc/Helpers.h
 namespace Math

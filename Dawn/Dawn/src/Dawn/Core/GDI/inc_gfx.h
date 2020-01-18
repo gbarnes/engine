@@ -2,8 +2,8 @@
 //---------------------------------------------------------------------------//
 //        Copyright 2016  Immersive Pixels. All Rights Reserved.			//
 
+#include <glad.h>
 #include "GfxResource.h"
-#include "inc_gfx_types.h"
 #include "GfxGDI.h"
 #include "GfxPrimitiveFactory.h"
 #include "GfxImmediatePrimitives.h"

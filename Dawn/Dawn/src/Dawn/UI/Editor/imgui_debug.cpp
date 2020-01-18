@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "imgui_debug.h"
 #include "Core/GDI/GfxResource.h"
 #include "Rendering/Renderer.h"
@@ -55,6 +56,36 @@ namespace Dawn
 		ImGui::SetWindowPos(ImVec2(10, 30));
 		ImGui::TextColored(ImVec4(0, 1, 0, 1), "%.3f ms/frame (%.1f FPS)", ImGui::GetIO().DeltaTime, ImGui::GetIO().Framerate);
 		//	g_Application->GetDeltaTime();
+		ImGui::End();
+	}
+
+	constexpr u8 debugTextBufferSize = 10;
+	static std::string debugTextBuffer[debugTextBufferSize];
+	static u8 debugTextBufferPosition = 0;
+	
+	void OutputDebugText(const std::string& InText)
+	{
+		debugTextBuffer[debugTextBufferPosition] = InText;
+		debugTextBufferPosition = (debugTextBufferPosition + 1) % debugTextBufferSize;
+	}
+
+	void ShowDebugText()
+	{
+		ImGui::Begin("DebugOutput", nullptr, ImGuiWindowFlags_NoTitleBar |
+			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
+			ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration);
+
+		ImGui::SetWindowSize(ImVec2(500, 500));
+		ImGui::SetWindowPos(ImVec2(10, 50));
+		ImGui::BeginChild("Scrolling");
+		for (u8 i = 0; i < debugTextBufferSize; ++i)
+		{
+			std::string& s = debugTextBuffer[i];
+			if(s.length() > 0)
+				ImGui::Text(s.c_str());
+		}
+		ImGui::EndChild();
 		ImGui::End();
 	}
 }

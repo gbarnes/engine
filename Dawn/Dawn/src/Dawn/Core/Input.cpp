@@ -1,4 +1,11 @@
+#include "stdafx.h"
 #include "Input.h"
+#define DIRECTINPUT_VERSION 0x0800
+
+#include <dinput.h>
+
+#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dxguid.lib")
 
 namespace Dawn
 {
@@ -11,7 +18,7 @@ namespace Dawn
 	{
 		unsigned char LastKeyboardStates[256];
 		unsigned char KeyboardStates[256];
-		DIMOUSESTATE MouseState;
+		//DIMOUSESTATE MouseState;
 		u32 Width, Height;
 		vec2 MousePos;
 	};

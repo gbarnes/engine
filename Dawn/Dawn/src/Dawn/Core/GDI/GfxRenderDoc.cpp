@@ -1,7 +1,7 @@
+#include "stdafx.h"
+#include "Core/Config.h"
 #include "GfxRenderDoc.h"
 #include "Vendor/RenderDoc/renderdoc_app.h"
-#include "inc_common.h"
-#include "Core/Config.h"
 
 namespace Dawn
 {

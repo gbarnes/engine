@@ -1,6 +1,6 @@
+#include "stdafx.h"
 #include "imgui_editor_functions.h"
 #include "imgui.h"
-#include "inc_common.h"
 #include "UI/UIEditorEvents.h"
 #include "imgui_editor_components.h"
 #include "EntitySystem/Entity.h"
@@ -14,8 +14,10 @@
 #include "vendor/ImGuizmo/ImGuizmo.h"
 #include "imgui_editor_types.h"
 #include "Core/Input.h"
+#include "Core/Paths.h"
 #include "imgui_editor_gizmo.h"
 #include "imgui_editor_assets.h"
+#include "imgui_debug.h"
 
 namespace Dawn 
 {
@@ -133,15 +135,15 @@ namespace Dawn
 	bool g_ShowSceneWindow = false;
 	void ShowSceneWindow()
 	{
-		auto world = g_Application->GetWorld();
-		auto transforms = world->GetComponentsByType<Transform>();
-		auto SceneData = Editor_GetSceneData();
-
 		ImGui::SetNextWindowBgAlpha(1.f);
 		ImGui::Begin("Scene", &g_ShowSceneWindow);
 		
 		if (ImGui::TreeNode("Root"))
 		{
+			auto world = g_Application->GetWorld();
+			auto transforms = world->GetComponentsByType<Transform>();
+			auto SceneData = Editor_GetSceneData();
+
 			for (auto transform : transforms)
 			{
 				auto entity = transform->GetEntity();
@@ -160,6 +162,8 @@ namespace Dawn
 					{
 						g_ShowPropertyWindow = true;
 						SceneData->CurrentSelectedEntity = entity;
+						SceneData->ModelMatrix = mat4(1);
+						SceneData->LastEulerRotation = glm::eulerAngles(world->GetComponentByEntity<Transform>(entity)->Rotation);
 					}
 
 					ImGui::TreePop();
@@ -274,6 +278,11 @@ namespace Dawn
 			if (ImGui::BeginMenu("Rendering"))
 			{
 				auto Renderer = g_Application->GetRenderer();
+
+				auto Camera = World::GetActiveCamera();
+
+				ImGui::Text(fmt::format("Camera: {0}", Camera->GetEntityMeta()->Name).c_str());
+
 				// note--- this is only temporary here!
 				ImGui::Text("SSAO");
 				ImGui::Checkbox("Active", &Renderer->SSAOSettings.bIsActive);

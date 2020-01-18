@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "RenderResourceHelper.h"
 #include "Core/GDI/inc_gfx_types.h"
 #include "ResourceSystem/ResourceSystem.h"

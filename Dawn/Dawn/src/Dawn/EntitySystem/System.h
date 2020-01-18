@@ -1,12 +1,9 @@
 #pragma once
 
-#include "inc_common.h"
-#include "inc_core.h"
-#include "Transform/Transform.h"
-
 namespace Dawn
 {
 	class World;
+	class DawnType;
 
 	class ISystem
 	{

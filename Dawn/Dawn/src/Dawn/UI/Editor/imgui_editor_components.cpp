@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "imgui_editor_components.h"
 #include "imgui_editor_functions.h"
 #include "imgui.h"
@@ -10,8 +11,7 @@ namespace Dawn
 {
 	void ShowEntity(World* InWorld, Entity* InEntity)
 	{
-		if (InEntity == nullptr)
-			return;
+		D_ASSERT(InEntity, "Entity to inspect is null");
 
 		if (ImGui::CollapsingHeader("Entity"))
 		{
@@ -27,8 +27,7 @@ namespace Dawn
 
 	void ShowTransformComponent(Transform* InTransform, ImGuizmo::MODE& InEditSpace)
 	{
-		if (InTransform == nullptr)
-			return;
+		D_ASSERT(InTransform, "Transform to inspect is null");
 
 		if (ImGui::CollapsingHeader("Transform"))
 		{
@@ -60,7 +59,8 @@ namespace Dawn
 
 	void ShowCameraComponent(Camera* InCamera)
 	{
-		
+		D_ASSERT(InCamera, "Camera to inspect is null");
+
 		if (ImGui::CollapsingHeader("Camera"))
 		{
 			bool bHasChanged = false;
@@ -97,6 +97,8 @@ namespace Dawn
 
 	void ShowDirectionalLightComponent(DirectionalLight* InLight)
 	{
+		D_ASSERT(InLight, "Light to inspect is null");
+
 		if (ImGui::CollapsingHeader("DirectionalLight"))
 		{
 			ImGui::Indent(10.0f);
@@ -109,6 +111,8 @@ namespace Dawn
 
 	void ShowPointLightComponent(PointLight* InLight)
 	{
+		D_ASSERT(InLight, "Light to inspect is null");
+
 		if (ImGui::CollapsingHeader("PointLight"))
 		{
 			ImGui::Indent(10.0f);

@@ -1,7 +1,6 @@
 #pragma once
 #include "Vendor/ImGuizmo/ImGuizmo.h"
 #include "Core/GDI/inc_gfx_types.h"
-#include "inc_common.h"
 #include "EntitySystem/Entity.h"
 #include "imgui.h"
 
@@ -21,6 +20,7 @@ namespace Dawn
 	{
 		Entity CurrentSelectedEntity = INVALID_ENTITY;
 		ImDrawList* GizmoDrawList;
+		mat4 ModelMatrix;
 		vec3 LastEulerRotation;
 		ImGuizmo::MODE EditSpace = ImGuizmo::WORLD;
 		ImGuizmo::OPERATION EditMethod = ImGuizmo::TRANSLATE;

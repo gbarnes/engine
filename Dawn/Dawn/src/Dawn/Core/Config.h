@@ -1,7 +1,4 @@
 #pragma once
-#include "inc_common.h"
-#include "inc_core.h"
-#include <filesystem>
 
 namespace Dawn
 {

@@ -6,6 +6,7 @@
 namespace Dawn
 {
 	class GfxCmdList;
+	class Application;
 
 	class TestRenderLayer : public Layer
 	{

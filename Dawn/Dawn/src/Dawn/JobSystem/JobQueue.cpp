@@ -2,9 +2,8 @@
 //-----------------------------------------------------------------------------
 // Inclusions
 //-----------------------------------------------------------------------------
+#include "stdafx.h"
 #include "JobQueue.h"
-#include <Windows.h>
-#include <iostream>
 
 
 #define COMPILER_BARRIER() asm volatile("" ::: "memory")

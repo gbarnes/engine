@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Type.h"
 #include <map>
 

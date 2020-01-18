@@ -1,6 +1,8 @@
+#include "stdafx.h"
 #include "WorldSimulateLayer.h"
 #include "EntitySystem/RigidBody/RigidbodySystem.h"
 #include "Application.h"
+#include "EntitySystem/PhysicsWorld.h"
 
 namespace Dawn
 {
@@ -19,8 +21,8 @@ namespace Dawn
 
 	void WorldSimulateLayer::FixedUpdate(float InFixedDeltaTime)
 	{
-		auto scene = Application->GetPhysics()->GetScene();
-		auto world = Application->GetWorld();
+		auto scene = Parent->GetPhysics()->GetScene();
+		auto world = Parent->GetWorld();
 
 		if (scene) 
 		{

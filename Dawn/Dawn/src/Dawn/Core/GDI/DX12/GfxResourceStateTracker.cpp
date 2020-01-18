@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #ifdef USE_DX12_GFX
 #include "GfxResourceStateTracker.h"
 #include "GfxCmdList.h"

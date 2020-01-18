@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "GLTexture.h"
 #include "glad.h"
 

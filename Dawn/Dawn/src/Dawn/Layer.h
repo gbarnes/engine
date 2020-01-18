@@ -1,7 +1,5 @@
 #pragma once
 
-#include "inc_common.h"
-#include "inc_core.h"
 
 namespace Dawn
 {
@@ -11,7 +9,7 @@ namespace Dawn
 	class DAWN_API Layer
 	{
 	public:
-		Layer(Shared<Dawn::Application> InApplication);
+		Layer(Shared<Application> InApplication);
 		~Layer();
 
 		virtual void Setup() = 0;
@@ -33,7 +31,7 @@ namespace Dawn
 		}
 
 	protected:
-		Shared<Application> Application;
+		Shared<Application> Parent;
 	};
 }
 

@@ -1,9 +1,9 @@
 #pragma once
-#include "inc_common.h"
 #include "Entity.h"
 
 namespace Dawn
 {
+	class World;
 	constexpr int MaxNumbersOfEntities = 4096;  // abritary number of aligned max entities for now?! 
 
 	class EntityTable

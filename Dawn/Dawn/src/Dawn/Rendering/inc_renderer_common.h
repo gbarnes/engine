@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/Math.h"
-#include "inc_common.h"
 
 namespace Dawn
 {

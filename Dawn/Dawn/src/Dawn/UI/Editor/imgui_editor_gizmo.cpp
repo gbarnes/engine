@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "imgui_editor_gizmo.h"
 #include "imgui.h"
 #include "Application.h"
@@ -6,7 +7,10 @@
 #include "Vendor/ImGuizmo/ImGuizmo.h"
 #include "EntitySystem/Lights/LightComponents.h"
 #include "EntitySystem/Camera/Camera.h"
+#include "Core/GDI/GfxGDI.h"
 #include "imgui_editor_types.h"
+#include "imgui_debug.h"
+#include <Brofiler.h>
 
 namespace Dawn
 {
@@ -39,7 +43,6 @@ namespace Dawn
 			if (meta->bIsHiddenInEditorHierarchy)
 				return;
 
-			static mat4 ModelMatrix(1);
 			static vec3 LastEuler;
 			const mat4& view = InEditorCamera->GetView();
 			const mat4& proj = InEditorCamera->GetProjection();
@@ -49,11 +52,11 @@ namespace Dawn
 			auto transform = InSceneData->CurrentSelectedEntity.GetTransform(InWorld);
 			auto rotation = InSceneData->LastEulerRotation;
 
-			ImGuizmo::RecomposeMatrixFromComponents(&transform->Position[0], &rotation[0], &transform->Scale[0], &ModelMatrix[0][0]);
-			ImGuizmo::Manipulate(&view[0][0], &proj[0][0], InSceneData->EditMethod, InSceneData->EditSpace, &ModelMatrix[0][0]);
-			ImGuizmo::DecomposeMatrixToComponents(&ModelMatrix[0][0], &transform->Position[0], &rotation[0], &transform->Scale[0]);
+			ImGuizmo::RecomposeMatrixFromComponents(&transform->Position[0], &rotation[0], &transform->Scale[0], &InSceneData->ModelMatrix[0][0]);
+			ImGuizmo::Manipulate(&view[0][0], &proj[0][0], InSceneData->EditMethod, InSceneData->EditSpace, &InSceneData->ModelMatrix[0][0]);
+			ImGuizmo::DecomposeMatrixToComponents(&InSceneData->ModelMatrix[0][0], &transform->Position[0], &rotation[0], &transform->Scale[0]);
 
-			if (LastEuler != rotation)
+			if (InSceneData->LastEulerRotation != rotation)
 			{
 				InSceneData->LastEulerRotation = rotation;
 				transform->Rotation = glm::angleAxis(glm::radians(rotation.y), vec3(0, 1, 0)) * glm::angleAxis(glm::radians(rotation.z), vec3(0, 0, 1)) * glm::angleAxis(glm::radians(rotation.x), vec3(1, 0, 0));
@@ -129,7 +132,7 @@ namespace Dawn
 				continue;
 
 			vec2 ScreenPos = CameraUtils::WorldToScreenPoint(InEditorCamera, DirLight.second->Position);
-
+			
 			ImVec2 pos[2] =
 			{
 				ImVec2(ScreenPos.x - size.x * 0.5f, ScreenPos.y - size.y * 0.5f),
@@ -165,6 +168,8 @@ namespace Dawn
 				continue;
 
 			vec2 ScreenPos = CameraUtils::WorldToScreenPoint(InEditorCamera, Camera.second->Position);
+			OutputDebugText(fmt::format("ScreenPos: {0}, {1}", ScreenPos.x, ScreenPos.y));
+
 			ImVec2 pos[2] =
 			{
 				ImVec2(ScreenPos.x - size.x * 0.5f, ScreenPos.y - size.y * 0.5f),

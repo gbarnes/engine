@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #ifdef USE_DX12_GFX
 #include "GfxRenderTarget.h"
 #include "inc_gfx.h"

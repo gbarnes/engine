@@ -1,4 +1,7 @@
+#include "stdafx.h"
 #include "System.h"
+#include "World.h"
+#include "Core/Type.h"
 
 namespace Dawn
 {

@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "GfxPrimitiveFactory.h"
 
 namespace Dawn

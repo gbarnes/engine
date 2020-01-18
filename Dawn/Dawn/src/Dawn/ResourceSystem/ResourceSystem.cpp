@@ -1,11 +1,12 @@
+#include "stdafx.h"
 #include "ResourceSystem.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <filesystem>
 #include "Core/Loading/File.h"
+#include "Core/Logging/Log.h"
+#include "Core/Paths.h"
 #include "ResourceWatcher.h"
-#include "inc_core.h"
 
 namespace fs = std::filesystem;
 

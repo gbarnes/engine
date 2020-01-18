@@ -1,11 +1,5 @@
 #pragma once
-
-#include "inc_core.h"
-#include "Layer.h"
-
-#include "Core/Window.h"
-#include "ResourceSystem/ResourceSystem.h"
-#include "EntitySystem/World.h"
+#include "Core/Timer.h"
 
 namespace Dawn
 {
@@ -14,6 +8,9 @@ namespace Dawn
 	class ResourceSystem;
 	class PhysicsWorld;
 	class DeferredRenderer;
+	class Window;
+	class Layer;
+	class World;
 
 
 	class DAWN_API Application : public std::enable_shared_from_this<Application>
@@ -25,40 +22,14 @@ namespace Dawn
 
 		static AppSettings* GetSettings();
 
-		Shared<GfxGDI> GetGDI()
-		{
-			return GDI;
-		}
-
-		Shared<DeferredRenderer> GetRenderer()
-		{
-			return Renderer;
-		}
-		
-		Shared<World> GetWorld()
-		{
-			return World;
-		}
-
-		Shared<World> GetEditorWorld()
-		{
-			return EditorWorld;
-		}
-
-		Shared<PhysicsWorld> GetPhysics()
-		{
-			return Physics;
-		}
-
-		Shared<ResourceSystem> GetResourceSystem()
-		{
-			return ResourceSystem;
-		}
-
-		Window* GetWindow() const
-		{
-			return Window.get();
-		}
+	public:
+		Shared<GfxGDI> GetGDI();
+		Shared<DeferredRenderer> GetRenderer();
+		Shared<World> GetWorld();
+		Shared<World> GetEditorWorld();
+		Shared<PhysicsWorld> GetPhysics();
+		Shared<ResourceSystem> GetResourceSystem();
+		Window* GetWindow() const;
 
 	protected:
 		std::vector<Layer*> Layers;
@@ -88,8 +59,8 @@ namespace Dawn
 		void PopLayer(Layer* InLayer);
 		void ClearLayers();
 
-		std::vector<Layer*>::iterator begin() { return Layers.begin(); }
-		std::vector<Layer*>::iterator end() { return Layers.end(); }
+		std::vector<Layer*>::iterator begin();
+		std::vector<Layer*>::iterator end();
 		void Tick();
 	};
 

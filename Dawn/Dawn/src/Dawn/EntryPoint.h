@@ -1,6 +1,6 @@
 #pragma once
-#include "inc_core.h"
 #include "Application.h"
+#include "Core/Logging/Log.h"
 
 extern Dawn::Application* Dawn::CreateApplication();
 

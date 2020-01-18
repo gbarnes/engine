@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #ifdef USE_DX12_GFX
 //---------------------------------------------------------------------------//
 //        Copyright 2016  Immersive Pixels. All Rights Reserved.			 //

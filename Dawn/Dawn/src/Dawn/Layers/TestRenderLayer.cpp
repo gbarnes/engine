@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "TestRenderLayer.h"
 #include "Core/GDI/inc_gfx.h"
 #include "Rendering/Renderer.h"
@@ -13,6 +14,7 @@
 #include "ResourceSystem/Resources.h"
 #include "imgui.h"
 #include "JobSystem/JobSystem.h"
+#include "ResourceSystem/ResourceSystem.h"
 #include "Core/Config.h"
 
 namespace Dawn
@@ -54,10 +56,10 @@ namespace Dawn
 
 	void TestRenderLayer::Setup()
 	{
-		const auto GDI = Application->GetGDI();
-		const auto World = Application->GetWorld();
-		const auto EditorWorld = Application->GetEditorWorld();
-		const auto RS = Application->GetResourceSystem();
+		const auto GDI = Parent->GetGDI();
+		const auto World = Parent->GetWorld();
+		const auto EditorWorld = Parent->GetEditorWorld();
+		const auto RS = Parent->GetResourceSystem();
 
 		// mesh loading
 		{
@@ -252,10 +254,11 @@ namespace Dawn
 		BROFILER_CATEGORY("RenderLayer_Render", Brofiler::Color::AliceBlue);
 
 
-		auto Renderer = Application->GetRenderer();
-		auto GDI = Application->GetGDI();
-		auto World = Application->GetWorld();
+		auto Renderer = Parent->GetRenderer();
+		auto GDI = Parent->GetGDI();
+		auto World = Parent->GetWorld();
 		auto ActiveCam = World->GetActiveCamera();
+		auto ActiveCamTransform = ActiveCam->GetTransform(ActiveCam->WorldRef);
 
 		// Geometry bucket
 		{
@@ -267,7 +270,7 @@ namespace Dawn
 			ShadowPassCmd->Height = Renderer->ShadowSettings.Height;
 			ShadowPassCmd->ShaderId = CommonShaderHandles::ShadowMapCompute;
 
-			TODO("this should really be done differently...");
+			//todo (gb) this should really be done differently...
 			auto directionalLights = World->GetComponentsByType<DirectionalLight>();
 			LightUtils::CalculateOrthoLightMatrix(World.get(), directionalLights[0], 0.1f, 1000.0f);
 			ShadowPassCmd->LightSpace = directionalLights[0]->LightSpace;
@@ -280,7 +283,7 @@ namespace Dawn
 			auto ClearColor = Renderer->PerFrameData.GeometryBucket.AppendCommand<Draw::ClearSceneWithColorData>(ViewportCmd);
 			ClearColor->ClearColor = vec4(0.0, 0.0, 0.0, 1.0f);
 
-			const auto ResourceSystem = Application->GetResourceSystem();
+			const auto ResourceSystem = Parent->GetResourceSystem();
 			if (usedModel != nullptr && CommonShaderHandles::Standard.IsValid)
 			{
 				u32 i = 0;
@@ -347,7 +350,7 @@ namespace Dawn
 			LightingPassData->ShaderId = CommonShaderHandles::LightingPass;
 			LightingPassData->GBufferId = Renderer->TransientData.GBufferId;
 			LightingPassData->FSQuadVAOId = FinalPassQuadId;
-			LightingPassData->ViewPosition = g_camTransform->Position;
+			LightingPassData->ViewPosition = ActiveCamTransform->Position;
 			LightingPassData->SSAOBufferId = Renderer->TransientData.SSAOBlurBufferId;
 
 		}

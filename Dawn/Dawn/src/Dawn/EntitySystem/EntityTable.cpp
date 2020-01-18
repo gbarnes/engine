@@ -1,4 +1,6 @@
+#include "stdafx.h"
 #include "EntityTable.h"
+#include "World.h"
 
 namespace Dawn
 {

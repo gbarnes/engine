@@ -1,5 +1,4 @@
 #pragma once
-#include "inc_common.h"
 #include "Core/Memory/MemoryUtils.h"
 
 namespace Dawn

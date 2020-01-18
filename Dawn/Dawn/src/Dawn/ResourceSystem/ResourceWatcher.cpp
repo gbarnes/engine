@@ -1,8 +1,8 @@
 #pragma once
+#include "stdafx.h"
 #include "ResourceWatcher.h"
-#include "inc_common.h"
-#include "inc_core.h"
 #include "ResourceSystem.h"
+#include "Core/Logging/Log.h"
 
 namespace Dawn
 {

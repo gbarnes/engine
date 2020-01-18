@@ -1,12 +1,13 @@
 #pragma once
-#include "inc_common.h"
 #include "Core/GDI/inc_gfx.h"
 #include "inc_renderer_common.h"
 #include "CommandPacket.h"
+#include "Core/Memory/MemoryAllocators.h"
+#include "Renderer.h"
 #include "Application.h"
+#include "ResourceSystem/ResourceSystem.h"
 #include "EntitySystem/Lights/LightComponents.h"
 #include "EntitySystem/Entity.h"
-#include "Core/Memory/MemoryAllocators.h"
 #include "RenderResourceHelper.h"
 
 namespace Dawn
@@ -160,7 +161,6 @@ namespace Dawn
 				} while (packet != nullptr);
 			}
 		}
-
 	private:
 		GfxResId RenderBufferId;
 		Key* Keys;

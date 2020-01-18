@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "RigidbodySystem.h"
 
 namespace Dawn

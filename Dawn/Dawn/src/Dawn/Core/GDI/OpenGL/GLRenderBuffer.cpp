@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "GLRenderBuffer.h"
 #include "../GfxGDI.h"
 #include "glad.h"

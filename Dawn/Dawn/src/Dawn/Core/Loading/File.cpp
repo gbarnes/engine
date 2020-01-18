@@ -5,10 +5,10 @@
 // Inclusions
 //-----------------------------------------------------------------------------
 //#include "..\FileSystem\skyAsyncFileOperation.h"
+#include "stdafx.h"
 #include "File.h"
 #include "../Threading/CriticalSection.h"
 #include "AsyncFileOperation.h"
-#include <iostream>
 
 namespace Dawn
 {

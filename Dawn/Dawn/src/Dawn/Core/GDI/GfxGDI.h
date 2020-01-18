@@ -1,12 +1,11 @@
 #pragma once
-#include "inc_common.h"
-#include "Core/Logging/Log.h"
-#include "GfxResource.h"
-#include "GfxImmediatePrimitives.h"
 #include "Core/Container/HandleObjectArray.h"
+#include "GfxResource.h"
 
 namespace Dawn
 {
+	class GfxImmediatePrimitives;
+
 	typedef HandleObjectSlot<GfxIndexBuffer> IndexBufferSlot;
 	typedef HandleObjectSlot<GfxVertexBuffer> VertexBufferSlot;
 	typedef HandleObjectSlot<GfxVertexArray> VertexArraySlot;

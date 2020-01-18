@@ -1,6 +1,4 @@
 #pragma once
-#include "inc_common.h"
-#include "inc_core.h"
 #include "Component.h"
 #include "Transform/Transform.h"
 

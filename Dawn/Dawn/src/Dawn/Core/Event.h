@@ -1,8 +1,5 @@
 #pragma once
-#include "inc_common.h"
-#include <map>
-#include <vector>
-#include <functional>
+
 
 #define BIND_EVENT_MEMBER(x) std::bind(&x, this, std::placeholders::_1)
 #define BIND_EVENT_STATIC(x) std::bind(&x)

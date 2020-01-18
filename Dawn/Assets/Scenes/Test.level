@@ -1,8 +1,8 @@
 ---Entity Cam
 ---Component Transform
-  Position: {x: 4.531662, y: 7.287404, z: -13.646290}
-  Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 0.000000}
-  Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
+  Position: {x: 0.000000, y: 3.000000, z: 10.000000}
+  Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}
+  Scale: {x: 0.999915, y: 0.999989, z: 0.999953}
 ---Component Camera
   AspectRatio: 1.777778
   ClearColor: {r: 0.780000, g: 0.600000, b: 0.900000, a: 1.000000}
@@ -14,8 +14,8 @@
 ---Entity Light
 ---Component Transform
   Position: {x: 0.000000, y: 0.000000, z: 0.000000}
-  Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 0.000000}
-  Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
+  Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}
+  Scale: {x: 0.999980, y: 1.000000, z: 0.999994}
 ---Component DirectionalLight
   Color: {r: 0.900000, g: 0.900000, b: 0.900000, a: 1.000000}
   Intensity: 1.000000
@@ -24,7 +24,7 @@
 ---Component Transform
   Position: {x: -10.000000, y: 10.000000, z: 10.000000}
   Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}
-  Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
+  Scale: {x: 0.999961, y: 1.000000, z: 0.999994}
 ---Component PointLight
   Color: {r: 1.000000, g: 1.000000, b: 1.000000, a: 1.000000}
   Intensity: 200.000000
@@ -32,13 +32,13 @@
   bCastShadows: 0
 ---Entity Pointlight
 ---Component Transform
-  Position: {x: 10.000000, y: 1.690732, z: 20.718508}
+  Position: {x: 10.000000, y: 4.124976, z: 10.922191}
   Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}
-  Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
+  Scale: {x: 0.999757, y: 1.000000, z: 0.999994}
 ---Component PointLight
-  Color: {r: 1.000000, g: 1.000000, b: 1.000000, a: 1.000000}
-  Intensity: 200.000000
-  Range: 1.000000
+  Color: {r: 0.345156, g: 0.722217, b: 0.838235, a: 1.000000}
+  Intensity: 202.400146
+  Range: 1.700000
   bCastShadows: 0
 ---Entity Pointlight
 ---Component Transform

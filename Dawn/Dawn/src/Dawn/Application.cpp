@@ -1,9 +1,14 @@
+#include "stdafx.h"
 #include "Application.h"
 #include "imgui.h"
 
+#include "EntitySystem/World.h"
+#include "Layer.h"
+#include "Core/Window.h"
+#include "ResourceSystem/ResourceSystem.h"
 #include "Core/Event.h"
 #include "Core/Events/MouseEvent.h"
-#include "inc_common.h"
+
 #include "Layers/TestRenderLayer.h"
 #include "Layers/WorldSimulateLayer.h"
 #include "ResourceSystem/ResourceSystem.h"
@@ -62,6 +67,8 @@ namespace Dawn
 
 		if (bShowFPS)
 			ShowFpsCounter();
+
+		ShowDebugText();
 
 		if(bShowGBuffer)
 			ShowGBuffer(InGDI->GetRenderBuffer(InRenderer->TransientData.GBufferId), InGDI->GetRenderBuffer(InRenderer->TransientData.ShadowMapBufferId));
@@ -353,5 +360,43 @@ namespace Dawn
 		}
 
 		Layers.clear();
+	}
+
+	std::vector<Layer*>::iterator Application::begin() { return Layers.begin(); }
+	std::vector<Layer*>::iterator Application::end() { return Layers.end(); }
+
+	Shared<GfxGDI> Application::GetGDI()
+	{
+		return GDI;
+	}
+
+	Shared<DeferredRenderer> Application::GetRenderer()
+	{
+		return Renderer;
+	}
+
+	Shared<World> Application::GetWorld()
+	{
+		return World;
+	}
+
+	Shared<World> Application::GetEditorWorld()
+	{
+		return EditorWorld;
+	}
+
+	Shared<PhysicsWorld> Application::GetPhysics()
+	{
+		return Physics;
+	}
+
+	Shared<ResourceSystem> Application::GetResourceSystem()
+	{
+		return ResourceSystem;
+	}
+
+	Window* Application::GetWindow() const
+	{
+		return Window.get();
 	}
 }

@@ -1,4 +1,6 @@
+#include "stdafx.h"
 #include "Config.h"
+#include "Paths.h"
 
 namespace Dawn
 {

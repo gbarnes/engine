@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "LightComponents.h"
 #include "../World.h"
 #include "../Transform/Transform.h"

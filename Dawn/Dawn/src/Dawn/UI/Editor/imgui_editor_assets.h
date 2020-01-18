@@ -1,5 +1,4 @@
 #pragma once
-#include "inc_common.h"
 
 namespace Dawn
 {
@@ -8,8 +7,6 @@ namespace Dawn
 	class ResourceSystem;
 
 	void Editor_SaveLevel(Path InPath, EditorSceneData* InSceneData, World* InWorld, ResourceSystem* InResources);
-
-
 
 	//Path Editor_OpenFileDialog(const Path& InPath, std::initializer_list<std::string> InExtensions);
 }

@@ -1,7 +1,5 @@
 #pragma once
-#include "inc_common.h"
-#include "inc_core.h"
-#include "Application.h"
+
 #include "EntryPoint.h"
 
 class SandboxApp : public Dawn::Application

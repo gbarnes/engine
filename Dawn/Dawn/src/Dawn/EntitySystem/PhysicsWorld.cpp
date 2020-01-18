@@ -1,10 +1,14 @@
-#include "PhysicsWorld.h"
+#include "stdafx.h"
 
+#include "PhysicsWorld.h"
+#include "Core/Logging/Log.h"
+
+using namespace physx;
 
 namespace Dawn
 {
-	physx::PxDefaultErrorCallback PhysicsWorld::gDefaultErrorCallback;
-	physx::PxDefaultAllocator PhysicsWorld::gDefaultAllocatorCallback;
+	PxDefaultErrorCallback PhysicsWorld::gDefaultErrorCallback;
+	PxDefaultAllocator PhysicsWorld::gDefaultAllocatorCallback;
 
 	PhysicsWorld::PhysicsWorld()
 	{

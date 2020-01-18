@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "ResourceLoaders.h"
 #include "ResourceSystem.h"
 #include "ResourceUtils.h"
@@ -20,6 +21,8 @@
 #include "Application.h"
 #include "Core/GDI/inc_gfx.h"
 #include "Core/Loading/File.h"
+#include "Core/Logging/Log.h"
+#include "Core/Paths.h"
 #include "Rendering/RenderResourceHelper.h"
 
 

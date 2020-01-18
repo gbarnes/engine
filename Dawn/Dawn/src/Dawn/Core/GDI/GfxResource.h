@@ -1,5 +1,4 @@
 #pragma once
-#include "inc_common.h"
 #include "inc_gfx_types.h"
 
 namespace Dawn

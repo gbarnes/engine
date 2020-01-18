@@ -2,10 +2,6 @@
 
 #define WIN32_LEAN_AND_MEAN
 
-#include "inc_core.h"
-#include <functional>
-#include <Windows.h>
-
 namespace Dawn
 {
 	class DAWN_API Window

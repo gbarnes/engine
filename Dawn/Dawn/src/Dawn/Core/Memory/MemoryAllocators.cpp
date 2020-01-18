@@ -1,5 +1,5 @@
+#include "stdafx.h"
 #include "MemoryAllocators.h"
-#include "inc_common.h"
 
 namespace Dawn
 {

@@ -2,7 +2,6 @@
 //---------------------------------------------------------------------------//
 //        Copyright 2016  Immersive Pixels. All Rights Reserved.			 //
 
-#include "inc_common.h"
 #include "Core/Threading/Thread.h"
 #include "File.h"
 

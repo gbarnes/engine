@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #ifdef USE_DX12_GFX
 #include "GfxGenerateMipsPSO.h"
 #include "GfxGenerateMips_CS.h"

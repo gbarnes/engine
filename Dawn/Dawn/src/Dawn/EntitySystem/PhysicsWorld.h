@@ -1,5 +1,4 @@
 #pragma once
-#include "inc_core.h"
 /*#pragma comment(lib, "PhysX_64.lib")
 #pragma comment(lib, "PhysXCommon_64.lib")
 #pragma comment(lib, "PhysXFoundation_64.lib")
@@ -13,14 +12,11 @@
 #pragma comment(lib, "LowLevelAABB_static_64.lib")
 #pragma comment(lib, "FastXml_static_64.lib")
 #pragma comment(lib, "LowLevel_static_64.lib")*/
-
 #include "PxPhysicsAPI.h"
 
-#define PX_VISUAL_DEBUGGER_HOST "DawnEnginePX"
-
-
 using namespace physx;
-#define PhysicsWorldId std::string("Physics")
+
+#define PX_VISUAL_DEBUGGER_HOST "DawnEnginePX"
 
 namespace Dawn
 {
@@ -40,8 +36,8 @@ namespace Dawn
 		}
 
 	private:
-		static physx::PxDefaultErrorCallback gDefaultErrorCallback;
-		static physx::PxDefaultAllocator gDefaultAllocatorCallback;
+		static PxDefaultErrorCallback gDefaultErrorCallback;
+		static PxDefaultAllocator gDefaultAllocatorCallback;
 
 		bool UseVisualDebugger = false;
 		bool RecordMemoryAllocations = false;

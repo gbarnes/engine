@@ -1,5 +1,4 @@
 #pragma once
-#include "inc_common.h"
 #include "Entity.h"
 #include "EntityTable.h"
 
@@ -39,7 +38,10 @@ namespace Dawn
 
 		EntityMetaData* GetEntityMeta()
 		{
-			return EntityTable::GetMeta(GetEntity());
+			if (WorldRef)
+				return WorldRef->GetEntityMetaData(GetEntity());
+
+			return nullptr;
 		}
 	};
 }

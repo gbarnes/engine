@@ -1,11 +1,12 @@
+#include "stdafx.h"
 #include "GfxGLGDI.h"
-#include "inc_core.h"
 #include "GLShaders.h"
 #include "GLTexture.h"
 #include "GLImmediatePrimitives.h"
 #include "GLRenderBuffer.h"
 #include "Core/Memory/MemoryUtils.h"
 #include "../GfxRenderDoc.h"
+#include "Core/Logging/Log.h"
 //#ifdef USE_OPENGL_GFX
 
 namespace Dawn

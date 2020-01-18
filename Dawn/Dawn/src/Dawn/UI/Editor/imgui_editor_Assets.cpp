@@ -1,5 +1,8 @@
+#include "stdafx.h"
 #include "imgui_editor_assets.h"
 #include "imgui_editor_types.h"
+#include "Core/Logging/Log.h"
+#include "Core/Type.h"
 #include "ResourceSystem/Resources.h"
 #include "EntitySystem/World.h"
 #include "ResourceSystem/ResourceSystem.h"

@@ -1,4 +1,7 @@
+#include "stdafx.h"
 #include "GfxGDI.h"
+#include "GfxImmediatePrimitives.h"
+
 #include "OpenGL/GfxGLGDI.h"
 
 namespace Dawn

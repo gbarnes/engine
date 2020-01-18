@@ -1,5 +1,4 @@
 #pragma once
-#include "inc_common.h"
 #include "Component.h"
 #include "Entity.h"
 

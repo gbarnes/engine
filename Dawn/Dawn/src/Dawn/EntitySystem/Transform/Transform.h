@@ -1,8 +1,7 @@
 #pragma once
-#include "inc_common.h"
-#include "inc_core.h"
 #include "../SceneGraph.h"
 #include "../Component.h"
+#include "Core/Type.h"
 
 namespace Dawn
 {
@@ -45,60 +44,30 @@ namespace Dawn
 		//
 		// Takes care of casting the quaternion rotation to a rotation matrix
 		//
-		FORCEINLINE static mat4 GetRotationMatrix(Transform* InTransform)
-		{
-			if (InTransform == nullptr)
-				return mat4(1.0f);
-
-			return glm::mat4_cast(InTransform->Rotation);
-		}
+		static mat4 GetRotationMatrix(Transform* InTransform);
 
 		//
 		// 
 		//
-		FORCEINLINE static void Rotate(Transform* InTransform, const quat& Rotation)
-		{
-			InTransform->Rotation = Rotation;
-		}
+		static void Rotate(Transform* InTransform, const quat& Rotation);
 
 		//
 		// Calculates the up direction vector for the transform 
 		// by the currently given orientation.
 		//
-		FORCEINLINE static vec3 CalculateUp(Transform* InTransform)
-		{
-			if (InTransform == nullptr) 
-				return vec3(0.0f);
-
-			InTransform->Up = glm::normalize(InTransform->Rotation * glm::vec3(0, 1, 0));
-			return InTransform->Up;
-		}
+		static vec3 CalculateUp(Transform* InTransform);
 
 		//
 		// Calculates the forward direction vector for the transform 
 		// by the currently given orientation.
 		//
-		FORCEINLINE static vec3 CalculateForward(Transform* InTransform)
-		{
-			if (InTransform == nullptr)
-				return vec3(0.0f);
-
-			InTransform->Forward = glm::normalize(InTransform->Rotation * glm::vec3(0, 0, 1));
-			return InTransform->Forward;
-		}
+		static vec3 CalculateForward(Transform* InTransform);
 
 		//
 		// Calculates the right direction vector for the transform 
 		// by the currently given orientation.
 		//
-		FORCEINLINE static vec3 CalculateRight(Transform* InTransform)
-		{
-			if (InTransform == nullptr)
-				return vec3(0.0f);
-
-			InTransform->Right = glm::normalize(InTransform->Rotation * glm::vec3(1, 0, 0));
-			return InTransform->Right;
-		}
+		static vec3 CalculateRight(Transform* InTransform);
 	};
 
 }

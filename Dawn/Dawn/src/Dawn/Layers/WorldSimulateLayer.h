@@ -1,17 +1,15 @@
 #pragma once
 
-#include "inc_common.h"
 #include "Layer.h"
 
-#include "EntitySystem/PhysicsWorld.h"
-#include "EntitySystem/World.h"
 
 namespace Dawn
 {
+	class Application;
 	class WorldSimulateLayer : public Layer
 	{
 	public:
-		WorldSimulateLayer(Shared<Dawn::Application> InApplication);
+		WorldSimulateLayer(Shared<Application> InApplication);
 		~WorldSimulateLayer();
 
 		virtual void Setup();

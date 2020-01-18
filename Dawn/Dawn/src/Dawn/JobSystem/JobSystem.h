@@ -1,11 +1,9 @@
 #pragma once
 #include "Job.h"
 #include "JobQueue.h"
-#include <atomic>
+/*#include <atomic>
 #include <queue>
-#include <thread>
-
-#include "inc_common.h"
+#include <thread>*/
 
 
 /*

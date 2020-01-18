@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "ImGuiWrapper.h"
 #include "imgui.h"
 #include "Core/GDI/GfxGDI.h"

@@ -1,14 +1,14 @@
 #pragma once
-#include "inc_common.h"
 #include "../Component.h"
-#include "../Transform/Transform.h"
-#include "../World.h"
+#include "Core/Type.h"
 
 
 namespace Dawn
 {
 	class CameraSystem;
 	class CameraUtils;
+	struct Transform;
+	class World;
 
 	// Let this only be a normal struct containing plain data
 	// without any methods and add the methods to 
@@ -32,25 +32,13 @@ namespace Dawn
 		vec4 ClearColor = { 0.4f, 0.6f, 0.9f, 1.0f };
 		vec3 WorldUp = {0.0f,1.0f,0.0f};
 
-		Transform* GetTransform(World* InWorld)
-		{
-			D_ASSERT(InWorld != nullptr, "World cannot be null!");
-			return InWorld->GetComponentByEntity<Transform>(this->Id.Entity);
-		}
-
-		const mat4& GetProjection() const 
-		{
-			return Projection;
-		}
-
-		const mat4& GetView() const
-		{
-			return View;
-		}
-
+		Transform* GetTransform(World* InWorld);
+		const mat4& GetProjection() const;
+		const mat4& GetView() const;
 		static void InitFromLoad(World* InWorld, void* Component);
 
 	private:
+		
 		mat4 Projection = mat4(1);
 		mat4 View = mat4(1);
 	};
@@ -59,72 +47,47 @@ namespace Dawn
 	//
 	// Helper function to get a camera from the world!
 	//
-	static Camera* GetCamera(World* InWorld, u32 i)
-	{
-		return InWorld->GetCamera(i);
-	};
+	extern Camera* GetCamera(World* InWorld, u32 i);
 
 	//
 	// Helper function to create a new camera at the world!
 	//
-	static Camera* CreateCamera(World* InWorld, std::string&& InName, u32 Width, u32 Height,
-		float InNearZ, float InFarZ, float InFoV, vec4 InClearColor, 
-		const vec3& InPosition = vec3(0), const quat& InOrientation = quat())
-	{
-		return InWorld->CreateCamera(InName, Width, Height, InNearZ, InFarZ, InFoV, InClearColor, InPosition, InOrientation);
-	};
+	extern Camera* CreateCamera(World* InWorld, std::string&& InName, u32 Width, u32 Height,
+		float InNearZ, float InFarZ, float InFoV, vec4 InClearColor,
+		const vec3& InPosition = vec3(0), const quat& InOrientation = quat());
 
 	class CameraUtils
 	{
 	public:
-		
-
 		//
 		// Calculates the view matrix from the given orientation and translation matrix
 		//
-		FORCEINLINE static const mat4& CalculateView(Camera* InCamera, Transform* InTransform)
-		{
-			InCamera->View = glm::mat4_cast(glm::conjugate(InTransform->Rotation));
-			InCamera->View = glm::translate(InCamera->View, -InTransform->Position);
-			return InCamera->View;
-		}
+		static const mat4& CalculateView(Camera* InCamera, Transform* InTransform);
 
-		FORCEINLINE static const mat4& CalculateView2(Camera* InCamera, Transform* InTransform)
-		{
-			//InCamera->View = glm::mat4_cast(InTransform->Rotation);
-			InCamera->View = glm::lookAt(InTransform->Position, vec3(0, 0, -1), vec3(0,1,0)); //glm::translate(InCamera->View, InTransform->Position);
-			return InCamera->View;
-		}
-
+		//
+		// Calculates the frustum of the camera used for visibility check
+		//
+		static const void CalculateFrustum(Camera* InCamera);
 
 		//
 		// Calculates the perspective matrix for the given camera.
 		//
-		FORCEINLINE static const mat4& CalculatePerspective(Camera* InCamera)
-		{
-			InCamera->Projection = glm::perspective(glm::radians(InCamera->FieldOfView), InCamera->AspectRatio, InCamera->NearZ, InCamera->FarZ);
-			return InCamera->Projection;
-		}
+		static const mat4& CalculatePerspective(Camera* InCamera);
 
 		//
 		// Calculates the orthographic matrix for the given camera.
 		//
-		FORCEINLINE static const mat4& CalculateOthographic(Camera* InCamera)
-		{
-			InCamera->Projection = glm::ortho<float>(0.0f, (float)InCamera->Width, -(float)InCamera->Height, (float)InCamera->Height, InCamera->NearZ, InCamera->FarZ);
-			return InCamera->Projection;
-		}
+		static const mat4& CalculateOthographic(Camera* InCamera);
 
-		FORCEINLINE static vec2 WorldToScreenPoint(Camera* InCamera, const vec3& InPoint)
-		{
-			vec2 Pos = glm::project(InPoint, InCamera->GetView(), InCamera->GetProjection(), glm::vec4(0.0f, float(InCamera->Height), float(InCamera->Width), -float(InCamera->Height)));
-			return vec2(Pos.x, Pos.y);
-		}
+		//
+		// Converts a world point to screenspace one
+		//
+		static vec2 WorldToScreenPoint(Camera* InCamera, const vec3& InPoint);
 
-		FORCEINLINE static vec3 ScreenToWorldPoint(Camera* InCamera, const vec3& InPoint)
-		{
-			return glm::unProject(InPoint, InCamera->GetView(), InCamera->GetProjection(), glm::vec4(0.0f, 0.0f, float(InCamera->Width), float(InCamera->Height)));
-		}
+		//
+		// Converts a screenspace point to worldspace one
+		//
+		static vec3 ScreenToWorldPoint(Camera* InCamera, const vec3& InPoint);
 
 	};
 }

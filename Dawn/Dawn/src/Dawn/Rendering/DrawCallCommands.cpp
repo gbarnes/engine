@@ -1,5 +1,7 @@
+#include "stdafx.h"
 #include "DrawCallCommands.h"
 #include "glad.h"
+#include <Brofiler.h>
 #include "Application.h"
 #include "EntitySystem/World.h"
 #include "EntitySystem/Lights/LightComponents.h"

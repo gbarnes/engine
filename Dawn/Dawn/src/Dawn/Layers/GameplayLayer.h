@@ -1,13 +1,14 @@
 #pragma once
-#include "inc_common.h"
 #include "Layer.h"
 
 namespace Dawn
 {
+	class Application;
+
 	class GameplayLayer : public Layer
 	{
 	public:
-		GameplayLayer(const Shared<Dawn::Application>& InApplication, HWND InWindowHandle);
+		GameplayLayer(Shared<Application> InApplication, HWND InWindowHandle);
 		~GameplayLayer();
 
 		virtual void Setup();

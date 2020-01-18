@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "GLImmediatePrimitives.h"
 #include "../inc_gfx.h"
 #include "glad.h"

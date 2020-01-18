@@ -1,6 +1,4 @@
 #pragma once
-#include "inc_core.h"
-#include "inc_common.h"
 #include "Core/Container/HandleObjectArray.h"
 #include "Core/Memory/MemoryUtils.h"
 #include "Resources.h"

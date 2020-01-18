@@ -1,6 +1,5 @@
+#include "stdafx.h"
 #include "World.h"
-#include <iostream>
-#include <utility>
 #include "Camera/Camera.h"
 #include "Transform/Transform.h"
 #include "Lights/LightComponents.h"
@@ -171,5 +170,66 @@ namespace Dawn
 		return true;
 	}
 
+	void*  World::GetComponentByName(const Entity& InEntity, const std::string& InName)
+	{
+		BaseComponentTable* ComponentTable = nullptr;
 
+		for (auto& table : ComponentTables)
+		{
+			if (table->GetTypeName() == InName)
+			{
+				ComponentTable = table.get();
+				break;
+			}
+		}
+
+		return ComponentTable->GetComponentByEntity(InEntity);
+		//it->second->
+	}
+
+	void World::AddSystem(ISystem* InSystem)
+	{
+		auto type = InSystem->AccessType();
+		auto it = SystemTable.find(type->GetName());
+		if (it != SystemTable.end())
+			return;
+
+		SystemTable.insert(std::make_pair(type->GetName(), InSystem));
+	}
+
+	std::array<Entity, MaxNumbersOfEntities>&  World::GetEntities(u32* OutCount)
+	{
+		return Entities.GetEntities(OutCount);
+	}
+
+	Camera* World::GetActiveCamera()
+	{
+		return ActiveCamera;
+	}
+
+	void World::SetActiveCamera(Camera* InCamera)
+	{
+		ActiveCamera = InCamera;
+	}
+
+	BaseComponentTable* World::GetTableByString(const std::string& InName)
+	{
+		for (auto& Table : ComponentTables)
+			if (Table->GetTypeName() == InName)
+				return Table.get();
+
+		return nullptr;
+	}
+
+	EntityMetaData* World::GetEntityMetaData(const Entity& InEntity)
+	{
+		return Entities.GetMeta(InEntity);
+	}
+
+	void World::ExecuteComponentInitFunc(void* InComponent, const std::string& InString)
+	{
+		auto it = this->InitFuncTable.find(InString);
+		if (it != InitFuncTable.end())
+			(it->second)(this, InComponent);
+	}
 }

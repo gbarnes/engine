@@ -24,14 +24,20 @@ project "Dawn"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
-
+	
+	pchheader "stdafx.h"
+	pchsource "Dawn/src/Dawn/stdafx.cpp"
+	
 	files
 	{
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp"--,
+		"%{prj.name}/src/**.cpp",--,
+		"Dawn/src/Dawn/stdafx.h",
+		"Dawn/src/Dawn/stdafx.cpp"
 		--"%{prj.name}/shader/**.hlsl"
 	}
 
+	
 	includedirs
 	{
 		"Dawn/vendor/spdlog/include/",
@@ -40,10 +46,11 @@ project "Dawn"
 		"Dawn/vendor/glm/",
 		"Dawn/vendor/DirectXTex/",
 		"Dawn/vendor/brofiler/src/",
+		"Dawn/vendor/TaskScheduler/Scheduler/Include/",
 		"Dawn/vendor/assimp/include/",
 		"Dawn/vendor/glad/glad/",
 		"Dawn/vendor/pugixml/src/",
-		"%{prj.name}/src/Dawn/",
+		"Dawn/src/Dawn/",
 		"Dawn/vendor/physx/physx/include/",
 		"Dawn/vendor/physx/physx/include/**",
 		"Dawn/vendor/physx/pxshared/include/"
@@ -83,17 +90,21 @@ project "Dawn"
 		cppdialect "C++17"
 		defines "DAWN_DEBUG"
 		symbols "On"
+		optimize "Off"
 
 	filter "configurations:Release" 
+		flags {LinkTimeOptimization}
 		cppdialect "C++17"
-		defines "DAWN_RELEASE"
-		symbols "On"
+		defines "DAWN_RELEASE;NDEBUG"
+		symbols "Off"
+		optimize "Full"
 
 	filter "configurations:Dist" 
+		flags {LinkTimeOptimization}
 		cppdialect "C++17"
-		defines "DAWN_DIST"
-		symbols "On"
-
+		defines "DAWN_DIST;NDEBUG"
+		symbols "Off"
+		optimize "Speed"
 
     -- shadermodel("5.0")
 
@@ -127,29 +138,34 @@ project "Sandbox"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
-
+	pchheader "pch.h"
+	pchsource "Sandbox/src/pch.cpp"
 	linkoptions { '/NODEFAULTLIB:"libcmt.lib"' }
 	
 	files
 	{
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp"
+		"%{prj.name}/src/**.cpp",
+		"Sandbox/src/pch.h",
+		"Sandbox/src/pch.cpp"
 	}
 
 	includedirs
 	{
 		"Dawn/vendor/spdlog/include/",
 		"Dawn/vendor/stb/include/",
-		"Dawn/src/Dawn",
+		"Dawn/src/Dawn/",
 		"Dawn/vendor/DirectXTex/",
 		"Dawn/vendor/glad/glad/",
 		"Dawn/vendor/brofiler/src/",
+		"Dawn/vendor/TaskScheduler/Scheduler/Include/",
 		"Dawn/vendor/assimp/include/",
 		"Dawn/vendor/glm/",
 		"Dawn/vendor/pugixml/src/",
 		"Dawn/vendor/physx/physx/include/",
 		"Dawn/vendor/physx/physx/include/**",
-		"Dawn/vendor/physx/pxshared/include/"
+		"Dawn/vendor/physx/pxshared/include/",
+		"Sandbox/src/"
 	}
 	
 	links 
@@ -189,11 +205,16 @@ project "Sandbox"
 	filter "configurations:Debug" 
 		defines "DAWN_DEBUG"
 		symbols "On"
+		optimize "Off"
 
 	filter "configurations:Release" 
-		defines "DAWN_RELEASE"
+		flags {LinkTimeOptimization}
+		defines "DAWN_RELEASE;NDEBUG"
 		symbols "On"
+		optimize "Full"
 
 	filter "configurations:Dist" 
-		defines "DAWN_DIST"
+		flags {LinkTimeOptimization}
+		defines "DAWN_DIST;NDEBUG"
 		symbols "On"
+		optimize "Speed"

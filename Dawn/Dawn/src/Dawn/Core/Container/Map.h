@@ -1,5 +1,5 @@
 #pragma once
-#include "../../inc_common.h"
+#include <iostream>
 #include "Array.h"
 #include "List.h"
 

@@ -2,7 +2,6 @@
 
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/ostr.h"
-#include "inc_common.h"
 
 namespace Dawn 
 {
