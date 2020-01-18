@@ -79,6 +79,8 @@ void SandboxApp::Load()
 	ImGuiWrapper::Create(this->Settings.Hwnd, this->GetGDI().get());
 	//World::SetActiveCamera(Cam1);
 
+	ResourceSystem->LoadFile("Model/Hero_Rig_Unified.fbx");
+
 	auto LevelId = ResourceSystem->LoadFile("Scenes/Test.level");
 	auto Level = ResourceSystem->FindLevel(LevelId);
 	World::LoadLevel(GetWorld().get(), Level);

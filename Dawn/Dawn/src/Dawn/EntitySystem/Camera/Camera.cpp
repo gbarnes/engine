@@ -110,7 +110,6 @@ namespace Dawn
 	{
 		InCamera->View = glm::mat4_cast(glm::conjugate(InTransform->Rotation));
 		InCamera->View = glm::translate(InCamera->View, -InTransform->Position);
-
 		CalculateFrustum(InCamera);
 
 		return InCamera->View;

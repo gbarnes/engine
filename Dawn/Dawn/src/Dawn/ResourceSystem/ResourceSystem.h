@@ -66,9 +66,10 @@ namespace Dawn
 		// File loading api
 	public:
 		FileMetaData* GetMetaDataFromHandle(FileId InHandle);
-		ResourceId LoadFile(std::string InFilename);
+		ResourceId LoadFile(const std::string& InFilename);
 		ResourceId LoadFile(FileId InHandle);
 		std::vector<FileMetaData> GetAllMetaFiles();
+		FileId GetFileId(const std::string& InFilename);
 
 		// Resource functions
 	public:

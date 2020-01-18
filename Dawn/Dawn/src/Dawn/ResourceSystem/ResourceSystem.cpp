@@ -149,9 +149,14 @@ namespace Dawn
 		return &It->second;
 	}
 
-	ResourceId ResourceSystem::LoadFile(std::string InFilename)
+	FileId ResourceSystem::GetFileId(const std::string& InFilename)
 	{
-		return LoadFile(CREATE_FILE_HANDLE(InFilename));
+		return CREATE_FILE_HANDLE(InFilename);
+	}
+
+	ResourceId ResourceSystem::LoadFile(const std::string& InFilename)
+	{
+		return LoadFile(GetFileId(InFilename));
 	}
 
 	ResourceId ResourceSystem::LoadFile(FileId InHandle)

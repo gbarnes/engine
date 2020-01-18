@@ -198,6 +198,13 @@ struct DAWN_API AppSettings
 	bool ShowGDIDebug = false;
 };
 
+struct AABBox
+{
+	vec3 Min;
+	vec3 Max;
+	vec3 Extents;
+};
+
 inline void ThrowIfFailed(HRESULT hr)
 {
 	if (FAILED(hr))

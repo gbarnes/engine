@@ -25,6 +25,7 @@
 #include "EntitySystem/Lights/LightComponents.h"
 #include "EntitySystem/PhysicsWorld.h"
 #include "EntitySystem/RigidBody/RigidbodySystem.h"
+#include "EntitySystem/StaticMesh/ModelView.h"
 #include "Core/Config.h"
 #include "Rendering/Renderer.h"
 #include "UI/Editor/imgui_editor_functions.h"
@@ -149,6 +150,7 @@ namespace Dawn
 		World->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
 		World->AddTable("DirectionalLight", std::make_unique<ComponentTable<DirectionalLight>>());
 		World->AddTable("PointLight", std::make_unique<ComponentTable<PointLight>>());
+		World->AddTable("ModelView", std::make_unique<ComponentTable<ModelView>>());
 
 		EditorWorld = std::make_shared<Dawn::World>();
 

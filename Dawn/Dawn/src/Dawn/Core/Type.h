@@ -444,6 +444,32 @@ namespace Dawn
 		};
 	};
 
+	class AABBoxType : public BaseType
+	{
+		union {
+			AABBox* asBox;
+			void* asVoid;
+		} Data;
+
+	public:
+		std::string GetName() override
+		{
+			return "AABBox";
+		}
+
+		std::string ToString(void* InData) override
+		{
+			Data.asVoid = InData;
+			return "";
+		}
+
+		void FromString(void* InData, const std::string& InSerializedData) override
+		{
+			Data.asVoid = InData;
+			
+		};
+	};
+
 	struct TypeMember
 	{
 		std::string Name;

@@ -35,6 +35,7 @@ namespace Dawn
 		u32 NumIndices;
 		u32 NumVertices;
 		std::vector<ResourceId> Materials;
+		AABBox Bounds;
 	};
 
 	struct DAWN_API AnimatedMesh : Resource
@@ -66,6 +67,7 @@ namespace Dawn
 		bool bHasAnimations = false;
 		std::vector<ResourceId> Meshes;
 		std::vector<ResourceId> Materials;
+		AABBox Bounds;
 	};
 
 	struct DAWN_API Image : Resource

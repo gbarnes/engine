@@ -29,7 +29,7 @@
 namespace Dawn
 {
 
-	void RS_ProcessMeshNode(ResourceSystem* InResourceSystem, Model* InModel, aiNode* InNode, const aiScene* InScene)
+	void RS_ProcessMeshNode(ResourceSystem* InResourceSystem, Model* InModel, aiNode* InNode, const aiScene* InScene, vec3& currentMin, vec3& currentMax)
 	{
 		const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
 		const auto GDI = g_Application->GetGDI();
@@ -45,6 +45,10 @@ namespace Dawn
 			Mesh->NumIndices = aiMesh->mNumFaces * 3;
 			Mesh->NumVertices = aiMesh->mNumVertices;
 			
+			vec3 min, max;
+			min = max = vec3(aiMesh->mVertices[0].x, aiMesh->mVertices[0].y, aiMesh->mVertices[0].z);
+			
+
 			std::string Content;
 			std::vector<float> VertexData;
 			for (u32 y = 0; y < aiMesh->mNumVertices; ++y)
@@ -64,6 +68,49 @@ namespace Dawn
 				VertexData.push_back(texCoord0->y);
 				VertexData.push_back(texCoord1->x);
 				VertexData.push_back(texCoord1->y);
+
+				// x-axis
+				if (pos->x < min.x)
+					min.x = pos->x;
+				if (pos->x > max.x)
+					max.x = pos->x;
+
+				// y-axis
+				if (pos->y < min.y)
+					min.y = pos->y;
+				if (pos->y > max.y)
+					max.y = pos->y;
+
+				// z-axis
+				if (pos->z < min.z)
+					min.z = pos->z;
+				if (pos->z > max.z)
+					max.z = pos->z;
+			}
+
+			Mesh->Bounds.Max = max;
+			Mesh->Bounds.Min = min;
+			Mesh->Bounds.Extents = Mesh->Bounds.Max - Mesh->Bounds.Min;
+
+			// check bounds of the entire model
+			{
+				// x-axis
+				if (Mesh->Bounds.Min.x < currentMin.x)
+					currentMin.x = Mesh->Bounds.Min.x;
+				if (Mesh->Bounds.Max.x > currentMax.x)
+					currentMax.x = Mesh->Bounds.Max.x;
+
+				// y-axis
+				if (Mesh->Bounds.Min.y < currentMin.y)
+					currentMin.y = Mesh->Bounds.Min.y;
+				if (Mesh->Bounds.Max.y > currentMax.y)
+					currentMax.y = Mesh->Bounds.Max.y;
+
+				// z-axis
+				if (Mesh->Bounds.Min.z < currentMin.z)
+					currentMin.z = Mesh->Bounds.Min.z;
+				if (Mesh->Bounds.Max.z > currentMax.z)
+					currentMax.z = Mesh->Bounds.Max.z;
 			}
 
 			Content = "";
@@ -152,7 +199,7 @@ namespace Dawn
 
 		for (u32 i = 0; i < InNode->mNumChildren; ++i)
 		{
-			RS_ProcessMeshNode(InResourceSystem, InModel, InNode->mChildren[i], InScene);
+			RS_ProcessMeshNode(InResourceSystem, InModel, InNode->mChildren[i], InScene, currentMin, currentMax);
 		}
 	}
 
@@ -182,7 +229,14 @@ namespace Dawn
 		Id = InResourceSystem->CreateModel(&model);
 		model->FileId = InMetaData->Id;
 
-		RS_ProcessMeshNode(InResourceSystem, model, scene->mRootNode, scene);
+		vec3 min, max;
+		min = max = vec3(scene->mMeshes[0]->mVertices[0].x, scene->mMeshes[0]->mVertices[0].y, scene->mMeshes[0]->mVertices[0].z);
+
+		RS_ProcessMeshNode(InResourceSystem, model, scene->mRootNode, scene, min, max);
+
+		model->Bounds.Max = max;
+		model->Bounds.Min = min;
+		model->Bounds.Extents = model->Bounds.Max - model->Bounds.Min;
 
 		return Id;
 	}
