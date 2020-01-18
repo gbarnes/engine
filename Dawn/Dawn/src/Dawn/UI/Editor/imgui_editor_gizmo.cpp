@@ -96,6 +96,9 @@ namespace Dawn
 			if (meta->bIsHiddenInEditorHierarchy)
 				continue;
 
+			if (!CameraUtils::IsPointVisible(InEditorCamera->GetFrustum(), PointLight.second->Position))
+				continue;
+
 			vec2 ScreenPos = CameraUtils::WorldToScreenPoint(InEditorCamera, PointLight.second->Position);
 
 			ImVec2 pos[2] =
@@ -129,6 +132,9 @@ namespace Dawn
 		{
 			auto meta = InWorld->GetEntityMetaData(DirLight.first->GetEntity());
 			if (meta->bIsHiddenInEditorHierarchy)
+				continue;
+
+			if (!CameraUtils::IsPointVisible(InEditorCamera->GetFrustum(), DirLight.second->Position))
 				continue;
 
 			vec2 ScreenPos = CameraUtils::WorldToScreenPoint(InEditorCamera, DirLight.second->Position);
@@ -165,6 +171,9 @@ namespace Dawn
 		{
 			auto meta = InWorld->GetEntityMetaData(Camera.first->GetEntity());
 			if (meta->bIsHiddenInEditorHierarchy)
+				continue;
+
+			if (!CameraUtils::IsPointVisible(InEditorCamera->GetFrustum(), Camera.second->Position))
 				continue;
 
 			vec2 ScreenPos = CameraUtils::WorldToScreenPoint(InEditorCamera, Camera.second->Position);

@@ -10,6 +10,47 @@ namespace Dawn
 	struct Transform;
 	class World;
 
+	// frustum code taken from https://gist.github.com/podgorskiy/e698d18879588ada9014768e3e82a644
+	struct Frustum
+	{
+		enum Planes
+		{
+			Left = 0,
+			Right,
+			Bottom,
+			Top,
+			Near,
+			Far,
+			Count,
+			Combinations = Count * (Count - 1) / 2
+		};
+
+
+		Frustum() {}
+		// m = ProjectionMatrix * ViewMatrix 
+		Frustum(glm::mat4 m);
+
+
+		template<Planes i, Planes j>
+		struct ij2k
+		{
+			enum { k = i * (9 - i) / 2 + j - 1 };
+		};
+
+		template<Frustum::Planes a, Frustum::Planes b, Frustum::Planes c>
+		vec3 intersection(const glm::vec3* crosses) const
+		{
+			float D = glm::dot(glm::vec3(Planes[a]), crosses[ij2k<b, c>::k]);
+			vec3 res = glm::mat3(crosses[ij2k<b, c>::k], -crosses[ij2k<a, c>::k], crosses[ij2k<a, b>::k]) *
+				vec3(Planes[a].w, Planes[b].w, Planes[c].w);
+			return res * (-1.0f / D);
+		}
+
+		vec4   Planes[Planes::Count];
+		vec3   Points[8];
+	};
+
+
 	// Let this only be a normal struct containing plain data
 	// without any methods and add the methods to 
 	// the camera system and make it the main access point for cameras ?
@@ -35,10 +76,15 @@ namespace Dawn
 		Transform* GetTransform(World* InWorld);
 		const mat4& GetProjection() const;
 		const mat4& GetView() const;
+		
+		const Frustum& GetFrustum() const {
+			return Frustum;
+		}
+
 		static void InitFromLoad(World* InWorld, void* Component);
 
 	private:
-		
+		Frustum Frustum;
 		mat4 Projection = mat4(1);
 		mat4 View = mat4(1);
 	};
@@ -89,5 +135,17 @@ namespace Dawn
 		//
 		static vec3 ScreenToWorldPoint(Camera* InCamera, const vec3& InPoint);
 
+		//
+		// Checks whether or not a single box is within the given frustum!
+		//
+		static bool IsBoxVisible(const Frustum& InFrustum, const vec3& minp, const vec3& maxp);
+
+		//
+		// Checks whether or not a single points is within the given frustum!
+		//
+		static bool IsPointVisible(const Frustum& InFrustum, const vec3& point);
+
+
+		//static bool ArePointsVisible(const Frustum& InFrustum, int InNumPoints, const vec3* InPoints, bool* InStates);
 	};
 }

@@ -227,15 +227,6 @@ namespace Dawn
 				CameraUtils::CalculateView(g_camera, g_camTransform);
 			}
 		}
-		else
-		{
-			auto transform = g_camera1->GetTransform(g_World.get());
-			TransformUtils::CalculateUp(transform);
-			TransformUtils::CalculateForward(transform);
-			TransformUtils::CalculateRight(transform);
-			CameraUtils::CalculatePerspective(g_camera1);
-			CameraUtils::CalculateView(g_camera1, transform);
-		}
 	}
 
 	void DrawSphere(const mat4& InModelMatrix, const ResourceId& Material, ResourceSystem* ResourceSystem, DeferredRenderer* Renderer, Model* InModel)
