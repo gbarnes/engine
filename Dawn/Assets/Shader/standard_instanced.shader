@@ -5,7 +5,7 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 uv0;
 layout(location = 3) in vec2 uv1;
-layout(location = 4) in mat4 model;
+layout(location = 4) in mat4 modelInstanced;
  
 out vec2 TexCoord0;
 out vec2 TexCoord1;
@@ -17,12 +17,12 @@ uniform mat4 proj;
  
 void main()
 {  
-	vec4 worldPos = view * model * vec4(position, 1.0);
+	vec4 worldPos = view * modelInstanced * vec4(position, 1.0);
 	FragPos =  worldPos;  
 	TexCoord0 = uv0;    
 	TexCoord1 = uv1;
 	
-    Normal = normalize(mat3(transpose(inverse(view * model))) * normal); 
+    Normal = normalize(mat3(transpose(inverse(view * modelInstanced))) * normal); 
 	gl_Position = proj * worldPos;
 }
 

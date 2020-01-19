@@ -226,6 +226,7 @@ namespace Dawn
 	struct GfxState
 	{
 		bool bEnableDepthTest = true;
+		bool bEnableCulling = true;
 		GfxCullFace FaceCull = GCF_Back;
 	};
 

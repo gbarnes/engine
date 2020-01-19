@@ -28,6 +28,8 @@ namespace Dawn
 			return false;
 		}
 
+		virtual void Destroy(const Entity& InId) = 0;
+
 		virtual void* GetComponentByEntity(const Entity& InId) = 0;
 		virtual ComponentId AddByVoid(const Entity& InEntity, void* InComponent) = 0;
 
@@ -74,18 +76,18 @@ namespace Dawn
 			return id;
 		}
 
-		void Destroy(const Entity& InEntity)
+		virtual void Destroy(const Entity& InEntity) override
 		{
 			// todo (gb): this will make problems when destroying multiple 
 			//			  components and not reallocating inbetween since 
 			//			  some ids will never be filled again (we need some sort of
 			//			  cache that saves the free ids (a queue?))
-			u32 compId = EntityComponent[InEntity.Id];
+			u32 compId = EntityToComponent[InEntity.Id];
 			SafeDelete(Components[compId]);
 			Components[compId] = nullptr;
 			ComponentIds[compId] = INVALID_HANDLE;
 			CurrentId = compId;
-			TotalCount - 1;
+			TotalCount -= 1;
 		}
 
 		ComponentId AddByVoid(const Entity& InEntity, void* InComponent) override
@@ -94,7 +96,7 @@ namespace Dawn
 			return Add(InEntity, CastedComponent);
 		}
 
-		void Destroy(const Entity& InEntity)
+		/*void Destroy(const Entity& InEntity)
 		{
 			auto it = EntityToComponent.find(InEntity.Id);
 			if (it == EntityToComponent.end())
@@ -113,7 +115,7 @@ namespace Dawn
 			ComponentId& id = ComponentIds[rawid];
 			id.IsValid = false;
 			CurrentId = rawId;
-		}
+		}*/
 
 
 		T* GetByEntityId(const Entity& InEntity)

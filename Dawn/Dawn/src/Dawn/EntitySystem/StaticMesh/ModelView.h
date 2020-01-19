@@ -2,6 +2,7 @@
 #include "Core/Type.h"
 #include "ResourceSystem/Resources.h"
 #include "../Component.h"
+#include "Rendering/inc_renderer_common.h"
 
 namespace Dawn
 {
@@ -15,6 +16,7 @@ namespace Dawn
 		ModelView()
 		{}
 
+		RenderLayer Layer = RenderLayer::StaticGeom;
 		FileId ModelId;
 		ResourceId ResourceId;
 

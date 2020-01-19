@@ -35,6 +35,7 @@ namespace Dawn
 	DAWN_API void Draw::DrawInstanced(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		const DrawInstancedData* RenderData = static_cast<const DrawInstancedData*>(data);
+		//InRenderer->CurrentShader->SetInt("isInstanced", 1);
 		InGDI->DrawInstanced(RenderData->VertexArrayId, RenderData->Amount);
 	}
 
@@ -66,6 +67,8 @@ namespace Dawn
 	DAWN_API void Draw::LightingPass(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		BROFILER_EVENT("Lighting Pass")
+
+		
 		const LightingPassData* RenderData = static_cast<const LightingPassData*>(data);
 		auto LightingPassShader = InGDI->GetShader(RenderData->ShaderId);
 		auto GBuffer = InGDI->GetRenderBuffer(RenderData->GBufferId);
@@ -183,7 +186,7 @@ namespace Dawn
 		BROFILER_EVENT("Shadowmap Pass");
 		const ShadowPassData* RenderData = static_cast<const ShadowPassData*>(data);
 		InRenderer->CurrentShader = InGDI->GetShader(RenderData->ShaderId);
-
+		glCullFace(GL_FRONT);
 		InGDI->SetViewport(0, 0, InRenderer->PerFrameData.Camera->Width, InRenderer->PerFrameData.Camera->Height);
 		InGDI->ClearWithColor(vec4(1, 1, 1, 1));
 		InRenderer->CurrentShader->Bind();

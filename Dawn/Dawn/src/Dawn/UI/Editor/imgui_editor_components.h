@@ -8,6 +8,8 @@ namespace Dawn
 	struct Camera;
 	struct DirectionalLight;
 	struct PointLight;
+	struct ModelView;
+	class ResourceSystem;
 	class World;
 
 	void ShowEntity(World* InWorld, Entity* InEntity);
@@ -15,4 +17,5 @@ namespace Dawn
 	void ShowCameraComponent(Camera* InCamera);
 	void ShowDirectionalLightComponent(DirectionalLight* InLight);
 	void ShowPointLightComponent(PointLight* InLight);
+	void ShowModelViewComponent(ModelView* InModelView, ResourceSystem* InResourceSystem);
 }

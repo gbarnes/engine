@@ -6,6 +6,8 @@
 #include "EntitySystem/Camera/Camera.h"
 #include "EntitySystem/Transform/Transform.h"
 #include "EntitySystem/Lights/LightComponents.h"
+#include "EntitySystem/StaticMesh/ModelView.h"
+#include "ResourceSystem/ResourceSystem.h"
 
 namespace Dawn
 {
@@ -133,4 +135,17 @@ namespace Dawn
 		}
 	}
 
+	void ShowModelViewComponent(ModelView* InModelView, ResourceSystem* InResourceSystem)
+	{
+		D_ASSERT(InModelView, "Model to inspect is null");
+
+		if (ImGui::CollapsingHeader("Model"))
+		{
+			auto* ModelMetaData = InResourceSystem->GetMetaDataFromHandle(InModelView->ModelId);
+
+			ImGui::Indent(10.0f);
+			ImGui::Text("File: %s", (ModelMetaData) ? ModelMetaData->Name.c_str() : "Not set");
+			ImGui::Unindent(10.0f);
+		}
+	}
 }

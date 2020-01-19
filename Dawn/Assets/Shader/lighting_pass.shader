@@ -72,8 +72,7 @@ void main()
 		
 		vec3 radiance = vec3(light.color) * light.intensity;
 		 
-		Lo += CalculateIrradiance(radiance, L, V, N, H, F0, Roughness, Metallic, Albedo);
-		Shadow += CalculateShadow(light.shadowColor, light.lightSpace * vec4(WorldPos, 1.0), N, -light.direction); 
+		Lo += CalculateIrradiance(radiance, L, V, N, H, F0, Roughness, Metallic, Albedo) * (1 - CalculateShadow(light.shadowColor, light.lightSpace * vec4(WorldPos, 1.0), N, -light.direction));
 	} 
 	  
 	for(int i = 0; i < pointLightNum; ++i)
@@ -89,8 +88,9 @@ void main()
 		Lo += CalculateIrradiance(radiance, L, V, N, H, F0, Roughness, Metallic, Albedo);
 	}
 	
+	//SampledAO * 
     vec3 ambient = vec3(0.03) * Albedo;
-    vec3 color = ambient * SampledAO * (1.0 - Shadow)  + Lo ;
+    vec3 color = SampledAO * ambient +  Lo ;
 	
     color = color / (color + vec3(1.0));
 	color = pow(color, vec3(1.0/2.2));

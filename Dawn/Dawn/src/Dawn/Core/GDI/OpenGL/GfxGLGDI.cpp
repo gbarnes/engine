@@ -153,7 +153,15 @@ namespace Dawn
 		else 
 			glDisable(GL_DEPTH_TEST);
 
-		glCullFace(InState.FaceCull);
+		if (InState.bEnableCulling)
+		{
+			glEnable(GL_CULL_FACE);
+			glCullFace(InState.FaceCull);
+		}
+		else
+		{
+			glDisable(GL_CULL_FACE);
+		}
 	}
 
 	void GfxGLGDI::Clear()

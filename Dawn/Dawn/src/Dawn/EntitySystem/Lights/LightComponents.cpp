@@ -2,6 +2,7 @@
 #include "LightComponents.h"
 #include "../World.h"
 #include "../Transform/Transform.h"
+#include "EntitySystem/Camera/Camera.h"
 #include "glm.hpp"
 
 namespace Dawn
@@ -65,16 +66,19 @@ namespace Dawn
 
 	void LightUtils::CalculateOrthoLightMatrix(World* InWorld, DirectionalLight* InLight, float InNearPlane, float InFarPlane)
 	{
+		auto Camera = World::GetActiveCamera();
+		auto CamTransform = Camera->GetTransform(Camera->WorldRef);
 		auto Transform = InLight->GetEntity().GetTransform(InWorld);
 
-		glm::mat4 Projection = glm::ortho(-20.0f, 20.0f, 20.0f, -20.0f, InNearPlane, InFarPlane);
+		glm::mat4 Projection = glm::ortho<float>(-25, 25, 25, -25, -25, InFarPlane);
+		
 		glm::mat4 lightView = glm::lookAt
 		(
-			Transform->Position - Transform->Forward * 20.0f,
-			Transform->Position + Transform->Forward * -2.0f,
-			Transform->Up
+			Transform->Position,
+			Transform->Position + Transform->Forward*InFarPlane,
+			vec3(0.0f, -1.0f, 0.0f)
 		);
 
-		InLight->LightSpace = Projection * lightView;
+		InLight->LightSpace = Projection * lightView * glm::mat4(1.0);
 	}
 }

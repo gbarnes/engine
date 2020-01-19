@@ -143,10 +143,10 @@ namespace Dawn
 
 		GfxBufferLayout Layout =
 		{
-			{ GfxShaderDataType::Float4, "model" },
-			{ GfxShaderDataType::Float4, "model" },
-			{ GfxShaderDataType::Float4, "model" },
-			{ GfxShaderDataType::Float4, "model" }
+			{ GfxShaderDataType::Float4, "modelInstanced" },
+			{ GfxShaderDataType::Float4, "modelInstanced" },
+			{ GfxShaderDataType::Float4, "modelInstanced" },
+			{ GfxShaderDataType::Float4, "modelInstanced" }
 		};
 
 		GDI->CreateVertexBuffer(&modelMatrices[0], Size * sizeof(glm::mat4), &ModelMatrixBuffer);
@@ -265,7 +265,7 @@ namespace Dawn
 		// Geometry bucket
 		{
 			auto SetStateCmd = Renderer->PerFrameData.ShadowBucket.AddCommand<Draw::SetStateData>(0u);
-			SetStateCmd->State = { true, GCF_Front };
+			SetStateCmd->State = { true, true, GCF_Back };
 
 			auto ShadowPassCmd = Renderer->PerFrameData.ShadowBucket.AppendCommand<Draw::ShadowPassData>(SetStateCmd);
 			ShadowPassCmd->Width = Renderer->ShadowSettings.Width;
@@ -277,8 +277,10 @@ namespace Dawn
 			LightUtils::CalculateOrthoLightMatrix(World.get(), directionalLights[0], 0.1f, 1000.0f);
 			ShadowPassCmd->LightSpace = directionalLights[0]->LightSpace;
 
+			auto SetStateBackCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::SetStateData>(0u);
+			SetStateBackCmd->State = { true, false, GCF_Back };
 
-			auto ViewportCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::SetViewportData>(0u);
+			auto ViewportCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::SetViewportData>(1u);
 			ViewportCmd->Width = ActiveCam->Width;
 			ViewportCmd->Height = ActiveCam->Height;
 
@@ -314,8 +316,11 @@ namespace Dawn
 			DrawCmd->IndexCount = CubeMeshArray->GetIndexBuffer(GDI.get())->GetSize();
 			DrawCmd->Amount = Size;
 
-			auto SetStateBackCmd = Renderer->PerFrameData.ShadowBucket.AddCommand<Draw::SetStateData>(0u);
-			SetStateBackCmd->State = { true, GCF_Front };
+			auto DrawShadowCmd = Renderer->PerFrameData.ShadowBucket.AddCommand<Draw::DrawInstancedData>(0u);
+			DrawShadowCmd->VertexArrayId = CubeMeshArray->GetId();
+			DrawShadowCmd->IndexCount = CubeMeshArray->GetIndexBuffer(GDI.get())->GetSize();
+			DrawShadowCmd->Amount = Size;
+
 		}
 
 		// Lighting Pass

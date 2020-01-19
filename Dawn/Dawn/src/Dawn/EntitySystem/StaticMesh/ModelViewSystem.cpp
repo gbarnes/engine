@@ -35,6 +35,7 @@ namespace Dawn
 			//if (CameraUtils::IsBoxVisible(camera->GetFrustum(), mesh->Bounds.Min, mesh->Bounds.Max))
 			//	continue;
 
+			// todo (gb): this should only be done once for static geometry!
 			mat4 modelMatrix = glm::translate(mat4(1), transform->Position)  * glm::scale(mat4(1), transform->Scale) * glm::mat4_cast(transform->Rotation);
 			
 

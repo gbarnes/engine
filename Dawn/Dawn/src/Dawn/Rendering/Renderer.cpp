@@ -101,7 +101,7 @@ namespace Dawn
 		TransientData.ShadowMapBufferId = GDI->CreateRenderBuffer(&ShadowMapBuffer);
 		if (TransientData.ShadowMapBufferId.IsValid)
 		{
-			ShadowMapBuffer->AttachDepthTarget(ShadowSettings.Width, ShadowSettings.Height);
+			ShadowMapBuffer->AttachDepthTarget(Settings->Width, Settings->Height);
 		}
 	}
 

@@ -7,6 +7,7 @@
 namespace Dawn
 {
 	MAKE_TYPE_BEGIN(ModelView)
+		ADD_MEMBER(ModelView, Layer, I32Type, true)
 		ADD_MEMBER(ModelView, ModelId, U64Type, true)
 	MAKE_TYPE_END()
 

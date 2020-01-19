@@ -22,7 +22,7 @@ namespace Dawn
 		ImDrawList* GizmoDrawList;
 		mat4 ModelMatrix;
 		vec3 LastEulerRotation;
-		ImGuizmo::MODE EditSpace = ImGuizmo::WORLD;
+		ImGuizmo::MODE EditSpace = ImGuizmo::LOCAL;
 		ImGuizmo::OPERATION EditMethod = ImGuizmo::TRANSLATE;
 		std::string Name = "";
 	};

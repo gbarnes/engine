@@ -148,9 +148,19 @@ namespace Dawn
 		return Entities.Create(InName);
 	}
 
+	//
+	// Destroys the given entity with all it's components!
+	//
 	void World::DestroyEntity(const Entity& InEntity)
 	{
 		auto components = GetComponentTypesByEntity(InEntity);
+		
+		for (auto component : components)
+		{
+			GetTableByString(component)->Destroy(InEntity);
+		}
+
+		Entities.Remove(InEntity.Id);
 	}
 
 	//
@@ -175,6 +185,7 @@ namespace Dawn
 		return components;
 	}
 
+	
 	struct ComponentInitData
 	{
 		std::string Type;

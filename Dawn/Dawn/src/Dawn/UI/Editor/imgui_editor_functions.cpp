@@ -7,6 +7,7 @@
 #include "EntitySystem/EntityTable.h"
 #include "EntitySystem/Transform/Transform.h"
 #include "EntitySystem/Camera/Camera.h"
+#include "EntitySystem/StaticMesh/ModelView.h"
 #include "ResourceSystem/Resources.h"
 #include "ResourceSystem/ResourceSystem.h"
 #include "Rendering/Renderer.h"
@@ -126,6 +127,8 @@ namespace Dawn
 					ShowDirectionalLightComponent(world->GetComponentByEntity<DirectionalLight>(SelectedEntity));
 				else if (component == "PointLight")
 					ShowPointLightComponent(world->GetComponentByEntity<PointLight>(SelectedEntity));
+				else if (component == "ModelView")
+					ShowModelViewComponent(world->GetComponentByEntity<ModelView>(SelectedEntity), g_Application->GetResourceSystem().get());
 			}
 		}
 
@@ -309,6 +312,13 @@ namespace Dawn
 		if (g_showMaterialBrowserWindow)
 			ShowMaterialBrowserWindow();
 
+		// todo (gb): add a command with undo and redo stuff and so on!
+		if (IsKeyDown(KeyCode::KeyCode_Delete) && SceneData->CurrentSelectedEntity.IsValid())
+		{
+			World->DestroyEntity(SceneData->CurrentSelectedEntity);
+			SceneData->CurrentSelectedEntity = INVALID_ENTITY;
+			
+		}
 
 		Editor_BeginGizmoFrame();
 		Editor_RenderObjectManipulationGizmo(EditorCamera, World.get(), Editor_GetSceneData());

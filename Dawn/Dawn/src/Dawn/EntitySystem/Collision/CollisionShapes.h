@@ -5,7 +5,7 @@
 
 namespace Dawn
 {
-	class Model;
+	struct Model;
 
 	struct DAWN_API BoxShape : public Component<BoxShape>
 	{
