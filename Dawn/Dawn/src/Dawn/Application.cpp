@@ -25,6 +25,7 @@
 #include "EntitySystem/Lights/LightComponents.h"
 #include "EntitySystem/PhysicsWorld.h"
 #include "EntitySystem/RigidBody/RigidbodySystem.h"
+#include "EntitySystem/StaticMesh/ModelViewSystem.h"
 #include "EntitySystem/StaticMesh/ModelView.h"
 #include "Core/Config.h"
 #include "Rendering/Renderer.h"
@@ -152,11 +153,13 @@ namespace Dawn
 		World->AddTable("PointLight", std::make_unique<ComponentTable<PointLight>>());
 		World->AddTable("ModelView", std::make_unique<ComponentTable<ModelView>>());
 
+		World->AddSystem(new ModelViewSystem());
+
 		EditorWorld = std::make_shared<Dawn::World>();
 
 		EditorWorld->AddTable("Transform", std::make_unique<ComponentTable<Transform>>());
 		EditorWorld->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
-		//World->AddSystem(std::make_unique<RigidbodySystem>());
+		//
 
 		Physics = std::make_shared<PhysicsWorld>();
 		if(!Physics->Initialize())
@@ -272,11 +275,15 @@ namespace Dawn
 		// Rendering
 		{BROFILER_EVENT("Rendering")
 
+			
 			auto* Camera = World::GetActiveCamera();
 			Renderer->BeginFrame(GDI.get(), Camera);
-
+		
 			for (auto Layer : Layers)
 				Layer->Render();
+
+			// todo (gb): do this differently?! :D
+			GetWorld()->GetSystemByType<ModelViewSystem>(ModelViewSystem::GetType())->Update(GetWorld().get());
 
 			Renderer->Submit(this);
 			Renderer->EndFrame(GDI.get());

@@ -3,7 +3,10 @@
 #include "Camera/Camera.h"
 #include "Transform/Transform.h"
 #include "Lights/LightComponents.h"
+#include "StaticMesh/ModelView.h"
 #include "ResourceSystem/Resources.h"
+#include "ResourceSystem/ResourceSystem.h"
+#include "Application.h"
 #include "EntityTable.h"
 
 namespace Dawn
@@ -19,8 +22,19 @@ namespace Dawn
 	{
 	}
 
+	void World::UpdateSystems()
+	{
+		for (auto pair : SystemTable)
+		{
+			pair.second->Update(this);
+		}
+	}
+
 	void World::Shutdown()
 	{
+		for (auto pair : SystemTable)
+			SafeDelete(pair.second);
+
 		ActiveCamera = nullptr;
 		Entities.Clear();
 		InitFuncTable.clear();
@@ -62,6 +76,28 @@ namespace Dawn
 
 		CameraEntities.emplace_back(e.Id);
 		return c;
+	}
+
+	i32 World::CreateModelEntity(std::string& InName, std::string& InModelName, vec3& InPosition, vec3& InScale, quat& InRotation)
+	{
+		Entity e = CreateEntity(InName);
+		if (!e.IsValid())
+			return -1;
+
+		auto rs = g_Application->GetResourceSystem();
+
+		Transform* t = this->MakeComponent<Transform>();
+		t->Position = InPosition;
+		t->Rotation = InRotation;
+		t->Scale = InScale;
+		AddComponent<Transform>(e, t);
+
+		ModelView* mv = this->MakeComponent<ModelView>();
+		mv->ModelId = rs->GetFileId(InModelName);
+		mv->ResourceId = rs->LoadFile(mv->ModelId);
+		AddComponent<ModelView>(e, mv);
+
+		return e.Id;
 	}
 
 	void World::AddCamera(Camera* Cam)
@@ -112,6 +148,11 @@ namespace Dawn
 		return Entities.Create(InName);
 	}
 
+	void World::DestroyEntity(const Entity& InEntity)
+	{
+		auto components = GetComponentTypesByEntity(InEntity);
+	}
+
 	//
 	// Returns all the component type names for a specific 
 	// entity! This is mainly used for editor handling.
@@ -134,6 +175,11 @@ namespace Dawn
 		return components;
 	}
 
+	struct ComponentInitData
+	{
+		std::string Type;
+		void* Payload;
+	};
 
 	bool World::LoadLevel(World* InWorld, Level* InLevel)
 	{
@@ -142,6 +188,8 @@ namespace Dawn
 
 
 		// unloading should be done here
+
+		std::vector<ComponentInitData> compToInit;
 
 		for (i32 i = 0; i < InLevel->Entities.size(); ++i)
 		{
@@ -161,9 +209,17 @@ namespace Dawn
 					for(auto& CompVal : CompData->ComponentValues)
 						Type->DeserializeMember(Component, CompVal.VariableName, CompVal.Data);
 
-					InWorld->ExecuteComponentInitFunc(Component, CompData->Type);
+					ComponentInitData data;
+					data.Type = CompData->Type;
+					data.Payload = Component;
+					compToInit.push_back(data);
 				}
 			}
+		}
+
+		for (auto data : compToInit)
+		{
+			InWorld->ExecuteComponentInitFunc(data.Payload, data.Type);
 		}
 
 

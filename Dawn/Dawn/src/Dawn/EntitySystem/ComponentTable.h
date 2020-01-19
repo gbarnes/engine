@@ -74,6 +74,20 @@ namespace Dawn
 			return id;
 		}
 
+		void Destroy(const Entity& InEntity)
+		{
+			// todo (gb): this will make problems when destroying multiple 
+			//			  components and not reallocating inbetween since 
+			//			  some ids will never be filled again (we need some sort of
+			//			  cache that saves the free ids (a queue?))
+			u32 compId = EntityComponent[InEntity.Id];
+			SafeDelete(Components[compId]);
+			Components[compId] = nullptr;
+			ComponentIds[compId] = INVALID_HANDLE;
+			CurrentId = compId;
+			TotalCount - 1;
+		}
+
 		ComponentId AddByVoid(const Entity& InEntity, void* InComponent) override
 		{
 			T* CastedComponent = static_cast<T*>(InComponent);

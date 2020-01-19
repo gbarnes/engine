@@ -36,11 +36,14 @@ namespace Dawn
 		Camera* GetCamera(i32 InId);
 		std::vector<Camera*> GetCameras();
 
+		i32 CreateModelEntity(std::string& InName, std::string& InModelName, vec3& InPosition, vec3& InScale = vec3(1), quat& InRotation = quat());
+
 		Entity CreateEntity(const std::string &InName);
+		void DestroyEntity(const Entity& InEntity);
 		EntityMetaData* GetEntityMetaData(const Entity& InEntity);
 		void Shutdown();
 		void ExecuteComponentInitFunc(void* InComponent, const std::string& InString);
-
+		void UpdateSystems();
 	public:
 		template <typename T>
 		void AddTable(std::string&& InTypeName, std::unique_ptr<ComponentTable<T>>&& InTable)
@@ -125,7 +128,7 @@ namespace Dawn
 			if (it == SystemTable.end())
 				return nullptr;
 
-			return static_cast<T*>(it->second.get());
+			return static_cast<T*>(it->second);
 		}
 
 		void* GetComponentByName(const Entity& InEntity, const std::string& InName);

@@ -79,7 +79,10 @@ void SandboxApp::Load()
 	ImGuiWrapper::Create(this->Settings.Hwnd, this->GetGDI().get());
 	//World::SetActiveCamera(Cam1);
 
-	ResourceSystem->LoadFile("Model/Hero_Rig_Unified.fbx");
+	//GetWorld()->CreateModelEntity(std::string("spaceCraft"), std::string("Model/spaceCraft1.fbx"), vec3(0, 0, 0));
+	//GetWorld()->CreateModelEntity(std::string("spaceCraft2"), std::string("Model/spaceCraft1.fbx"), vec3(-20, 0, 0));
+	//GetWorld()->CreateModelEntity(std::string("tank"), std::string("Model/Tank.fbx"), vec3(20, 0, 0), vec3(0.05f, 0.05f, 0.05f));
+
 
 	auto LevelId = ResourceSystem->LoadFile("Scenes/Test.level");
 	auto Level = ResourceSystem->FindLevel(LevelId);
