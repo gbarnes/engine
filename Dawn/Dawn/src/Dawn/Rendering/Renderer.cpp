@@ -131,6 +131,16 @@ namespace Dawn
 		{
 			SSAOBlurBuffer->AttachColorTarget(0, InWidth, InHeight, RGBA16F, R);
 		}
+
+		if (auto SSAOBlurBuffer = InGDI->GetRenderBuffer(TransientData.SSAOBlurBufferId))
+		{
+			SSAOBlurBuffer->AttachColorTarget(0, InWidth, InHeight, RGBA16F, R);
+		}
+
+		if (auto ShadowMapBuffer = InGDI->GetRenderBuffer(TransientData.ShadowMapBufferId))
+		{
+			ShadowMapBuffer->AttachDepthTarget(InWidth, InHeight);
+		}
 	}
 
 	void DeferredRenderer::BeginFrame(GfxGDI* InGDI, Camera* InCamera)

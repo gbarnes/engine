@@ -143,10 +143,10 @@ namespace Dawn
 
 		GfxBufferLayout Layout =
 		{
-			{ GfxShaderDataType::Float4, "modelInstanced" },
-			{ GfxShaderDataType::Float4, "modelInstanced" },
-			{ GfxShaderDataType::Float4, "modelInstanced" },
-			{ GfxShaderDataType::Float4, "modelInstanced" }
+			{ GfxShaderDataType::Float4, "model" },
+			{ GfxShaderDataType::Float4, "model" },
+			{ GfxShaderDataType::Float4, "model" },
+			{ GfxShaderDataType::Float4, "model" }
 		};
 
 		GDI->CreateVertexBuffer(&modelMatrices[0], Size * sizeof(glm::mat4), &ModelMatrixBuffer);
@@ -265,7 +265,7 @@ namespace Dawn
 		// Geometry bucket
 		{
 			auto SetStateCmd = Renderer->PerFrameData.ShadowBucket.AddCommand<Draw::SetStateData>(0u);
-			SetStateCmd->State = { true, true, GCF_Back };
+			SetStateCmd->State = { true, true, GCF_Front };
 
 			auto ShadowPassCmd = Renderer->PerFrameData.ShadowBucket.AppendCommand<Draw::ShadowPassData>(SetStateCmd);
 			ShadowPassCmd->Width = Renderer->ShadowSettings.Width;
@@ -278,7 +278,7 @@ namespace Dawn
 			ShadowPassCmd->LightSpace = directionalLights[0]->LightSpace;
 
 			auto SetStateBackCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::SetStateData>(0u);
-			SetStateBackCmd->State = { true, false, GCF_Back };
+			SetStateBackCmd->State = { true, false, GCF_Front };
 
 			auto ViewportCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::SetViewportData>(1u);
 			ViewportCmd->Width = ActiveCam->Width;
@@ -287,7 +287,7 @@ namespace Dawn
 			auto ClearColor = Renderer->PerFrameData.GeometryBucket.AppendCommand<Draw::ClearSceneWithColorData>(ViewportCmd);
 			ClearColor->ClearColor = vec4(0.0, 0.0, 0.0, 1.0f);
 
-			const auto ResourceSystem = Parent->GetResourceSystem();
+			/*const auto ResourceSystem = Parent->GetResourceSystem();
 			if (usedModel != nullptr && CommonShaderHandles::Standard.IsValid)
 			{
 				u32 i = 0;
@@ -307,7 +307,7 @@ namespace Dawn
 						++i;
 					}
 				}
-			}
+			}*/
 
 
 			//JobSystem::CreateJob();

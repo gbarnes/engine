@@ -28,6 +28,9 @@ namespace Dawn
 	DAWN_API void Draw::DrawIndexed(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		const DrawIndexedData* RenderData = static_cast<const DrawIndexedData*>(data);
+
+		// todo (gb): change this?!
+		InRenderer->CurrentShader->SetInt("isInstanced", 0);
 		InRenderer->CurrentShader->SetMat4("model", RenderData->Model);
 		InGDI->DrawIndexed(RenderData->VertexArrayId);
 	}
@@ -35,13 +38,14 @@ namespace Dawn
 	DAWN_API void Draw::DrawInstanced(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		const DrawInstancedData* RenderData = static_cast<const DrawInstancedData*>(data);
-		//InRenderer->CurrentShader->SetInt("isInstanced", 1);
+		InRenderer->CurrentShader->SetInt("isInstanced", 1);
 		InGDI->DrawInstanced(RenderData->VertexArrayId, RenderData->Amount);
 	}
 
 	DAWN_API void Draw::DrawVertex(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		const DrawVertexData* RenderData = static_cast<const DrawVertexData*>(data);
+		InRenderer->CurrentShader->SetInt("isInstanced", 0);
 		InRenderer->CurrentShader->SetMat4("model", RenderData->Model);
 		InGDI->DrawArray(RenderData->VertexArrayId);
 	}

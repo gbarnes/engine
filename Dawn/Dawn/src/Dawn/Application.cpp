@@ -232,7 +232,11 @@ namespace Dawn
 			if(bIsInEditMode)
 				World::SetActiveCamera(EditorWorld->GetCamera(0));
 			else 
-				World::SetActiveCamera(World->GetCamera(0));
+			{
+				auto* Cam = World->GetCamera(0);
+				World::SetActiveCamera(Cam);
+				CameraUtils::CalculateView(Cam, Cam->GetTransform(World.get()));
+			}
 		}
 
 		if (IsKeyPressed(KeyCode::KeyCode_F5))

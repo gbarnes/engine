@@ -44,6 +44,9 @@ namespace  Dawn
 		for (u32 i = 0; i < count; ++i)
 		{
 			auto entity = entities[i];
+			if (!entity.IsValid())
+				continue;
+
 			auto meta = InWorld->GetEntityMetaData(entity);
 			
 			if (meta->bIsHiddenInEditorHierarchy)

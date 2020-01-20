@@ -52,7 +52,6 @@ namespace Dawn
 		ADD_MEMBER(Camera, FieldOfView, FloatType, true)
 		ADD_MEMBER(Camera, NearZ, FloatType, true)
 		ADD_MEMBER(Camera, FarZ, FloatType, true)
-		ADD_MEMBER(Camera, AspectRatio, FloatType, true)
 		ADD_MEMBER(Camera, ClearColor, ColorType, true)
 		ADD_MEMBER(Camera, WorldUp, Vector3Type, true)
 		ADD_MEMBER(Camera, bIsOrthographic, BoolType, true)
@@ -83,6 +82,7 @@ namespace Dawn
 		cam->WorldRef = World;
 		cam->Width = g_Application->GetSettings()->Width;
 		cam->Height = g_Application->GetSettings()->Height;
+		cam->AspectRatio = (float)cam->Width / (float)cam->Height;
 
 		if (cam->bIsOrthographic)
 			CameraUtils::CalculateOthographic(cam);

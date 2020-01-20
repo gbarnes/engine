@@ -32,18 +32,7 @@ void SandboxApp::Load()
 {
 	RenderResourceHelper::LoadCommonShaders(ResourceSystem.get());
 
-	auto editorCam = CreateCamera(GetEditorWorld().get(),
-		"EditorCam",
-		Settings.Width,
-		Settings.Height,
-		0.1f, 1000.0f, 65.0f,
-		vec4(0.4f, 0.6f, 0.9f, 1.0f),
-		vec3(0, 3, 10)
-	);
-
-	auto meta = GetEditorWorld()->GetEntityMetaData(editorCam->GetEntity());
-	meta->bIsHiddenInEditorHierarchy = true;
-	CameraUtils::CalculatePerspective(editorCam);
+	
 
 	/*auto Cam1 = CreateCamera(GetWorld().get(),
 		"Cam",
@@ -87,6 +76,22 @@ void SandboxApp::Load()
 	auto LevelId = ResourceSystem->LoadFile("Scenes/Test.level");
 	auto Level = ResourceSystem->FindLevel(LevelId);
 	World::LoadLevel(GetWorld().get(), Level);
+
+	auto* CamTransform = GetWorld()->GetCamera(0)->GetTransform(GetWorld().get());
+	
+	auto editorCam = CreateCamera(GetEditorWorld().get(),
+		"EditorCam",
+		Settings.Width,
+		Settings.Height,
+		0.1f, 1000.0f, 65.0f,
+		vec4(0.4f, 0.6f, 0.9f, 1.0f),
+		CamTransform->Position,
+		CamTransform->Rotation
+	);
+
+	auto meta = GetEditorWorld()->GetEntityMetaData(editorCam->GetEntity());
+	meta->bIsHiddenInEditorHierarchy = true;
+	CameraUtils::CalculatePerspective(editorCam);
 }
 
 void SandboxApp::Resize(int InWidth, int InHeight)

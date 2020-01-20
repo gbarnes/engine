@@ -268,6 +268,22 @@ namespace Dawn
 				
 				if (ImGui::MenuItem("Camera")) { }
 				//if (ImGui::MenuItem("Camera")) {g_ShowCameraEditWindow = !g_ShowCameraEditWindow;}
+
+				ImGui::Separator();
+
+				if (ImGui::MenuItem("Align to View") && SceneData->CurrentSelectedEntity.IsValid())
+				{
+					auto* EditorTransform = EditorCamera->GetTransform(EditorWorld.get());
+					auto* SelectedTransform = World->GetComponentByEntity<Transform>(SceneData->CurrentSelectedEntity);
+					D_ASSERT(SelectedTransform != nullptr, "Selected entity has no transform");
+
+					SelectedTransform->Position = EditorTransform->Position;
+					SelectedTransform->Rotation = EditorTransform->Rotation;
+					SelectedTransform->Forward = EditorTransform->Forward;
+					SelectedTransform->Right = EditorTransform->Right;
+					SelectedTransform->Up = EditorTransform->Up;
+				}
+
 				ImGui::EndMenu();
 			}
 

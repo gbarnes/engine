@@ -5,7 +5,7 @@ layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 uv0;
 layout (location = 3) in vec2 uv1;
-layout(location = 4) in mat4 modelInstanced;
+layout (location = 4) in mat4 modelInstanced;
 
 uniform int isInstanced;
 uniform mat4 lightSpace;
@@ -13,7 +13,10 @@ uniform mat4 model;
 
 void main()
 {
-	gl_Position = lightSpace * model * vec4(aPos, 1.0);
+	if(isInstanced == 1)
+		gl_Position = lightSpace * modelInstanced * vec4(aPos, 1.0);
+	else 
+		gl_Position = lightSpace * model * vec4(aPos, 1.0);
 }
 
 #pragma frag_begin

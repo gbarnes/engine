@@ -42,7 +42,7 @@ uniform mat4 view;
 void main()
 { 
     vec3 NormalVP = texture(gNormal, TexCoords).rgb;
-
+  
 	if(NormalVP == vec3(0,0,0)) 
 		discard;
 		
