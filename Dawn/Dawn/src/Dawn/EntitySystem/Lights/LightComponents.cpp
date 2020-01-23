@@ -26,11 +26,7 @@ namespace Dawn
 		if (!e.IsValid())
 			return nullptr;
 
-		Transform* t = InWorld->MakeComponent<Transform>();
-		t->Position = vec3(0, 0, 0);
-		t->Rotation = InOrientation;
-		t->Scale = vec3(1, 1, 1);
-		InWorld->AddComponent<Transform>(e, t);
+		InWorld->CreateTransform(e, vec3(0, 0, 0), vec3(1), InOrientation);
 
 		DirectionalLight* l = InWorld->MakeComponent<DirectionalLight>();
 		l->Color = InColor;
@@ -45,11 +41,7 @@ namespace Dawn
 		if (!e.IsValid())
 			return nullptr;
 
-		Transform* t = InWorld->MakeComponent<Transform>();
-		t->Position = InPosition;
-		t->Rotation = quat(1,0,0,0);
-		t->Scale = vec3(1, 1, 1);
-		InWorld->AddComponent<Transform>(e, t);
+		InWorld->CreateTransform(e, InPosition, vec3(1), quat(1, 0, 0, 0));
 
 		PointLight* l = InWorld->MakeComponent<PointLight>();
 		l->Color = InColor;
@@ -70,13 +62,13 @@ namespace Dawn
 		auto CamTransform = Camera->GetTransform(Camera->WorldRef);
 		auto Transform = InLight->GetEntity().GetTransform(InWorld);
 
-		glm::mat4 Projection = glm::ortho<float>(-35, 35, -35, 35, -35, InFarPlane);
+		glm::mat4 Projection = glm::ortho<float>(-35, 35, 35, -35, -35, InFarPlane);
 		
 		glm::mat4 lightView = glm::lookAt
 		(
 			Transform->Position,
 			Transform->Position + Transform->Forward*InFarPlane,
-			vec3(0.0f, -1.0f, 0.0f)
+			vec3(0.0f, 1.0f, 0.0f)
 		);
 
 		InLight->LightSpace = Projection * lightView * glm::mat4(1.0);

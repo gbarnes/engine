@@ -14,19 +14,20 @@ void main()
 }
 	
 #pragma frag_begin
+
+#pragma include "fast_blur.include"
 #pragma include "shader_globals.include"
 
-
-out vec4 FragColor;
+out vec4 FragColor; 
 
 uniform sampler2D gPosition; 
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedoAO;
 uniform sampler2D gMetallicRoughness;
-uniform sampler2D gSSAO;
+uniform sampler2D gSSAO; 
 uniform sampler2D gShadowMap; 
- 
-in vec2 TexCoords;
+  
+in vec2 TexCoords;  
 
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 uniform DirectionalLight directionalLights[NR_DIR_LIGHTS];
@@ -40,12 +41,12 @@ uniform mat4 view;
 #pragma include "lighting.include"
 
 void main()
-{ 
+{        
     vec3 NormalVP = texture(gNormal, TexCoords).rgb;
   
 	if(NormalVP == vec3(0,0,0)) 
 		discard;
-		
+		  
 	vec3 Normal = (inverse(view) * texture(gNormal, TexCoords)).rgb;
     vec3 WorldPos =  (inverse(view) * texture(gPosition, TexCoords)).rgb;
 	vec3 Albedo = texture(gAlbedoAO, TexCoords).rgb;
@@ -61,7 +62,6 @@ void main()
 	F0 = mix(F0, Albedo, Metallic);
 	
 	vec3 Lo = vec3(0.0); 
-	float Shadow = 1.0; 
 	 
 	for(int i = 0; i < directionalLightsNum; ++i) 
 	{  
@@ -69,19 +69,19 @@ void main()
   
 		vec3 L = normalize(-light.direction);
 		vec3 H = normalize(V + L); 
-		
-		vec3 radiance = vec3(light.color) * light.intensity;
 		 
+		vec3 radiance = vec3(light.color) * light.intensity;
+		     
 		Lo += CalculateIrradiance(radiance, L, V, N, H, F0, Roughness, Metallic, Albedo) * (1 - CalculateShadow(light.shadowColor, light.lightSpace * vec4(WorldPos, 1.0), N, -light.direction));
 	} 
-	  
+	   
 	for(int i = 0; i < pointLightNum; ++i)
 	{ 
 		PointLight light = pointLights[i];
 
 		vec3 L = normalize(light.position - WorldPos);
 		vec3 H = normalize(V + L); 
-		
+		 
 		float attenuation = CalculateAttenuation(WorldPos, light.position) * light.range; 
 		vec3 radiance = vec3(light.color) * light.intensity * attenuation;
 		

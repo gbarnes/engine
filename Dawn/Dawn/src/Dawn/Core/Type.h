@@ -247,6 +247,39 @@ namespace Dawn
 		};
 	};
 
+	class HandleType : public BaseType
+	{
+		union {
+			GenericHandle* asHandle;
+			void* asVoid;
+		} Data;
+
+	public:
+		std::string GetName() override
+		{
+			return "GenericHandle";
+		}
+
+		std::string ToString(void* InData) override
+		{
+			Data.asVoid = InData;
+			return "{Index: " + std::to_string(Data.asHandle->Index) + ", Generation: " + std::to_string(Data.asHandle->Generation) + "}";
+		}
+
+		void FromString(void* InData, const std::string& InSerializedData) override
+		{
+			Data.asVoid = InData;
+
+			std::regex filter("\\{Index: ([-]?[0-9]*.[0-9]*), Generation: ([-]?[0-9]*.[0-9]*)\\}");
+			std::smatch matches;
+			if (std::regex_search(InSerializedData, matches, filter))
+			{
+				Data.asHandle->Index = std::stoul(matches.str(1));
+				Data.asHandle->Generation = std::stoul(matches.str(2));
+			}
+		};
+	};
+
 	class BoolType : public BaseType
 	{
 		union {

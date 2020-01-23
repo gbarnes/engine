@@ -8,6 +8,7 @@ namespace Dawn
 
 	struct EntityMetaData
 	{
+		UUID Guid;
 		std::string Name;
 		bool bIsHiddenInEditorHierarchy = false;
 		bool PersistsThroughLoad = false;

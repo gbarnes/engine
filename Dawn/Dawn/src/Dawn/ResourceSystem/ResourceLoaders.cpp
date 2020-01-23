@@ -29,177 +29,192 @@
 namespace Dawn
 {
 
-	void RS_ProcessMeshNode(ResourceSystem* InResourceSystem, Model* InModel, aiNode* InNode, const aiScene* InScene, vec3& currentMin, vec3& currentMax)
+	void RS_ProcessMeshNode(ResourceSystem* InResourceSystem, Model* InModel, aiNode* InNode, const aiScene* InScene, vec3& currentMin, vec3& currentMax, HierarchyNode* parentNode = nullptr)
 	{
 		const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
 		const auto GDI = g_Application->GetGDI();
 		
-		for (u32 i = 0; i < InNode->mNumMeshes; ++i)
+		if (InNode->mNumMeshes > 0)
 		{
-			const aiMesh* aiMesh = InScene->mMeshes[InNode->mMeshes[i]];
-
-			Mesh* Mesh;
-			InResourceSystem->CreateMesh(&Mesh);
-
-			Mesh->Name = aiMesh->mName.C_Str();
-			Mesh->NumIndices = aiMesh->mNumFaces * 3;
-			Mesh->NumVertices = aiMesh->mNumVertices;
-			
-			vec3 min, max;
-			min = max = vec3(aiMesh->mVertices[0].x, aiMesh->mVertices[0].y, aiMesh->mVertices[0].z);
-			
-
-			std::string Content;
-			std::vector<float> VertexData;
-			for (u32 y = 0; y < aiMesh->mNumVertices; ++y)
-			{
-				const aiVector3D* pos = &(aiMesh->mVertices[y]);
-				const aiVector3D* normal = aiMesh->HasNormals() ? &(aiMesh->mNormals[y]) : &Zero3D;
-				const aiVector3D* texCoord0 = aiMesh->HasTextureCoords(0) ? &(aiMesh->mTextureCoords[0][y]) : &Zero3D;
-				const aiVector3D* texCoord1 = aiMesh->HasTextureCoords(1) ? &(aiMesh->mTextureCoords[1][y]) : &Zero3D;
-
-				VertexData.push_back(pos->x);
-				VertexData.push_back(pos->y);
-				VertexData.push_back(pos->z);
-				VertexData.push_back(normal->x);
-				VertexData.push_back(normal->y);
-				VertexData.push_back(normal->z);
-				VertexData.push_back(texCoord0->x);
-				VertexData.push_back(texCoord0->y);
-				VertexData.push_back(texCoord1->x);
-				VertexData.push_back(texCoord1->y);
-
-				// x-axis
-				if (pos->x < min.x)
-					min.x = pos->x;
-				if (pos->x > max.x)
-					max.x = pos->x;
-
-				// y-axis
-				if (pos->y < min.y)
-					min.y = pos->y;
-				if (pos->y > max.y)
-					max.y = pos->y;
-
-				// z-axis
-				if (pos->z < min.z)
-					min.z = pos->z;
-				if (pos->z > max.z)
-					max.z = pos->z;
-			}
-
-			Mesh->Bounds.Max = max;
-			Mesh->Bounds.Min = min;
-			Mesh->Bounds.Extents = Mesh->Bounds.Max - Mesh->Bounds.Min;
-
-			// check bounds of the entire model
-			{
-				// x-axis
-				if (Mesh->Bounds.Min.x < currentMin.x)
-					currentMin.x = Mesh->Bounds.Min.x;
-				if (Mesh->Bounds.Max.x > currentMax.x)
-					currentMax.x = Mesh->Bounds.Max.x;
-
-				// y-axis
-				if (Mesh->Bounds.Min.y < currentMin.y)
-					currentMin.y = Mesh->Bounds.Min.y;
-				if (Mesh->Bounds.Max.y > currentMax.y)
-					currentMax.y = Mesh->Bounds.Max.y;
-
-				// z-axis
-				if (Mesh->Bounds.Min.z < currentMin.z)
-					currentMin.z = Mesh->Bounds.Min.z;
-				if (Mesh->Bounds.Max.z > currentMax.z)
-					currentMax.z = Mesh->Bounds.Max.z;
-			}
-
-			Content = "";
-			std::vector<u32> IndexData;
-			for (u32 u = 0; u < aiMesh->mNumFaces; ++u)
-			{
-				const aiFace& Face = aiMesh->mFaces[u];
-				assert(Face.mNumIndices == 3);
-				IndexData.push_back(Face.mIndices[0]);
-				IndexData.push_back(Face.mIndices[1]);
-				IndexData.push_back(Face.mIndices[2]);
-
-			}
-
-			GfxBufferLayout MeshLayout
-			(
-				{
-					{ GfxShaderDataType::Float3, "position" },
-					{ GfxShaderDataType::Float3, "normal" },
-					{ GfxShaderDataType::Float2, "uv0" },
-					{ GfxShaderDataType::Float2, "uv1" }
-				}
+			ModelNodeData ModelNode;
+			ModelNode.Name = InNode->mName.C_Str();
+			ModelNode.Transform = mat4(
+				(float)InNode->mTransformation.a1, (float)InNode->mTransformation.a2, (float)InNode->mTransformation.a3, (float)InNode->mTransformation.a4,
+				(float)InNode->mTransformation.b1, (float)InNode->mTransformation.b2, (float)InNode->mTransformation.b3, (float)InNode->mTransformation.b4,
+				(float)InNode->mTransformation.c1, (float)InNode->mTransformation.c2, (float)InNode->mTransformation.c3, (float)InNode->mTransformation.c4,
+				(float)InNode->mTransformation.d1, (float)InNode->mTransformation.d2, (float)InNode->mTransformation.d3, (float)InNode->mTransformation.d4
 			);
 
-			// Buffer Setup
-			GfxVertexArray* VertexArray = nullptr;
-			auto VertexArrayId = GDI->CreateVertexArray(&VertexArray);
 
-			GfxVertexBuffer* VertexBuffer;
-			GDI->CreateVertexBuffer(&VertexData[0], (u32)(VertexData.size() * sizeof(float)), &VertexBuffer);
-			VertexBuffer->SetLayout(MeshLayout);
-			VertexArray->AttachVertexBuffer(VertexBuffer);
-
-			GfxIndexBuffer* IndexBuffer;
-			GDI->CreateIndexBuffer(&IndexData[0], IndexData.size(), &IndexBuffer);
-			VertexArray->SetIndexBuffer(IndexBuffer);
-
-			Mesh->VertexArrayId = VertexArrayId;
-
-			// Creating Material
-			if (InScene->HasMaterials())
+			for (u32 i = 0; i < InNode->mNumMeshes; ++i)
 			{
-				Material* Material;
-				InResourceSystem->CreateMaterial(&Material);
+				const aiMesh* aiMesh = InScene->mMeshes[InNode->mMeshes[i]];
 
-				const auto aiMaterial = InScene->mMaterials[aiMesh->mMaterialIndex];
+				Mesh* Mesh;
+				InResourceSystem->CreateMesh(&Mesh);
 
-				// TODO (gb): add texture loading and path handling, asset conversion to a custom binary format etc.
-				/*u32 diffuseTextureCount = aiGetMaterialTextureCount(aiMaterial, aiTextureType_DIFFUSE);
-				DWN_CORE_INFO("Diffuse Texture count: {0}", diffuseTextureCount);
+				Mesh->Name = aiMesh->mName.C_Str();
+				Mesh->NumIndices = aiMesh->mNumFaces * 3;
+				Mesh->NumVertices = aiMesh->mNumVertices;
 
-				aiString path;
-				aiGetMaterialTexture(aiMaterial, aiTextureType_DIFFUSE, 0, &path);
-				DWN_CORE_INFO("Texture Path: {0}", path.C_Str());*/
-				//Material->Name
+				vec3 min, max;
+				min = max = vec3(aiMesh->mVertices[0].x, aiMesh->mVertices[0].y, aiMesh->mVertices[0].z);
 
-				aiString matname;
-				aiGetMaterialString(aiMaterial, AI_MATKEY_NAME, &matname);
-				Material->Name = matname.C_Str();
-				//aiMaterial->
+				std::string Content;
+				std::vector<float> VertexData;
+				for (u32 y = 0; y < aiMesh->mNumVertices; ++y)
+				{
+					const aiVector3D* pos = &(aiMesh->mVertices[y]);
+					const aiVector3D* normal = aiMesh->HasNormals() ? &(aiMesh->mNormals[y]) : &Zero3D;
+					const aiVector3D* texCoord0 = aiMesh->HasTextureCoords(0) ? &(aiMesh->mTextureCoords[0][y]) : &Zero3D;
+					const aiVector3D* texCoord1 = aiMesh->HasTextureCoords(1) ? &(aiMesh->mTextureCoords[1][y]) : &Zero3D;
 
-				aiColor4D albedo = aiColor4D(0, 0, 0, 0);
-				aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_DIFFUSE, &albedo);
-				Material->Albedo = vec4(albedo.r, albedo.g, albedo.b, albedo.a);
+					VertexData.push_back(pos->x);
+					VertexData.push_back(pos->y);
+					VertexData.push_back(pos->z);
+					VertexData.push_back(normal->x);
+					VertexData.push_back(normal->y);
+					VertexData.push_back(normal->z);
+					VertexData.push_back(texCoord0->x);
+					VertexData.push_back(texCoord0->y);
+					VertexData.push_back(texCoord1->x);
+					VertexData.push_back(texCoord1->y);
+
+					// x-axis
+					if (pos->x < min.x)
+						min.x = pos->x;
+					if (pos->x > max.x)
+						max.x = pos->x;
+
+					// y-axis
+					if (pos->y < min.y)
+						min.y = pos->y;
+					if (pos->y > max.y)
+						max.y = pos->y;
+
+					// z-axis
+					if (pos->z < min.z)
+						min.z = pos->z;
+					if (pos->z > max.z)
+						max.z = pos->z;
+				}
+
+				Mesh->Bounds.Max = max;
+				Mesh->Bounds.Min = min;
+				Mesh->Bounds.Extents = Mesh->Bounds.Max - Mesh->Bounds.Min;
+
+				// check bounds of the entire model
+				{
+					// x-axis
+					if (Mesh->Bounds.Min.x < currentMin.x)
+						currentMin.x = Mesh->Bounds.Min.x;
+					if (Mesh->Bounds.Max.x > currentMax.x)
+						currentMax.x = Mesh->Bounds.Max.x;
+
+					// y-axis
+					if (Mesh->Bounds.Min.y < currentMin.y)
+						currentMin.y = Mesh->Bounds.Min.y;
+					if (Mesh->Bounds.Max.y > currentMax.y)
+						currentMax.y = Mesh->Bounds.Max.y;
+
+					// z-axis
+					if (Mesh->Bounds.Min.z < currentMin.z)
+						currentMin.z = Mesh->Bounds.Min.z;
+					if (Mesh->Bounds.Max.z > currentMax.z)
+						currentMax.z = Mesh->Bounds.Max.z;
+				}
+
+				Content = "";
+				std::vector<u32> IndexData;
+				for (u32 u = 0; u < aiMesh->mNumFaces; ++u)
+				{
+					const aiFace& Face = aiMesh->mFaces[u];
+					assert(Face.mNumIndices == 3);
+					IndexData.push_back(Face.mIndices[0]);
+					IndexData.push_back(Face.mIndices[1]);
+					IndexData.push_back(Face.mIndices[2]);
+
+				}
+
+				GfxBufferLayout MeshLayout
+				(
+					{
+						{ GfxShaderDataType::Float3, "position" },
+						{ GfxShaderDataType::Float3, "normal" },
+						{ GfxShaderDataType::Float2, "uv0" },
+						{ GfxShaderDataType::Float2, "uv1" }
+					}
+				);
+
+				// Buffer Setup
+				GfxVertexArray* VertexArray = nullptr;
+				auto VertexArrayId = GDI->CreateVertexArray(&VertexArray);
+
+				GfxVertexBuffer* VertexBuffer;
+				GDI->CreateVertexBuffer(&VertexData[0], (u32)(VertexData.size() * sizeof(float)), &VertexBuffer);
+				VertexBuffer->SetLayout(MeshLayout);
+				VertexArray->AttachVertexBuffer(VertexBuffer);
+
+				GfxIndexBuffer* IndexBuffer;
+				GDI->CreateIndexBuffer(&IndexData[0], (u32)IndexData.size(), &IndexBuffer);
+				VertexArray->SetIndexBuffer(IndexBuffer);
+
+				Mesh->VertexArrayId = VertexArrayId;
+
+				// Creating Material
+				if (InScene->HasMaterials())
+				{
+					Material* Material;
+					InResourceSystem->CreateMaterial(&Material);
+
+					const auto aiMaterial = InScene->mMaterials[aiMesh->mMaterialIndex];
+
+					// TODO (gb): add texture loading and path handling, asset conversion to a custom binary format etc.
+					/*u32 diffuseTextureCount = aiGetMaterialTextureCount(aiMaterial, aiTextureType_DIFFUSE);
+					DWN_CORE_INFO("Diffuse Texture count: {0}", diffuseTextureCount);
+
+					aiString path;
+					aiGetMaterialTexture(aiMaterial, aiTextureType_DIFFUSE, 0, &path);
+					DWN_CORE_INFO("Texture Path: {0}", path.C_Str());*/
+					//Material->Name
+
+					aiString matname;
+					aiGetMaterialString(aiMaterial, AI_MATKEY_NAME, &matname);
+					Material->Name = matname.C_Str();
+					//aiMaterial->
+
+					aiColor4D albedo = aiColor4D(0, 0, 0, 0);
+					aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_DIFFUSE, &albedo);
+					Material->Albedo = vec4(albedo.r, albedo.g, albedo.b, albedo.a);
 
 
-				aiColor4D emissiveColor = aiColor4D(0, 0, 0, 0);
-				aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_EMISSIVE, &emissiveColor);
-				Material->Emissive = vec4(emissiveColor.r, emissiveColor.g, emissiveColor.b, emissiveColor.a);
+					aiColor4D emissiveColor = aiColor4D(0, 0, 0, 0);
+					aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_EMISSIVE, &emissiveColor);
+					Material->Emissive = vec4(emissiveColor.r, emissiveColor.g, emissiveColor.b, emissiveColor.a);
 
-				/*float reflection = 0;
-				aiGetMaterialFloat(aiMaterial, AI_MATKEY_REFLECTIVITY, &reflection);
-				Material->Metallic = reflection;
+					/*float reflection = 0;
+					aiGetMaterialFloat(aiMaterial, AI_MATKEY_REFLECTIVITY, &reflection);
+					Material->Metallic = reflection;
 
-				float reflection = 0;
-				aiGetMaterialFloat(aiMaterial, AI_MATKEY_REFLECTIVITY, &reflection);
-				Material->Metallic = reflection;*/
+					float reflection = 0;
+					aiGetMaterialFloat(aiMaterial, AI_MATKEY_REFLECTIVITY, &reflection);
+					Material->Metallic = reflection;*/
 
 
-				Material->ShaderId = CommonShaderHandles::Standard;
-				Mesh->Materials.push_back(Material->Id);
+					Material->ShaderId = CommonShaderHandles::Standard;
+					Mesh->Materials.push_back(Material->Id);
+				}
+
+				InModel->Meshes.push_back(Mesh->Id);
+				ModelNode.Meshes.push_back((i32)(InModel->Meshes.size() - 1));
 			}
 
-			InModel->Meshes.push_back(Mesh->Id);
+			parentNode = InModel->Hierarchy.AddNode(ModelNode, parentNode);
 		}
 
 		for (u32 i = 0; i < InNode->mNumChildren; ++i)
 		{
-			RS_ProcessMeshNode(InResourceSystem, InModel, InNode->mChildren[i], InScene, currentMin, currentMax);
+			RS_ProcessMeshNode(InResourceSystem, InModel, InNode->mChildren[i], InScene, currentMin, currentMax, parentNode);
 		}
 	}
 
@@ -231,6 +246,9 @@ namespace Dawn
 
 		vec3 min, max;
 		min = max = vec3(scene->mMeshes[0]->mVertices[0].x, scene->mMeshes[0]->mVertices[0].y, scene->mMeshes[0]->mVertices[0].z);
+		
+		ResourceId rid;
+		rid.IsValid = false;
 
 		RS_ProcessMeshNode(InResourceSystem, model, scene->mRootNode, scene, min, max);
 
@@ -420,9 +438,9 @@ namespace Dawn
 				GfxMemoryType::UnsignedByte,
 				GfxTextureFormat::RGBA,
 				data, // raw pixel data
-				x, // width of the image
-				y, // height of the image
-				n, // channels per pixel
+				(u32)x, // width of the image
+				(u32)y, // height of the image
+				(u16)n, // channels per pixel
 				{ GL_REPEAT, GL_REPEAT }, // wrap settings 
 				{ GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR }, // filter settings
 				true
@@ -477,9 +495,9 @@ namespace Dawn
 						GfxMemoryType::UnsignedByte,
 						GfxTextureFormat::RGBA,
 						data, // raw pixel data
-						x, // width of the image
-						y, // height of the image
-						n, // channels per pixel
+						static_cast<u32>(x), // width of the image
+						static_cast<u32>(y), // height of the image
+						static_cast<u16>(n), // channels per pixel
 						{ GL_REPEAT, GL_REPEAT }, // wrap settings 
 						{ GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR }, // filter settings
 						true
@@ -519,14 +537,27 @@ namespace Dawn
 			// Begin Entity Parsing
 			if (view.substr(0, EntityKeyword.size()) == EntityKeyword)
 			{
-				EntityData NewEntity;
-				NewEntity.Name = std::string(view.substr(EntityKeyword.size(), view.size() - EntityKeyword.size()));
-				NewEntity.InFileId = InMetaData->Id;
+				std::regex expression(".* \\{(.*)\\}\\{(.*)\\}\\{(.*)\\}");
+				std::smatch match;
 
-				Level->Entities.push_back(NewEntity);
-				Entity = &Level->Entities.at(Level->Entities.size() - 1);
-		
-				bIsAtComponent = false;
+				bool bFound = std::regex_search(Line, match, expression);
+				if (bFound)
+				{
+					std::string Guid = match.str(1);
+					std::string Name = match.str(2);
+					std::string ParentGuid = match.str(3);
+
+					EntityData NewEntity;
+					NewEntity.Guid = StringToUUID(Guid);
+					NewEntity.Name = Name;
+					NewEntity.ParentEntity = StringToUUID(ParentGuid);
+					NewEntity.InFileId = InMetaData->Id;
+
+					Level->Entities.push_back(NewEntity);
+					Entity = &Level->Entities.at(Level->Entities.size() - 1);
+
+					bIsAtComponent = false;
+				}
 			}
 
 			// parse component variable
@@ -565,10 +596,10 @@ namespace Dawn
 					NewComponent.Type = type;
 
 					Level->Components.push_back(NewComponent);
-					int id = Level->Components.size() - 1;
+					u32 id = static_cast<u32>(Level->Components.size() - 1);
 
 					Component = &Level->Components[id];
-					Component->Id = static_cast<u32>(id);
+					Component->Id = id;
 
 					Entity->IdToComponent.push_back(Component->Id);
 					bIsAtComponent = true;

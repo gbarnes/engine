@@ -4,13 +4,13 @@
 
 namespace Dawn
 {
-	class ModelViewSystem : public ISystem
+	class MeshFilterSystem : public ISystem
 	{
-		REGISTER_TYPE(ModelViewSystem)
+		REGISTER_TYPE(MeshFilterSystem)
 	public:
 		virtual DawnType* AccessType() const override
 		{
-			return ModelViewSystem::GetType();
+			return MeshFilterSystem::GetType();
 		}
 
 		virtual void Update(World* InWorld) override;

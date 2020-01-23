@@ -7,7 +7,7 @@
 #include "EntitySystem/EntityTable.h"
 #include "EntitySystem/Transform/Transform.h"
 #include "EntitySystem/Camera/Camera.h"
-#include "EntitySystem/StaticMesh/ModelView.h"
+#include "EntitySystem/Model/MeshFilter.h"
 #include "ResourceSystem/Resources.h"
 #include "ResourceSystem/ResourceSystem.h"
 #include "Rendering/Renderer.h"
@@ -127,8 +127,8 @@ namespace Dawn
 					ShowDirectionalLightComponent(world->GetComponentByEntity<DirectionalLight>(SelectedEntity));
 				else if (component == "PointLight")
 					ShowPointLightComponent(world->GetComponentByEntity<PointLight>(SelectedEntity));
-				else if (component == "ModelView")
-					ShowModelViewComponent(world->GetComponentByEntity<ModelView>(SelectedEntity), g_Application->GetResourceSystem().get());
+				else if (component == "MeshFilter")
+					ShowMeshFilterComponent(world->GetComponentByEntity<MeshFilter>(SelectedEntity), g_Application->GetResourceSystem().get());
 			}
 		}
 
@@ -136,6 +136,43 @@ namespace Dawn
 	}
 
 	bool g_ShowSceneWindow = false;
+	void BuildEntitiesRecursively(World* World, EditorSceneData* SceneData, HierarchyGraph<SceneObject>* Scene, const std::vector<HierarchyNode*>& Nodes)
+	{
+		for (auto* sceneNode : Nodes)
+		{
+			auto* sceneObj = Scene->GetDataFromNode(sceneNode);
+			auto transform = World->GetComponentById<Transform>(sceneObj->TransformId);
+			auto entity = transform->GetEntity();
+			auto meta = transform->GetEntityMeta();
+
+			if (meta->bIsHiddenInEditorHierarchy)
+				continue;
+
+			ImGuiTreeNodeFlags flags = 0;
+
+			if (SceneData->CurrentSelectedEntity.IsValid() && entity.Id == SceneData->CurrentSelectedEntity.Id)
+				flags |= ImGuiTreeNodeFlags_Selected;
+
+			if(sceneNode->Childs.size() == 0)
+				flags |= ImGuiTreeNodeFlags_Leaf;
+
+			if (ImGui::TreeNodeEx(meta->Name.c_str(), flags))
+			{
+				if (ImGui::IsItemClicked())
+				{
+					g_ShowPropertyWindow = true;
+					SceneData->CurrentSelectedEntity = entity;
+					SceneData->ModelMatrix = mat4(1);
+					SceneData->LastEulerRotation = glm::eulerAngles(transform->Rotation);
+				}
+
+				BuildEntitiesRecursively(World, SceneData, Scene, sceneNode->Childs);
+
+				ImGui::TreePop();
+			}
+		}
+	}
+
 	void ShowSceneWindow()
 	{
 		ImGui::SetNextWindowBgAlpha(1.f);
@@ -144,34 +181,11 @@ namespace Dawn
 		if (ImGui::TreeNode("Root"))
 		{
 			auto world = g_Application->GetWorld();
-			auto transforms = world->GetComponentsByType<Transform>();
+			auto* scene = world->GetScene();
 			auto SceneData = Editor_GetSceneData();
 
-			for (auto transform : transforms)
-			{
-				auto entity = transform->GetEntity();
-				auto meta = world->GetEntityMetaData(entity);
-				if (meta->bIsHiddenInEditorHierarchy)
-					continue;
-
-				int selected = 0;
-				
-				if(SceneData->CurrentSelectedEntity.IsValid())
-					selected = (entity.Id == SceneData->CurrentSelectedEntity.Id) ? ImGuiTreeNodeFlags_Selected : 0;
-
-				if (ImGui::TreeNodeEx(meta->Name.c_str(), selected | ImGuiTreeNodeFlags_Leaf))
-				{
-					if (ImGui::IsItemClicked())
-					{
-						g_ShowPropertyWindow = true;
-						SceneData->CurrentSelectedEntity = entity;
-						SceneData->ModelMatrix = mat4(1);
-						SceneData->LastEulerRotation = glm::eulerAngles(world->GetComponentByEntity<Transform>(entity)->Rotation);
-					}
-
-					ImGui::TreePop();
-				}
-			}
+			BuildEntitiesRecursively(world.get(), SceneData, scene, scene->GetRoots());
+			
 			ImGui::TreePop();
 		}
 

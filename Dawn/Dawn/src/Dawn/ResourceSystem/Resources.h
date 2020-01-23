@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Container/HierarchyGraph.h"
 #include "Core/GDI/inc_gfx.h"
 
 namespace Dawn
@@ -62,11 +63,19 @@ namespace Dawn
 		GfxResId DiffuseTexture = INVALID_HANDLE;
 	};
 
+	struct DAWN_API ModelNodeData
+	{
+		std::string Name;
+		std::vector<i32> Meshes;
+		mat4 Transform;
+	};
+
 	struct DAWN_API Model : Resource
 	{
 		bool bHasAnimations = false;
 		std::vector<ResourceId> Meshes;
 		std::vector<ResourceId> Materials;
+		HierarchyGraph<ModelNodeData> Hierarchy;
 		AABBox Bounds;
 	};
 
@@ -94,8 +103,10 @@ namespace Dawn
 
 	struct EntityData
 	{
-		u32 InFileId; // set only if needed!
+		FileId InFileId; // set only if needed!
+		UUID Guid;
 		std::string Name;
+		UUID ParentEntity;
 		std::vector<u32> IdToComponent;
 	};
 

@@ -25,8 +25,8 @@
 #include "EntitySystem/Lights/LightComponents.h"
 #include "EntitySystem/PhysicsWorld.h"
 #include "EntitySystem/RigidBody/RigidbodySystem.h"
-#include "EntitySystem/StaticMesh/ModelViewSystem.h"
-#include "EntitySystem/StaticMesh/ModelView.h"
+#include "EntitySystem/Model/MeshFilterSystem.h"
+#include "EntitySystem/Model/MeshFilter.h"
 #include "Core/Config.h"
 #include "Rendering/Renderer.h"
 #include "UI/Editor/imgui_editor_functions.h"
@@ -151,9 +151,9 @@ namespace Dawn
 		World->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
 		World->AddTable("DirectionalLight", std::make_unique<ComponentTable<DirectionalLight>>());
 		World->AddTable("PointLight", std::make_unique<ComponentTable<PointLight>>());
-		World->AddTable("ModelView", std::make_unique<ComponentTable<ModelView>>());
+		World->AddTable("MeshFilter", std::make_unique<ComponentTable<MeshFilter>>());
 
-		World->AddSystem(new ModelViewSystem());
+		World->AddSystem(new MeshFilterSystem());
 
 		EditorWorld = std::make_shared<Dawn::World>();
 
@@ -249,6 +249,7 @@ namespace Dawn
 			while (Time.AlignedUpdateDeltaTime >= Time::TargetUpdateRate)
 			{
 				Update(Time.AlignedUpdateDeltaTime * Time.TimeScale); 
+				CalculateSceneGraph(GetWorld().get());
 				Time.AlignedUpdateDeltaTime -= Time::TargetUpdateRate;
 			}
 		}
@@ -279,7 +280,6 @@ namespace Dawn
 		// Rendering
 		{BROFILER_EVENT("Rendering")
 
-			
 			auto* Camera = World::GetActiveCamera();
 			Renderer->BeginFrame(GDI.get(), Camera);
 		
@@ -287,10 +287,42 @@ namespace Dawn
 				Layer->Render();
 
 			// todo (gb): do this differently?! :D
-			GetWorld()->GetSystemByType<ModelViewSystem>(ModelViewSystem::GetType())->Update(GetWorld().get());
+			GetWorld()->GetSystemByType<MeshFilterSystem>(MeshFilterSystem::GetType())->Update(GetWorld().get());
 
 			Renderer->Submit(this);
 			Renderer->EndFrame(GDI.get());
+		}
+	}
+
+	void CalculateChildsRecursively(Dawn::World* InWorld, std::vector<HierarchyNode*>& InNodes, Dawn::Transform* ParentTransform)
+	{
+		auto* Scene = InWorld->GetScene();
+		for (auto* Node : InNodes)
+		{
+			auto* Obj = Scene->GetDataFromIndex(Node->DataIndex);
+			auto* Transform = InWorld->GetComponentById<Dawn::Transform>(Obj->TransformId);
+			Transform->LocalSpace = glm::translate(mat4(1), Transform->Position)  * glm::scale(mat4(1), Transform->Scale) * glm::mat4_cast(Transform->Rotation);
+			Transform->WorldSpace = ParentTransform->WorldSpace * Transform->LocalSpace;
+
+			if(Node->Childs.size() > 0)
+				CalculateChildsRecursively(InWorld, Node->Childs, Transform);
+		}
+	}
+
+
+	void Application::CalculateSceneGraph(Dawn::World* InWorld)
+	{
+		auto* Scene = InWorld->GetScene();
+
+		for (auto* Node : Scene->GetRoots())
+		{
+			auto* Obj = Scene->GetDataFromIndex(Node->DataIndex);
+			auto* Transform = InWorld->GetComponentById<Dawn::Transform>(Obj->TransformId);
+			Transform->LocalSpace = glm::translate(mat4(1), Transform->Position)  * glm::scale(mat4(1), Transform->Scale) * glm::mat4_cast(Transform->Rotation);
+			Transform->WorldSpace = Transform->LocalSpace;
+
+			if(Node->Childs.size() > 0)
+				CalculateChildsRecursively(InWorld, Node->Childs, Transform);
 		}
 	}
 

@@ -1,5 +1,4 @@
 #pragma once
-#include "../SceneGraph.h"
 #include "../Component.h"
 #include "Core/Type.h"
 
@@ -25,11 +24,18 @@ namespace Dawn
 		vec3 Up = vec3(0, 1, 0);
 		vec3 Right = vec3(1, 0, 0);
 
+		i32 SceneIndex;
+
+		mat4 WorldSpace;
+		mat4 LocalSpace;
+
 		static void InitFromLoad(World* InWorld, void* Component);
 
-	private:
-		SceneNodeId SceneId;
+		Transform* GetParent(World* InWorld);
+		void SetParent(World* InWorld, Transform* InParent);
 
+	private:
+		
 		friend class SceneGraph;
 	};
 

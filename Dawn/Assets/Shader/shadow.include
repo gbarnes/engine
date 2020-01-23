@@ -10,24 +10,24 @@ float CalculateShadow(vec4 shadowColor, vec4 fragPosLightSpace, vec3 normal, vec
 	if(projCoords.z > 1.0)
         return 0.0;
 	
-	float bias = max(0.0005 * (1.0 - dot(normal, lightDir)), 0.0005);
+	float bias = max(0.0006 * (1.0 - dot(normal, lightDir)), 0.0006);
 	
 	// clamp projected coordinate to range from [0, 1] since depth map contains these values
 	projCoords = projCoords * 0.5 + 0.5; 
-	float sampledShadowDepth = texture(gShadowMap, projCoords.xy).r;
+	
+	float sampledShadowDepth = texture(gShadowMap, projCoords.xy).r;  // blur13(gShadowMap, projCoords.xy, shadowMapSize, vec2(0.123)).r ; // 
 	float currentDepth = projCoords.z;
-	float shadow = 0.0;
+	float shadow = currentDepth - bias > sampledShadowDepth  ? 1.0 : 0.0;
 	
 	vec2 texelSize = 1.0 / textureSize(gShadowMap, 0);
-	for(int x = -1; x <= 1; ++x)
+	for(int x = -2; x < 2; ++x)
 	{
-		for(int y = -1; y <= 1; ++y)
+		for(int y = -2; y < 2; ++y)
 		{
 			float pcfDepth = texture(gShadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
 			shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
 		}    
 	}
-	shadow /= 9.0;
-	
+	shadow /= 35;
 	return shadow; 
 }

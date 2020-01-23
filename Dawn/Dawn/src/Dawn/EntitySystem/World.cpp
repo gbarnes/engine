@@ -3,7 +3,6 @@
 #include "Camera/Camera.h"
 #include "Transform/Transform.h"
 #include "Lights/LightComponents.h"
-#include "StaticMesh/ModelView.h"
 #include "ResourceSystem/Resources.h"
 #include "ResourceSystem/ResourceSystem.h"
 #include "Application.h"
@@ -42,6 +41,18 @@ namespace Dawn
 		SystemTable.clear();
 	}
 
+	Transform* World::CreateTransform(const Entity& InEntity, const vec3& InPos, const vec3& InScale, const quat& InOrientation)
+	{
+		Transform* t = MakeComponent<Transform>();
+		t->Position = InPos;
+		t->Scale = InScale;
+		t->Rotation = InOrientation;
+		AddComponent<Transform>(InEntity, t);
+
+		Transform::InitFromLoad(this, t);
+		return t;
+	}
+
 	//
 	// This function creates a camera entity that is then moved into 
 	// a list to save the entity id.
@@ -54,11 +65,7 @@ namespace Dawn
 		if (!e.IsValid())
 			return nullptr;
 
-		Transform* t = this->MakeComponent<Transform>();
-		t->Position = InPosition;
-		t->Rotation = InOrientation;
-		t->Scale = vec3(1, 1, 1);
-		AddComponent<Transform>(e, t);
+		CreateTransform(e, InPosition, vec3(1), InOrientation);
 
 		Camera* c = this->MakeComponent<Camera>();
 		c->AspectRatio = (float)Width / (float)Height;
@@ -86,16 +93,7 @@ namespace Dawn
 
 		auto rs = g_Application->GetResourceSystem();
 
-		Transform* t = this->MakeComponent<Transform>();
-		t->Position = InPosition;
-		t->Rotation = InRotation;
-		t->Scale = InScale;
-		AddComponent<Transform>(e, t);
-
-		ModelView* mv = this->MakeComponent<ModelView>();
-		mv->ModelId = rs->GetFileId(InModelName);
-		mv->ResourceId = rs->LoadFile(mv->ModelId);
-		AddComponent<ModelView>(e, mv);
+		CreateTransform(e, InPosition, InScale, InRotation);
 
 		return e.Id;
 	}
@@ -137,6 +135,11 @@ namespace Dawn
 		}
 
 		return Cams;
+	}
+
+	HierarchyGraph<SceneObject>* World::GetScene()
+	{
+		return &SceneGraph;
 	}
 
 	//
@@ -201,11 +204,13 @@ namespace Dawn
 		// unloading should be done here
 
 		std::vector<ComponentInitData> compToInit;
+		std::map<std::string, Entity> entities;
 
 		for (i32 i = 0; i < InLevel->Entities.size(); ++i)
 		{
 			auto EntityData = &InLevel->Entities[i];
 			auto Entity = InWorld->CreateEntity(EntityData->Name);
+			entities.insert(std::make_pair(UUIDToString(EntityData->Guid), Entity));
 
 			for (i32 x = 0; x < EntityData->IdToComponent.size(); ++x)
 			{
@@ -231,6 +236,20 @@ namespace Dawn
 		for (auto data : compToInit)
 		{
 			InWorld->ExecuteComponentInitFunc(data.Payload, data.Type);
+		}
+
+		// build the scene graph!
+		for (i32 i = 0; i < InLevel->Entities.size(); ++i)
+		{
+			auto EntityData = &InLevel->Entities[i];
+			if (EntityData->ParentEntity == UUID())
+				continue;
+
+			auto& Entity = entities[UUIDToString(EntityData->Guid)];
+			auto& Parent = entities[UUIDToString(EntityData->ParentEntity)];
+
+			auto* EntityTransform = InWorld->GetComponentByEntity<Transform>(Entity);
+			EntityTransform->SetParent(InWorld, InWorld->GetComponentByEntity<Transform>(Parent));
 		}
 
 
@@ -291,6 +310,11 @@ namespace Dawn
 	EntityMetaData* World::GetEntityMetaData(const Entity& InEntity)
 	{
 		return Entities.GetMeta(InEntity);
+	}
+
+	EntityMetaData* World::GetEntityMetaData(const UUID& InUUID)
+	{
+		return Entities.GetMeta(InUUID);
 	}
 
 	void World::ExecuteComponentInitFunc(void* InComponent, const std::string& InString)

@@ -14,6 +14,7 @@ namespace Dawn
 		
 		Entity Get(const i32 InId);
 		EntityMetaData* GetMeta(const Entity& InEntity);
+		EntityMetaData* GetMeta(const UUID& InUUID);
 		Entity Create(const std::string& InName);
 		void Remove(const i32 InId);
 		std::array<Entity, MaxNumbersOfEntities>& GetEntities(u32* OutCount);

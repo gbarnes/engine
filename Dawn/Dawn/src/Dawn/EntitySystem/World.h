@@ -5,6 +5,7 @@
 #include "Entity.h"
 #include "System.h"
 #include "Core/Type.h"
+#include "Core/Container/HierarchyGraph.h"
 
 
 #define MAX_NUM_OF_COMPONENT_TYPES 48
@@ -18,6 +19,12 @@ namespace Dawn
 	struct Camera;
 	class World;
 
+	struct SceneObject
+	{
+		ComponentId TransformId;
+		i32 NodeRef;
+	};
+
 	typedef std::function<void(World*,void*)> ComponentInitFunc;
 
 	class DAWN_API World : public std::enable_shared_from_this<World>
@@ -29,18 +36,21 @@ namespace Dawn
 	public:
 		std::vector<std::string> GetComponentTypesByEntity(const Entity& InEntity);
 		
+		Transform* CreateTransform(const Entity& InEntity, const vec3& InPos, const vec3& InScale, const quat& InOrientation);
 		Camera* CreateCamera(std::string& InName, u32 Width, u32 Height,
 			float InNearZ, float InFarZ, float InFoV, vec4 InClearColor, 
 			const vec3& InPosition = vec3(0), const quat& InOrientation = quat());
 		void AddCamera(Camera* Cam);
 		Camera* GetCamera(i32 InId);
 		std::vector<Camera*> GetCameras();
+		HierarchyGraph<SceneObject>* GetScene();
 
 		i32 CreateModelEntity(std::string& InName, std::string& InModelName, vec3& InPosition, vec3& InScale = vec3(1), quat& InRotation = quat());
 
 		Entity CreateEntity(const std::string &InName);
 		void DestroyEntity(const Entity& InEntity);
 		EntityMetaData* GetEntityMetaData(const Entity& InEntity);
+		EntityMetaData* GetEntityMetaData(const UUID& InUUID);
 		void Shutdown();
 		void ExecuteComponentInitFunc(void* InComponent, const std::string& InString);
 		void UpdateSystems();
@@ -145,6 +155,7 @@ namespace Dawn
 		std::array<std::unique_ptr<BaseComponentTable>, MAX_NUM_OF_COMPONENT_TYPES> ComponentTables;
 		std::map<std::string, ISystem*> SystemTable;
 		std::map<std::string, ComponentInitFunc> InitFuncTable;
+		HierarchyGraph<SceneObject> SceneGraph;
 
 		template<typename T>
 		ComponentTable<T>* GetTable()

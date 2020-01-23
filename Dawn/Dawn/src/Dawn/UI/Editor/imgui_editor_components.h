@@ -8,7 +8,7 @@ namespace Dawn
 	struct Camera;
 	struct DirectionalLight;
 	struct PointLight;
-	struct ModelView;
+	struct MeshFilter;
 	class ResourceSystem;
 	class World;
 
@@ -17,5 +17,5 @@ namespace Dawn
 	void ShowCameraComponent(Camera* InCamera);
 	void ShowDirectionalLightComponent(DirectionalLight* InLight);
 	void ShowPointLightComponent(PointLight* InLight);
-	void ShowModelViewComponent(ModelView* InModelView, ResourceSystem* InResourceSystem);
+	void ShowMeshFilterComponent(MeshFilter* InMeshFilter, ResourceSystem* InResourceSystem);
 }

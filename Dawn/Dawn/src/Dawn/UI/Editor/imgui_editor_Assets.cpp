@@ -5,6 +5,7 @@
 #include "Core/Type.h"
 #include "ResourceSystem/Resources.h"
 #include "EntitySystem/World.h"
+#include "EntitySystem/Transform/Transform.h"
 #include "ResourceSystem/ResourceSystem.h"
 
 namespace  Dawn
@@ -48,14 +49,22 @@ namespace  Dawn
 				continue;
 
 			auto meta = InWorld->GetEntityMetaData(entity);
-			
+
 			if (meta->bIsHiddenInEditorHierarchy)
 				continue;
+
+			Transform* transform = InWorld->GetComponentByEntity<Transform>(entity);
+			D_ASSERT(transform != nullptr, fmt::format("Entity {0} has no transform - this cannot happen at all!", meta->Name).c_str());
+
+			Transform* parent = transform->GetParent(InWorld);
 			
 			EntityData data = {};
+			data.Guid = meta->Guid;
 			data.Name = meta->Name.c_str();
+			data.ParentEntity = (parent != nullptr) ? parent->GetEntityMeta()->Guid : UUID();
 
-			fputs(std::string("---Entity "+ data.Name + "\n").c_str(), LevelFile);
+			std::string entityHeader = "---Entity {"+ UUIDToString(data.Guid) +"}{" + data.Name + "}{" + UUIDToString(data.ParentEntity) + "}\n";
+			fputs(entityHeader.c_str(), LevelFile);
 			
 			auto componentNames = InWorld->GetComponentTypesByEntity(entity);
 			for (const auto& componentName : componentNames)
@@ -80,8 +89,6 @@ namespace  Dawn
 					compData.ComponentValues.push_back(Value);
 
 					fputs(("  " + member.Name + ": " + member.Type->ToString(type->GetAsVoid(componentInstance, member.Name)).append("\n")).c_str(), LevelFile);
-					
-					DWN_CORE_INFO("Member: {0}", member.Name.c_str());
 				}
 
 				data.IdToComponent.push_back(compData.Id);

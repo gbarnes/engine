@@ -36,6 +36,9 @@ using namespace Microsoft::WRL;
 #include <chrono>
 #include <Windows.h>
 #include <atomic>
+#include <Rpc.h> // for uuid only on win32
+
+#pragma comment(lib, "rpcrt4.lib")
 
 #define GLM_GTC_half_float
 #include "glm.hpp"
@@ -74,6 +77,7 @@ typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
+typedef unsigned long ul64;
 typedef float f32;
 typedef double f64;
 
@@ -81,6 +85,7 @@ typedef int8_t c8;
 typedef int16_t s16;
 typedef int32_t i32;
 typedef int64_t i64;
+typedef long l64;
 typedef u64 FileId;
 
 typedef glm::quat quat;
@@ -220,4 +225,5 @@ template<typename T>
 using Unique = std::unique_ptr<T>;
 
 
-
+extern std::string UUIDToString(const UUID& InUUID);
+extern UUID StringToUUID(const std::string& InUUIDString);

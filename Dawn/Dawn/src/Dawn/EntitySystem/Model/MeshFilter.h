@@ -8,23 +8,25 @@ namespace Dawn
 {
 	class ResourceSystem;
 
-	struct DAWN_API ModelView : public Component<ModelView>
+	struct DAWN_API MeshFilter : public Component<MeshFilter>
 	{
-		REGISTER_TYPE(ModelView)
+		REGISTER_TYPE(MeshFilter)
 		static const u32 Version = 1;
 
-		ModelView()
+		MeshFilter()
 		{}
 
 		RenderLayer Layer = RenderLayer::StaticGeom;
-		FileId ModelId;
-		ResourceId ResourceId;
+		FileId ModelFileId;
+		u32 MeshIndex;
 
-		Model* GetModel(ResourceSystem* InResourceSystem);
+		ResourceId MeshId;
+
+		Mesh* GetMesh(ResourceSystem* InResourceSystem);
 
 		static void InitFromLoad(World* InWorld, void* Component);
 	};
 
 
-	extern ModelView* CreateModelView(World* InWorld, const Entity& InEntity, const std::string& InFile);
+	extern MeshFilter* CreateMeshFilter(World* InWorld, const Entity& InEntity, const std::string& InFile);
 }

@@ -14,6 +14,17 @@ namespace Dawn
 		return &MetaData[InEntity.Id];
 	}
 
+	EntityMetaData* EntityTable::GetMeta(const UUID& InUUID)
+	{
+		for (auto& Meta : MetaData)
+		{
+			if (Meta.Guid == InUUID)
+				return &Meta;
+		}
+
+		return nullptr;
+	}
+
 	Entity EntityTable::Create(const std::string& InName)
 	{
 		if (CurrentId == Entities.max_size() - 1)
@@ -24,6 +35,8 @@ namespace Dawn
 		NewHandle.Generation += 1;
 
 		EntityMetaData& Meta = MetaData[CurrentId];
+		UuidCreate(&Meta.Guid);
+
 		Meta.bIsActive = true;
 		Meta.bIsHiddenInEditorHierarchy = false;
 		Meta.Name = InName;

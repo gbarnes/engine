@@ -1,12 +1,22 @@
----Entity tank
+---Entity {0870e615-160d-4174-8d0f-6cb402835142}{tank}{00000000-0000-0000-0000-000000000000}
 ---Component Transform
-  Position: {x: 11.184309, y: 0.000000, z: 9.881655}
+  Position: {x: 11.184309, y: -0.048592, z: 9.881655}
   Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 0.000000}
   Scale: {x: 0.050000, y: 0.050000, z: 0.050000}
----Component ModelView
+---Component MeshFilter
   Layer: 0
-  ModelId: 5795740957049988417
----Entity Cam
+  ModelFileId: 5795740957049988417
+  MeshIndex: 0
+---Entity {0870e615-160d-41d3-8d23-6cb402835134}{tanktop}{0870e615-160d-4174-8d0f-6cb402835142}
+---Component Transform
+  Position: {x: 0.0, y: 0.0, z: 0.0}
+  Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 0.000000}
+  Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
+---Component MeshFilter
+  Layer: 0
+  ModelFileId: 5795740957049988417
+  MeshIndex: 1
+---Entity {989adb78-92ad-484d-8a5c-c4b78ec0ec3e}{Cam}{00000000-0000-0000-0000-000000000000}
 ---Component Transform
   Position: {x: -6.461598, y: 28.348858, z: 39.652996}
   Rotation: {x: -0.321618, y: -0.111870, z: -0.038298, w: 0.939457}
@@ -18,16 +28,16 @@
   NearZ: 0.100000
   WorldUp: {x: 0.000000, y: 1.000000, z: 0.000000}
   bIsOrthographic: 0
----Entity Light
+---Entity {6f9cbfce-94aa-44c7-81ea-87016d429d08}{Light}{00000000-0000-0000-0000-000000000000}
 ---Component Transform
   Position: {x: 0.000000, y: 0.000000, z: 0.000000}
-  Rotation: {x: 0.417664, y: 0.027106, z: -0.204154, w: 0.884954}
-  Scale: {x: 0.999981, y: 1.000000, z: 0.999997}
+  Rotation: {x: 0.510766, y: 0.000000, z: 0.000000, w: 0.859720}
+  Scale: {x: 0.999979, y: 1.000000, z: 1.000000}
 ---Component DirectionalLight
   Color: {r: 0.900000, g: 0.900000, b: 0.900000, a: 1.000000}
   Intensity: 1.000000
   bCastShadows: 1
----Entity Pointlight
+---Entity {d4784b0e-152a-4c61-b3bc-dc3140a76b48}{Pointlight}{00000000-0000-0000-0000-000000000000}
 ---Component Transform
   Position: {x: -4.129946, y: 13.446422, z: 10.922191}
   Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}
@@ -37,7 +47,7 @@
   Intensity: 202.400146
   Range: 1.700000
   bCastShadows: 0
----Entity Pointlight
+---Entity {9d98fac7-da74-48eb-860f-288e46337662}{Pointlight}{00000000-0000-0000-0000-000000000000}
 ---Component Transform
   Position: {x: 10.000000, y: -10.000000, z: 10.000000}
   Rotation: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}

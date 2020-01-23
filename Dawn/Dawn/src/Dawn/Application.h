@@ -57,6 +57,8 @@ namespace Dawn
 		virtual void Cleanup() = 0;
 		virtual void Resize(int width, int height);
 
+		void CalculateSceneGraph(Dawn::World* InWorld);
+
 		void PushLayer(Layer* InLayer);
 		void PopLayer(Layer* InLayer);
 		void ClearLayers();

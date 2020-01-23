@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Transform.h"
+#include "EntitySystem/World.h"
 
 namespace Dawn
 {
@@ -17,10 +18,29 @@ namespace Dawn
 		TransformUtils::CalculateForward(transform);
 		TransformUtils::CalculateUp(transform);
 		TransformUtils::CalculateRight(transform);
+
+		SceneObject Obj;
+		Obj.TransformId = transform->Id;
+		//Obj.Local = glm::translate(mat4(1), transform->Position) * glm::scale(mat4(1), transform->Scale) * glm::toMat4(transform->Rotation);
+
+		auto* Node = InWorld->GetScene()->AddNode(Obj);
+		D_ASSERT(Node != nullptr, "Couldn't create node for transform?!");
+		transform->SceneIndex = Node->DataIndex;
 	}
 
+	Transform* Transform::GetParent(World* InWorld)
+	{
+		auto* Object = InWorld->GetScene()->GetParentDataFromIndex(SceneIndex);
+		if (!Object) return nullptr;
+		return InWorld->GetComponentById<Transform>(Object->TransformId);
+	}
 
-	
+	void Transform::SetParent(World* InWorld, Transform* InParent)
+	{
+		auto* Scene = InWorld->GetScene();
+		Scene->SetParent(SceneIndex, (InParent == nullptr) ? -1 : InParent->SceneIndex);
+	}
+
 	mat4 TransformUtils::GetRotationMatrix(Transform* InTransform)
 	{
 		if (InTransform == nullptr)
