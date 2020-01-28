@@ -24,7 +24,7 @@
 #include "Core/Logging/Log.h"
 #include "Core/Paths.h"
 #include "Rendering/RenderResourceHelper.h"
-
+#include "Rendering/Renderer.h"
 
 namespace Dawn
 {
@@ -38,13 +38,15 @@ namespace Dawn
 		{
 			ModelNodeData ModelNode;
 			ModelNode.Name = InNode->mName.C_Str();
-			ModelNode.Transform = mat4(
-				(float)InNode->mTransformation.a1, (float)InNode->mTransformation.a2, (float)InNode->mTransformation.a3, (float)InNode->mTransformation.a4,
-				(float)InNode->mTransformation.b1, (float)InNode->mTransformation.b2, (float)InNode->mTransformation.b3, (float)InNode->mTransformation.b4,
-				(float)InNode->mTransformation.c1, (float)InNode->mTransformation.c2, (float)InNode->mTransformation.c3, (float)InNode->mTransformation.c4,
-				(float)InNode->mTransformation.d1, (float)InNode->mTransformation.d2, (float)InNode->mTransformation.d3, (float)InNode->mTransformation.d4
-			);
+			if (InNode->mParent->mName == aiString(""))
+			{
+				aiVector3D pos, scale, rot;
+				InNode->mParent->mTransformation.Decompose(scale, rot, pos);
 
+				ModelNode.Position = vec3(pos.x, pos.y, pos.z);
+				ModelNode.Scale = vec3(scale.x, scale.y, scale.z);
+				ModelNode.Rotation = vec3(rot.x, rot.y, rot.z);
+			}
 
 			for (u32 i = 0; i < InNode->mNumMeshes; ++i)
 			{
@@ -244,13 +246,25 @@ namespace Dawn
 		Id = InResourceSystem->CreateModel(&model);
 		model->FileId = InMetaData->Id;
 
+		ModelNodeData ModelNode;
+		ModelNode.Name = InMetaData->Name;
+
+		aiVector3D pos, scale, rot;
+		scene->mRootNode->mTransformation.Decompose(scale, rot, pos);
+
+		ModelNode.Position = vec3(pos.x, pos.y, pos.z);
+		ModelNode.Scale = vec3(scale.x, scale.y, scale.z);
+		ModelNode.Rotation = vec3(rot.x, rot.y, rot.z);
+
+		auto* RootNode = model->Hierarchy.AddNode(ModelNode);
+
 		vec3 min, max;
 		min = max = vec3(scene->mMeshes[0]->mVertices[0].x, scene->mMeshes[0]->mVertices[0].y, scene->mMeshes[0]->mVertices[0].z);
 		
 		ResourceId rid;
 		rid.IsValid = false;
 
-		RS_ProcessMeshNode(InResourceSystem, model, scene->mRootNode, scene, min, max);
+		RS_ProcessMeshNode(InResourceSystem, model, scene->mRootNode, scene, min, max, RootNode);
 
 		model->Bounds.Max = max;
 		model->Bounds.Min = min;
@@ -410,6 +424,7 @@ namespace Dawn
 
 	ResourceId RS_LoadImage(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InFile)
 	{
+		const auto Renderer = g_Application->GetRenderer();
 		const auto GDI = g_Application->GetGDI();
 
 		ResourceId Id = InResourceSystem->FindResourceIdFromFileId(InFile->Id);
@@ -451,6 +466,11 @@ namespace Dawn
 			// associated to the file
 			image->TextureId = GDI->CreateTexture(Desc, nullptr);
 			
+
+			// Note(gb): remove this later since we don't want another dependency in the resource
+			//			 system - maybe there shouldn't be a dependency to the gdi as well
+			Renderer->Stats.TextureMemory += InFile->Size;
+
 			// hm is it good to release the data...
 			stbi_image_free(data);
 
@@ -475,6 +495,7 @@ namespace Dawn
 	ResourceId RS_ReloadImage(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InMetaData)
 	{
 		const auto GDI = g_Application->GetGDI();
+		const auto Renderer = g_Application->GetRenderer();
 		auto ResourceId = InResourceSystem->FindResourceIdFromFileId(InMetaData->Id);
 		auto CastedResource = InResourceSystem->FindImage(ResourceId);
 
@@ -489,6 +510,7 @@ namespace Dawn
 				unsigned char *data = stbi_load(path.c_str(), &x, &y, &n, 4);
 				if (data)
 				{
+					
 					GfxTextureDesc Desc =
 					{
 						GfxTextureFormat::RGBA,
@@ -502,6 +524,10 @@ namespace Dawn
 						{ GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR }, // filter settings
 						true
 					};
+
+					// Note(gb): remove this later since we don't want another dependency in the resource
+					//			 system - maybe there shouldn't be a dependency to the gdi as well
+					Renderer->Stats.TextureMemory += InMetaData->Size;
 
 					Texture->Reset(Desc);
 					stbi_image_free(data);

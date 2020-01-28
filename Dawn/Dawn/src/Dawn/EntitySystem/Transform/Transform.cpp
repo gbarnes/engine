@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "Transform.h"
-#include "EntitySystem/World.h"
 
 namespace Dawn
 {
@@ -14,6 +13,7 @@ namespace Dawn
 	{
 		auto transform = static_cast<Transform*>(Component);
 		transform->WorldRef = InWorld;
+		transform->CalculateLocalSpace();
 
 		TransformUtils::CalculateForward(transform);
 		TransformUtils::CalculateUp(transform);
@@ -21,10 +21,10 @@ namespace Dawn
 
 		SceneObject Obj;
 		Obj.TransformId = transform->Id;
-		//Obj.Local = glm::translate(mat4(1), transform->Position) * glm::scale(mat4(1), transform->Scale) * glm::toMat4(transform->Rotation);
-
+		
 		auto* Node = InWorld->GetScene()->AddNode(Obj);
 		D_ASSERT(Node != nullptr, "Couldn't create node for transform?!");
+
 		transform->SceneIndex = Node->DataIndex;
 	}
 

@@ -5,7 +5,7 @@ struct HierarchyNode
 {
 	i32 DataIndex;
 	HierarchyNode* Parent;
-	std::vector<HierarchyNode*> Childs;
+	std::vector<HierarchyNode*> Childs; // todo (gb): use something else as a vector here to reduce memory footprint?
 };
 
 template<typename T>
@@ -19,6 +19,7 @@ template<typename T>
 class HierarchyGraph
 {
 public:
+	// Todo (gb): use a better memory allocator instead of the generic new...
 	HierarchyNode* CreateNode() { return new HierarchyNode(); }
 
 	HierarchyNode* AddNode(T InData, HierarchyNode* InParent = nullptr)
@@ -29,7 +30,8 @@ public:
 		DataNode.Data = InData;
 		DataNode.NodeRef = reinterpret_cast<i64>(Node);
 
-		Data.push_back(DataNode);
+		Data.insert(std::make_pair(id, DataNode));
+		++id;
 
 		Node->Parent = InParent;
 		Node->DataIndex = static_cast<i32>(Data.size() - 1);
@@ -41,6 +43,41 @@ public:
 
 		return Node;
 	}
+
+	std::vector<T> RemoveNode(i32 InDataIndex)
+	{
+		std::vector<T> data;
+		HierarchyNodeData<T>& DataObj = Data[InDataIndex];
+		HierarchyNode* Node = ((HierarchyNode*)DataObj.NodeRef);
+
+		data.push_back(DataObj.Data);
+
+		if (Node != nullptr)
+		{
+			Data.erase(InDataIndex);
+
+			if (Node->Parent != nullptr)
+			{
+				auto it = std::find(Node->Parent->Childs.begin(), Node->Parent->Childs.end(), Node);
+				if (it != Node->Parent->Childs.end()) Node->Parent->Childs.erase(it);
+			}
+			else
+			{
+				auto it = std::find(Roots.begin(), Roots.end(), Node);
+				if (it != Roots.end()) Roots.erase(it);
+			}
+
+
+			if (Node->Childs.size())
+				RemoveChilds(Node->Childs, data);
+
+			SafeDelete(Node);
+		}
+
+		return data;
+	}
+
+	
 
 	//
 	// Moves the Node attached to the Data Index to the 
@@ -87,8 +124,13 @@ public:
 	T* GetParentDataFromIndex(i32 InIndex)
 	{
 		auto* Node = (HierarchyNode*)this->Data[InIndex].NodeRef;
+		
+		if (Node->Parent == nullptr)
+			return nullptr;
 
-		return (Node->Parent == nullptr) ? nullptr : &this->Data[Node->DataIndex].Data;
+		auto* ParentNode = Node->Parent;
+
+		return &this->Data[ParentNode->DataIndex].Data;
 	}
 
 	const std::vector<HierarchyNode*>& GetRoots() const {
@@ -96,6 +138,21 @@ public:
 	}
 
 private:
-	std::vector<HierarchyNodeData<T>> Data;
+	i32 id = 0;
+	std::unordered_map<i32, HierarchyNodeData<T>> Data;
 	std::vector<HierarchyNode*> Roots;
+
+	void RemoveChilds(const std::vector<HierarchyNode*>& Childs, std::vector<T>& ReturnData)
+	{
+		for (auto* Child : Childs)
+		{
+			ReturnData.push_back(Data[Child->DataIndex].Data);
+			
+			if (Child->Childs.size() > 0)
+				RemoveChilds(Child->Childs, ReturnData);
+
+			Data.erase(Child->DataIndex);
+			SafeDelete(Child);
+		}
+	}
 };

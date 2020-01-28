@@ -132,11 +132,6 @@ namespace Dawn
 			SSAOBlurBuffer->AttachColorTarget(0, InWidth, InHeight, RGBA16F, R);
 		}
 
-		if (auto SSAOBlurBuffer = InGDI->GetRenderBuffer(TransientData.SSAOBlurBufferId))
-		{
-			SSAOBlurBuffer->AttachColorTarget(0, InWidth, InHeight, RGBA16F, R);
-		}
-
 		if (auto ShadowMapBuffer = InGDI->GetRenderBuffer(TransientData.ShadowMapBufferId))
 		{
 			ShadowMapBuffer->AttachDepthTarget(InWidth, InHeight);
@@ -148,6 +143,7 @@ namespace Dawn
 		BROFILER_EVENT("Rendering_BeginFrame");
 		D_ASSERT(InCamera != nullptr, "There is no active camera to use for rendering!");
 		
+		Stats.DrawCalls = 0;
 		PerFrameData.Camera = InCamera;
 		PerFrameData.ShadowBucket.Reset(2048, TransientData.ShadowMapBufferId, mat4(), mat4());
 		PerFrameData.GeometryBucket.Reset(2048, TransientData.GBufferId, InCamera->GetView(), InCamera->GetProjection());

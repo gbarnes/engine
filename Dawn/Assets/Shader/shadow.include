@@ -10,7 +10,7 @@ float CalculateShadow(vec4 shadowColor, vec4 fragPosLightSpace, vec3 normal, vec
 	if(projCoords.z > 1.0)
         return 0.0;
 	
-	float bias = max(0.0006 * (1.0 - dot(normal, lightDir)), 0.0006);
+	float bias = max(0.0057 * (1.0 - dot(normal, -lightDir)), 0.0057);
 	
 	// clamp projected coordinate to range from [0, 1] since depth map contains these values
 	projCoords = projCoords * 0.5 + 0.5; 
@@ -28,6 +28,6 @@ float CalculateShadow(vec4 shadowColor, vec4 fragPosLightSpace, vec3 normal, vec
 			shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
 		}    
 	}
-	shadow /= 35;
+	shadow /= (4*4);
 	return shadow; 
 }

@@ -72,7 +72,8 @@ namespace Dawn
 		ShowDebugText();
 
 		if(bShowGBuffer)
-			ShowGBuffer(InGDI->GetRenderBuffer(InRenderer->TransientData.GBufferId), InGDI->GetRenderBuffer(InRenderer->TransientData.ShadowMapBufferId));
+			ShowGBuffer(InGDI->GetRenderBuffer(InRenderer->TransientData.GBufferId), InGDI->GetRenderBuffer(InRenderer->TransientData.ShadowMapBufferId), 
+				InGDI->GetRenderBuffer(InRenderer->TransientData.SSAOBlurBufferId));
 
 
 		if (g_Application->GetIsInEditMode())
@@ -249,7 +250,7 @@ namespace Dawn
 			while (Time.AlignedUpdateDeltaTime >= Time::TargetUpdateRate)
 			{
 				Update(Time.AlignedUpdateDeltaTime * Time.TimeScale); 
-				CalculateSceneGraph(GetWorld().get());
+				
 				Time.AlignedUpdateDeltaTime -= Time::TargetUpdateRate;
 			}
 		}
@@ -279,7 +280,7 @@ namespace Dawn
 
 		// Rendering
 		{BROFILER_EVENT("Rendering")
-
+			World->UpdateSceneGraph();
 			auto* Camera = World::GetActiveCamera();
 			Renderer->BeginFrame(GDI.get(), Camera);
 		
@@ -291,38 +292,6 @@ namespace Dawn
 
 			Renderer->Submit(this);
 			Renderer->EndFrame(GDI.get());
-		}
-	}
-
-	void CalculateChildsRecursively(Dawn::World* InWorld, std::vector<HierarchyNode*>& InNodes, Dawn::Transform* ParentTransform)
-	{
-		auto* Scene = InWorld->GetScene();
-		for (auto* Node : InNodes)
-		{
-			auto* Obj = Scene->GetDataFromIndex(Node->DataIndex);
-			auto* Transform = InWorld->GetComponentById<Dawn::Transform>(Obj->TransformId);
-			Transform->LocalSpace = glm::translate(mat4(1), Transform->Position)  * glm::scale(mat4(1), Transform->Scale) * glm::mat4_cast(Transform->Rotation);
-			Transform->WorldSpace = ParentTransform->WorldSpace * Transform->LocalSpace;
-
-			if(Node->Childs.size() > 0)
-				CalculateChildsRecursively(InWorld, Node->Childs, Transform);
-		}
-	}
-
-
-	void Application::CalculateSceneGraph(Dawn::World* InWorld)
-	{
-		auto* Scene = InWorld->GetScene();
-
-		for (auto* Node : Scene->GetRoots())
-		{
-			auto* Obj = Scene->GetDataFromIndex(Node->DataIndex);
-			auto* Transform = InWorld->GetComponentById<Dawn::Transform>(Obj->TransformId);
-			Transform->LocalSpace = glm::translate(mat4(1), Transform->Position)  * glm::scale(mat4(1), Transform->Scale) * glm::mat4_cast(Transform->Rotation);
-			Transform->WorldSpace = Transform->LocalSpace;
-
-			if(Node->Childs.size() > 0)
-				CalculateChildsRecursively(InWorld, Node->Childs, Transform);
 		}
 	}
 

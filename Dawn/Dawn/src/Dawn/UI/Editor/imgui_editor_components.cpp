@@ -8,6 +8,8 @@
 #include "EntitySystem/Lights/LightComponents.h"
 #include "EntitySystem/Model/MeshFilter.h"
 #include "ResourceSystem/ResourceSystem.h"
+#include "imgui_editor_types.h"
+#include "imgui_debug.h"
 
 namespace Dawn
 {
@@ -27,9 +29,12 @@ namespace Dawn
 		}
 	}
 
-	void ShowTransformComponent(Transform* InTransform, ImGuizmo::MODE& InEditSpace)
+	void ShowTransformComponent(World* InWorld, Transform* InTransform, ImGuizmo::MODE& InEditSpace)
 	{
 		D_ASSERT(InTransform, "Transform to inspect is null");
+		auto* SceneData = Editor_GetSceneData();
+		auto* ParentTransform = InTransform->GetParent(InWorld);
+		mat4& ParentWorldSpace = (ParentTransform) ? ParentTransform->WorldSpace : InTransform->WorldSpace;
 
 		if (ImGui::CollapsingHeader("Transform"))
 		{
@@ -51,10 +56,10 @@ namespace Dawn
 
 			ImGui::Spacing();
 
-			ImGui::InputFloat3("Position", &InTransform->Position[0]);
+			ImGui::InputFloat3("Position", &SceneData->SelectionData.Position[0]);
 			ImGui::InputFloat3("Scale", &InTransform->Scale[0]);
-			ImGui::InputFloat4("Rotation", &InTransform->Rotation[0]);
-
+			ImGui::InputFloat3("Rotation", &SceneData->SelectionData.Rotation[0]);
+		
 			ImGui::Unindent(10.0f);
 		}
 	}

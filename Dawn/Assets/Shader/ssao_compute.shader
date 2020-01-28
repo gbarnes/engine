@@ -30,15 +30,15 @@ uniform float radius;
 uniform float bias;
 uniform float power;
  
-const vec2 noiseScale = vec2(1920.0/4.0, 1080.0/4.0); 
+const vec2 noiseScale = vec2(1280.0/4.0, 720.0/4.0); 
 in vec2 TexCoords;
 
 int kernelSize = 64;
 
 void main() 
 {
-	vec3 fragPos = texture(gPosition, TexCoords).xyz;
-    vec3 normal =  normalize(texture(gNormal, TexCoords).rgb);
+	vec3 fragPos = (texture(gPosition, TexCoords)).xyz;
+    vec3 normal =  normalize(view * texture(gNormal, TexCoords)).xyz;
     vec3 randomVec = texture(Noise, TexCoords * noiseScale).xyz;
 
     // create TBN change-of-basis matrix: from tangent-space to view-space
@@ -52,23 +52,26 @@ void main()
     for(int i = 0; i < kernelSize; ++i) 
     {
         // get sample position
-		vec3 sample = TBN * samples[i];
-        vec3 samplePos = fragPos + sample; // from tangent to view-space
-        samplePos = fragPos + sample * radius; 
+		vec3 samplex = TBN * samples[i];
+       // vec3 samplePos = fragPos + samplex; // from tangent to view-space
+        samplex = fragPos + samplex * radius; 
         
         // project sample position (to sample texture) (to get position on screen/texture)
-        vec4 offset = vec4(samplePos, 1.0);
-        offset = projection * offset; // from view to clip-space
-        offset.xyz /= offset.w; // perspective divide
-        offset.xyz = offset.xyz * 0.5 + vec3(0.5); // transform to range 0.0 - 1.0
+        vec4 offset = vec4(samplex, 1.0);
+        offset      =  projection * view * offset;    // from view to clip-space
+		offset.xyz /= offset.w;               // perspective divide
+		offset.xyz  = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0  
 
         // get sample depth
-		float sampleDepth = (texture(gPosition, offset.xy).b); // get depth value of kernel sample
+		float sampleDepth = (texture(gPosition, offset.xy).z); // get depth value of kernel sample
 		
 		// range check & accumulate
 		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
-		occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck  * power; 	
+		occlusion += (sampleDepth >= samplex.z + bias ? 1.0 : 0.0) * rangeCheck  * power; 	
     }
 
     gSSAO.r = 1.0 - (occlusion / kernelSize);
+	gSSAO.g = 1.0;
+	gSSAO.b = 1.0;
+	gSSAO.a = 1.0;	 
 }

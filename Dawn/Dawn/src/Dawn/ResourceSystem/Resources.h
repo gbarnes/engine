@@ -67,7 +67,7 @@ namespace Dawn
 	{
 		std::string Name;
 		std::vector<i32> Meshes;
-		mat4 Transform;
+		vec3 Position, Scale, Rotation;
 	};
 
 	struct DAWN_API Model : Resource

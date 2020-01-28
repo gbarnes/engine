@@ -19,11 +19,11 @@ uniform mat4 proj;
 void main()
 { 
 	vec4 worldPos =view *  model * vec4(position, 1.0);
-	FragPos =  worldPos;  
+	FragPos =  model * vec4(position, 1.0);  
 	TexCoord0 = uv0;    
 	TexCoord1 = uv1;
 	
-    Normal = normalize(mat3(transpose(inverse(view * model))) * normal); 
+    Normal = normalize(normal); //normalize(mat3(transpose(inverse(view * model))) * normal); 
 	gl_Position = proj * worldPos;
 }
 

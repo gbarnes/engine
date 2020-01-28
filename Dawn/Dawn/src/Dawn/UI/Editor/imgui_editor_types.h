@@ -16,12 +16,18 @@ namespace Dawn
 
 	struct Entity;
 
+	struct EditorSelectionData
+	{
+		Entity Entity = INVALID_ENTITY;
+		mat4 ModelMatrix;
+		vec3 Position;
+		vec3 Scale;
+		vec3 Rotation;
+	};
 	struct EditorSceneData
 	{
-		Entity CurrentSelectedEntity = INVALID_ENTITY;
+		EditorSelectionData SelectionData;
 		ImDrawList* GizmoDrawList;
-		mat4 ModelMatrix;
-		vec3 LastEulerRotation;
 		ImGuizmo::MODE EditSpace = ImGuizmo::LOCAL;
 		ImGuizmo::OPERATION EditMethod = ImGuizmo::TRANSLATE;
 		std::string Name = "";

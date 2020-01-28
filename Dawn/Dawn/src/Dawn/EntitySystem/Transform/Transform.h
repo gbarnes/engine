@@ -1,9 +1,11 @@
 #pragma once
 #include "../Component.h"
 #include "Core/Type.h"
+#include "EntitySystem/World.h"
 
 namespace Dawn
 {
+
 	struct DAWN_API Transform : public Component<Transform>
 	{
 		REGISTER_TYPE(Transform)
@@ -26,17 +28,32 @@ namespace Dawn
 
 		i32 SceneIndex;
 
-		mat4 WorldSpace;
-		mat4 LocalSpace;
+		mat4 WorldSpace = mat4(1);
+		mat4 LocalSpace = mat4(1);
 
 		static void InitFromLoad(World* InWorld, void* Component);
 
 		Transform* GetParent(World* InWorld);
 		void SetParent(World* InWorld, Transform* InParent);
 
-	private:
+		void CalculateLocalSpace() {
+			LocalSpace =  glm::translate(mat4(1), this->Position) * glm::toMat4(this->Rotation) *  glm::scale(mat4(1), this->Scale);
+		}
+
+		mat4 GetInverseTransform() {
+			vec3 invertedPos = -1.0f*Position;
+			return glm::translate(mat4(1), invertedPos)  *  glm::scale(mat4(1), 1.0f / Scale) * glm::transpose(glm::toMat4(Rotation));
+		}
+
+		vec3 GetWorldPosition() {
+			return WorldSpace * vec4(Position, 1);
+		}
+
+		vec3 GetWorldScale() {
+			return WorldSpace * vec4(Scale, 1);
+		}
+
 		
-		friend class SceneGraph;
 	};
 
 #define MAKE_TRANSFORM_PSR(pos, scale, rot) Transform(pos, scale,  rot)

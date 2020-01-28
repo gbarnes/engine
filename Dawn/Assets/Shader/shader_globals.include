@@ -42,3 +42,18 @@ float CalculateAttenuation(vec3 WorldPos, vec3 LightPosition)
 	return attenuation;
 }
 
+vec3 ApplyFog( in vec3  rgb,      // original color of the pixel
+               in float distance, // camera to point distance
+                in vec3  rayDir,   // camera position
+               in vec3  sunDir,
+			   in float density, 
+			   in vec3 colorA,
+			   in vec3 colorB)  // camera to point vector
+{
+   float fogAmount = 1.0 - exp( -distance*density );
+    float sunAmount = max( dot( rayDir, sunDir ), 0.0 );
+    vec3  fogColor  = mix( colorA, // bluish
+                           colorB, // yellowish
+                           pow(sunAmount,8.0) );
+    return mix( rgb, fogColor, fogAmount );
+}

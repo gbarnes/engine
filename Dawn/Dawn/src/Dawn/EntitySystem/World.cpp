@@ -142,6 +142,40 @@ namespace Dawn
 		return &SceneGraph;
 	}
 
+	void CalculateChildsRecursively(Dawn::World* InWorld, std::vector<HierarchyNode*>& InNodes, Dawn::Transform* ParentTransform)
+	{
+		auto* Scene = InWorld->GetScene();
+		for (auto* Node : InNodes)
+		{
+			auto* Obj = Scene->GetDataFromIndex(Node->DataIndex);
+			auto* Transform = InWorld->GetComponentById<Dawn::Transform>(Obj->TransformId);
+
+			Transform->CalculateLocalSpace();
+			Transform->WorldSpace = glm::translate(mat4(1), Transform->Position) * ParentTransform->WorldSpace * glm::toMat4(Transform->Rotation) *  glm::scale(mat4(1), Transform->Scale);
+			
+			if (Node->Childs.size() > 0)
+				CalculateChildsRecursively(InWorld, Node->Childs, Transform);
+		}
+	}
+
+
+	void World::UpdateSceneGraph()
+	{
+		auto* Scene = GetScene();
+
+		for (auto* Node : Scene->GetRoots())
+		{
+			auto* Obj = Scene->GetDataFromIndex(Node->DataIndex);
+			auto* Transform = GetComponentById<Dawn::Transform>(Obj->TransformId);
+			
+			Transform->CalculateLocalSpace();
+			Transform->WorldSpace = Transform->LocalSpace;
+
+			if (Node->Childs.size() > 0)
+				CalculateChildsRecursively(this, Node->Childs, Transform);
+		}
+	}
+
 	//
 	// Creates a new Entity with the given name and returns it's 
 	// entity handle.
@@ -152,18 +186,28 @@ namespace Dawn
 	}
 
 	//
-	// Destroys the given entity with all it's components!
+	// Destroys the given entity with all it's components & child entities
 	//
 	void World::DestroyEntity(const Entity& InEntity)
 	{
-		auto components = GetComponentTypesByEntity(InEntity);
-		
-		for (auto component : components)
-		{
-			GetTableByString(component)->Destroy(InEntity);
-		}
+		Transform* transform = GetComponentByEntity<Transform>(InEntity);
+		std::vector<SceneObject> childs;
+		if(transform)
+			childs = SceneGraph.RemoveNode(transform->SceneIndex);
 
-		Entities.Remove(InEntity.Id);
+		for (auto& child : childs)
+		{
+			auto transform = GetComponentById<Transform>(child.TransformId);
+			auto entity = transform->GetEntity();
+			auto components = GetComponentTypesByEntity(entity);
+
+			for (auto component : components)
+			{
+				GetTableByString(component)->Destroy(entity);
+			}
+
+			Entities.Remove(entity.Id);
+		}
 	}
 
 	//
@@ -252,6 +296,7 @@ namespace Dawn
 			EntityTransform->SetParent(InWorld, InWorld->GetComponentByEntity<Transform>(Parent));
 		}
 
+		InWorld->UpdateSceneGraph();
 
 		return true;
 	}

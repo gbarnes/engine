@@ -42,25 +42,29 @@ uniform mat4 view;
 
 void main()
 {        
-    vec3 NormalVP = texture(gNormal, TexCoords).rgb;
+    vec4 Normal = texture(gNormal, TexCoords);
   
-	if(NormalVP == vec3(0,0,0)) 
+	if(Normal == vec4(0,0,0,1)) 
 		discard;
-		  
-	vec3 Normal = (inverse(view) * texture(gNormal, TexCoords)).rgb;
-    vec3 WorldPos =  (inverse(view) * texture(gPosition, TexCoords)).rgb;
+
+	Normal.a = 0; // this only needed at the moment to get the right result when multiplying with the inverse view matrix...
+	
+	mat4 inverseView = inverse(view);
+	
+	//Normal = //(inverseView  * Normal).rgba;
+	vec3 WorldPos = (texture(gPosition, TexCoords)).rgb;
 	vec3 Albedo = texture(gAlbedoAO, TexCoords).rgb;
 	float AO = texture(gAlbedoAO, TexCoords).a;
     float Metallic = texture(gMetallicRoughness, TexCoords).r;
 	float Roughness = texture(gMetallicRoughness, TexCoords).g;
 	float SampledAO = texture(gSSAO, TexCoords).r;
 	
-	vec3 N = normalize(Normal);
+	vec3 N = normalize(Normal.rgb);
 	vec3 V = normalize(viewPos - WorldPos);  
 	
-	vec3 F0 = vec3(0.04);
+	vec3 F0 = vec3(0.04); 
 	F0 = mix(F0, Albedo, Metallic);
-	
+	  
 	vec3 Lo = vec3(0.0); 
 	 
 	for(int i = 0; i < directionalLightsNum; ++i) 
@@ -72,28 +76,29 @@ void main()
 		 
 		vec3 radiance = vec3(light.color) * light.intensity;
 		     
-		Lo += CalculateIrradiance(radiance, L, V, N, H, F0, Roughness, Metallic, Albedo) * (1 - CalculateShadow(light.shadowColor, light.lightSpace * vec4(WorldPos, 1.0), N, -light.direction));
+		Lo += SampledAO *CalculateIrradiance(radiance, L, V, N, H, F0, Roughness, Metallic, Albedo) * (1 - CalculateShadow(light.shadowColor, light.lightSpace * vec4(WorldPos, 1.0), N, -light.direction));
 	} 
 	   
 	for(int i = 0; i < pointLightNum; ++i)
 	{ 
 		PointLight light = pointLights[i];
-
+ 
 		vec3 L = normalize(light.position - WorldPos);
 		vec3 H = normalize(V + L); 
 		 
 		float attenuation = CalculateAttenuation(WorldPos, light.position) * light.range; 
 		vec3 radiance = vec3(light.color) * light.intensity * attenuation;
 		
-		Lo += CalculateIrradiance(radiance, L, V, N, H, F0, Roughness, Metallic, Albedo);
+		Lo += SampledAO *CalculateIrradiance(radiance, L, V, N, H, F0, Roughness, Metallic, Albedo);
 	}
 	
 	//SampledAO * 
     vec3 ambient = vec3(0.03) * Albedo;
-    vec3 color = SampledAO * ambient +  Lo ;
+    vec3 color =   ambient + Lo ;
 	
     color = color / (color + vec3(1.0));
 	color = pow(color, vec3(1.0/2.2));
    
-    FragColor = vec4(color , 1);
+   DirectionalLight light = directionalLights[0];
+   FragColor = vec4(ApplyFog(color, distance(viewPos, WorldPos), V, light.direction, 0.008, vec3(0.5,0.6,0.7), light.color), 1);
 }

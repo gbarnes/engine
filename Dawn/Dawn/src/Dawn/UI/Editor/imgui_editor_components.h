@@ -13,7 +13,7 @@ namespace Dawn
 	class World;
 
 	void ShowEntity(World* InWorld, Entity* InEntity);
-	void ShowTransformComponent(Transform* InTransform, ImGuizmo::MODE& InEditSpace);
+	void ShowTransformComponent(World* InWorld, Transform* InTransform, ImGuizmo::MODE& InEditSpace);
 	void ShowCameraComponent(Camera* InCamera);
 	void ShowDirectionalLightComponent(DirectionalLight* InLight);
 	void ShowPointLightComponent(PointLight* InLight);

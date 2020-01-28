@@ -37,35 +37,19 @@ namespace Dawn
 
 	void Editor_RenderObjectManipulationGizmo(Camera* InEditorCamera, World* InWorld, EditorSceneData* InSceneData)
 	{
-		if (InSceneData->CurrentSelectedEntity.IsValid())
+		if (InSceneData->SelectionData.Entity.IsValid())
 		{
-			auto meta = InWorld->GetEntityMetaData(InSceneData->CurrentSelectedEntity);
+			auto meta = InWorld->GetEntityMetaData(InSceneData->SelectionData.Entity);
 			if (meta->bIsHiddenInEditorHierarchy)
 				return;
 
-			static vec3 LastEuler;
 			const mat4& view = InEditorCamera->GetView();
 			const mat4& proj = InEditorCamera->GetProjection();
 
 			ImGuizmo::Enable(true);
 
-			auto transform = InSceneData->CurrentSelectedEntity.GetTransform(InWorld);
-			auto rotation = InSceneData->LastEulerRotation;
-
-			ImGuizmo::RecomposeMatrixFromComponents(&transform->Position[0], &rotation[0], &transform->Scale[0], &InSceneData->ModelMatrix[0][0]);
-			ImGuizmo::Manipulate(&view[0][0], &proj[0][0], InSceneData->EditMethod, InSceneData->EditSpace, &InSceneData->ModelMatrix[0][0]);
-			ImGuizmo::DecomposeMatrixToComponents(&InSceneData->ModelMatrix[0][0], &transform->Position[0], &rotation[0], &transform->Scale[0]);
-
-			if (InSceneData->LastEulerRotation != rotation)
-			{
-				InSceneData->LastEulerRotation = rotation;
-				transform->Rotation = glm::angleAxis(glm::radians(rotation.y), vec3(0, 1, 0)) * glm::angleAxis(glm::radians(rotation.z), vec3(0, 0, 1)) * glm::angleAxis(glm::radians(rotation.x), vec3(1, 0, 0));
-				
-				TransformUtils::CalculateForward(transform);
-				TransformUtils::CalculateRight(transform);
-				TransformUtils::CalculateUp(transform);
-			}
-
+			ImGuizmo::Manipulate(&view[0][0], &proj[0][0], InSceneData->EditMethod, InSceneData->EditSpace, &InSceneData->SelectionData.ModelMatrix[0][0]);
+			
 			if (!IsMouseDown(MouseBtn_Right))
 			{
 				if (IsKeyPressed(KeyCode::KeyCode_W))
@@ -112,7 +96,8 @@ namespace Dawn
 
 			if (ImGui::IsMouseHoveringRect(pos[0], pos[1], false) && ImGui::IsMouseClicked(0))
 			{
-				InSceneData->CurrentSelectedEntity = PointLight.first->GetEntity();
+				InSceneData->SelectionData.Entity = PointLight.first->GetEntity();
+				InSceneData->SelectionData.ModelMatrix = PointLight.second->WorldSpace;
 			}
 
 			InSceneData->GizmoDrawList->AddImage(Texture->GetGPUAddress(), pos[0], pos[1], ImVec2(0, 0), ImVec2(1, 1), ConvertedColor);
@@ -150,7 +135,8 @@ namespace Dawn
 
 			if (ImGui::IsMouseHoveringRect(pos[0], pos[1], false) && ImGui::IsMouseClicked(0))
 			{
-				InSceneData->CurrentSelectedEntity = DirLight.first->GetEntity();
+				InSceneData->SelectionData.Entity = DirLight.first->GetEntity();
+				InSceneData->SelectionData.ModelMatrix = DirLight.second->WorldSpace;
 			}
 
 			InSceneData->GizmoDrawList->AddImage(LightBulbDirTexture->GetGPUAddress(), pos[0], pos[1], 
@@ -186,10 +172,11 @@ namespace Dawn
 
 			if (ImGui::IsMouseHoveringRect(pos[0], pos[1], false) && ImGui::IsMouseClicked(0))
 			{
-				InSceneData->CurrentSelectedEntity = Camera.first->GetEntity();
+				InSceneData->SelectionData.Entity = Camera.first->GetEntity();
+				InSceneData->SelectionData.ModelMatrix = Camera.second->WorldSpace;
 			}
 
-			if (InSceneData->CurrentSelectedEntity.Id == Camera.first->GetEntity().Id)
+			if (InSceneData->SelectionData.Entity.Id == Camera.first->GetEntity().Id)
 			{
 				vec2 ForwardPos = CameraUtils::WorldToScreenPoint(InEditorCamera, Camera.second->Position - Camera.second->Forward * 5.0f);
 				InSceneData->GizmoDrawList->AddLine(ImVec2(ScreenPos.x, ScreenPos.y), ImVec2(ForwardPos.x, ForwardPos.y), 0xff0000ff, 5.0f);

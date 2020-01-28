@@ -113,6 +113,7 @@ namespace Dawn
 		{
 			const auto Slot = InArray->Request();
 			Allocators::LinearAllocator* Arena = InArray->GetMemArena();
+
 			T* NewResource = new (Arena->Allocate(sizeof(T), __alignof(T), 0)) T(); //D_NEW_ALLOC(T, 0, Arena)();
 
 			Resource* BaseResource = static_cast<Dawn::Resource*>(NewResource);

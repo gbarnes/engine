@@ -69,6 +69,13 @@ namespace Dawn
 		Camera* Camera;
 	};
 
+	struct DAWN_API RenderStats
+	{
+		u32 DrawCalls;
+		u64 TextureMemory;
+		u64 VerticeCount;
+	};
+
 	struct DAWN_API SSAOSettings
 	{
 		bool bIsActive = true;
@@ -92,7 +99,7 @@ namespace Dawn
 	public:
 		std::function<void(GfxGDI*, DeferredRenderer*)> OnPostRender;
 
-
+		RenderStats Stats;
 		GfxShader* CurrentShader;
 		TransientData TransientData;
 		PerFrameData PerFrameData;

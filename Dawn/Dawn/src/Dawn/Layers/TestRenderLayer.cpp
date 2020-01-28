@@ -44,7 +44,7 @@ namespace Dawn
 	float pitch = 0.0f;
 	vec3 right = vec3(1.0f, 0.0f, 0.0f), forward = vec3(0.0f, 0.0f, -1.0f), up = vec3(0.0f, 1.0f, 0.0f);
 	u64 CubeDrawKey;
-	constexpr u32 Size = 10 * 10;
+	constexpr u32 Size = 50 * 50;
 	u32 nrRows = 7;
 	u32 nrColumns = 7;
 
@@ -70,11 +70,11 @@ namespace Dawn
 			}
 		}
 
-		auto imageId = RS->LoadFile("Textures/smiley.jpg");
+		/*auto imageId = RS->LoadFile("Textures/smiley.jpg");
 		if (imageId.IsValid)
 		{
 			DiffuseImage = RS->FindImage(imageId);
-		}
+		}*/
 
 		g_World = World;
 
@@ -127,9 +127,9 @@ namespace Dawn
 		u32 row = 0;
 		u32 columnCount = 0;
 		u32 index = 0;
-		for (u32 i = 0; i < 10; ++i)
+		for (u32 i = 0; i < 50; ++i)
 		{
-			for (u32 y = 0; y < 10; ++y)
+			for (u32 y = 0; y < 50; ++y)
 			{
 				glm::mat4 model = glm::mat4(1.0f);
 				model = glm::translate(model, vec3(i * 2.1f, -1.0f, y * 2.1f));
@@ -265,7 +265,7 @@ namespace Dawn
 		// Geometry bucket
 		{
 			auto SetStateCmd = Renderer->PerFrameData.ShadowBucket.AddCommand<Draw::SetStateData>(0u);
-			SetStateCmd->State = { true, true, GCF_Front };
+			SetStateCmd->State = { true, false, GCF_Back };
 
 			auto ShadowPassCmd = Renderer->PerFrameData.ShadowBucket.AppendCommand<Draw::ShadowPassData>(SetStateCmd);
 			ShadowPassCmd->Width = Renderer->ShadowSettings.Width;

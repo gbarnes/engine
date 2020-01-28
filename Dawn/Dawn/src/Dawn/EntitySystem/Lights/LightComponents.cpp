@@ -62,15 +62,15 @@ namespace Dawn
 		auto CamTransform = Camera->GetTransform(Camera->WorldRef);
 		auto Transform = InLight->GetEntity().GetTransform(InWorld);
 
-		glm::mat4 Projection = glm::ortho<float>(-35, 35, 35, -35, -35, InFarPlane);
+		glm::mat4 Projection = glm::ortho<float>(-65, 65, -65, 65, -65, 65);
 		
 		glm::mat4 lightView = glm::lookAt
 		(
 			Transform->Position,
-			Transform->Position + Transform->Forward*InFarPlane,
-			vec3(0.0f, 1.0f, 0.0f)
+			Transform->Position + (Transform->Forward * 65.0f),
+			Transform->Up
 		);
 
-		InLight->LightSpace = Projection * lightView * glm::mat4(1.0);
+		InLight->LightSpace =  Projection * lightView;
 	}
 }

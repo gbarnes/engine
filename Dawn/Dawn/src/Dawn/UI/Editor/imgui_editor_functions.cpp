@@ -18,6 +18,7 @@
 #include "Core/Paths.h"
 #include "imgui_editor_gizmo.h"
 #include "imgui_editor_assets.h"
+#include "imgui_editor_utils.h"
 #include "imgui_debug.h"
 
 namespace Dawn 
@@ -109,7 +110,7 @@ namespace Dawn
 		ImGui::Begin("Inspector", &g_ShowPropertyWindow);
 
 		auto SceneData = Editor_GetSceneData();
-		auto SelectedEntity = SceneData->CurrentSelectedEntity;
+		auto SelectedEntity = SceneData->SelectionData.Entity;
 
 		if (SelectedEntity.IsValid())
 		{
@@ -122,7 +123,7 @@ namespace Dawn
 				if (component == "Camera")
 					ShowCameraComponent(world->GetComponentByEntity<Camera>(SelectedEntity));
 				else if (component == "Transform")
-					ShowTransformComponent(world->GetComponentByEntity<Transform>(SelectedEntity), SceneData->EditSpace);
+					ShowTransformComponent(world.get(), world->GetComponentByEntity<Transform>(SelectedEntity), SceneData->EditSpace);
 				else if (component == "DirectionalLight")
 					ShowDirectionalLightComponent(world->GetComponentByEntity<DirectionalLight>(SelectedEntity));
 				else if (component == "PointLight")
@@ -150,7 +151,7 @@ namespace Dawn
 
 			ImGuiTreeNodeFlags flags = 0;
 
-			if (SceneData->CurrentSelectedEntity.IsValid() && entity.Id == SceneData->CurrentSelectedEntity.Id)
+			if (SceneData->SelectionData.Entity.IsValid() && entity.Id == SceneData->SelectionData.Entity.Id)
 				flags |= ImGuiTreeNodeFlags_Selected;
 
 			if(sceneNode->Childs.size() == 0)
@@ -161,9 +162,10 @@ namespace Dawn
 				if (ImGui::IsItemClicked())
 				{
 					g_ShowPropertyWindow = true;
-					SceneData->CurrentSelectedEntity = entity;
-					SceneData->ModelMatrix = mat4(1);
-					SceneData->LastEulerRotation = glm::eulerAngles(transform->Rotation);
+
+					SceneData->SelectionData.Entity = entity;
+					SceneData->SelectionData.ModelMatrix = transform->WorldSpace;
+					//SceneData->LastEulerRotation = glm::eulerAngles(transform->Rotation);
 				}
 
 				BuildEntitiesRecursively(World, SceneData, Scene, sceneNode->Childs);
@@ -285,10 +287,10 @@ namespace Dawn
 
 				ImGui::Separator();
 
-				if (ImGui::MenuItem("Align to View") && SceneData->CurrentSelectedEntity.IsValid())
+				if (ImGui::MenuItem("Align to View") && SceneData->SelectionData.Entity.IsValid())
 				{
 					auto* EditorTransform = EditorCamera->GetTransform(EditorWorld.get());
-					auto* SelectedTransform = World->GetComponentByEntity<Transform>(SceneData->CurrentSelectedEntity);
+					auto* SelectedTransform = World->GetComponentByEntity<Transform>(SceneData->SelectionData.Entity);
 					D_ASSERT(SelectedTransform != nullptr, "Selected entity has no transform");
 
 					SelectedTransform->Position = EditorTransform->Position;
@@ -330,26 +332,30 @@ namespace Dawn
 			ImGui::EndMainMenuBar();
 		}
 		
-		if (g_ShowPropertyWindow)
-			ShowPropertyWindow(World.get());
-
 		if (g_showAssetBrowser)
 			ShowAssetBrowserWindow();
 
+		
 		if (g_ShowSceneWindow)
 			ShowSceneWindow();
+		
+		Editor_ReadGizmoManipulation(World.get());
+		if (g_ShowPropertyWindow)
+			ShowPropertyWindow(World.get());
+		Editor_WriteGizmoManipulation(World.get());
 
 		if (g_showMaterialBrowserWindow)
 			ShowMaterialBrowserWindow();
 
 		// todo (gb): add a command with undo and redo stuff and so on!
-		if (IsKeyDown(KeyCode::KeyCode_Delete) && SceneData->CurrentSelectedEntity.IsValid())
+		if (IsKeyDown(KeyCode::KeyCode_Delete) && SceneData->SelectionData.Entity.IsValid())
 		{
-			World->DestroyEntity(SceneData->CurrentSelectedEntity);
-			SceneData->CurrentSelectedEntity = INVALID_ENTITY;
+			World->DestroyEntity(SceneData->SelectionData.Entity);
+			SceneData->SelectionData.Entity = INVALID_ENTITY;
 			
 		}
 
+		
 		Editor_BeginGizmoFrame();
 		Editor_RenderObjectManipulationGizmo(EditorCamera, World.get(), Editor_GetSceneData());
 		Editor_RenderDirectionalLightGizmos(GDI.get(), EditorCamera, World.get(), SceneData, Resources);

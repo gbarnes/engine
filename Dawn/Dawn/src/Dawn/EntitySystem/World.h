@@ -22,7 +22,6 @@ namespace Dawn
 	struct SceneObject
 	{
 		ComponentId TransformId;
-		i32 NodeRef;
 	};
 
 	typedef std::function<void(World*,void*)> ComponentInitFunc;
@@ -54,6 +53,7 @@ namespace Dawn
 		void Shutdown();
 		void ExecuteComponentInitFunc(void* InComponent, const std::string& InString);
 		void UpdateSystems();
+		void UpdateSceneGraph();
 	public:
 		template <typename T>
 		void AddTable(std::string&& InTypeName, std::unique_ptr<ComponentTable<T>>&& InTable)
