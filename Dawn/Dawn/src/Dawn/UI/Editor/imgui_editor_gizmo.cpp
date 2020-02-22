@@ -7,7 +7,7 @@
 #include "Vendor/ImGuizmo/ImGuizmo.h"
 #include "EntitySystem/Lights/LightComponents.h"
 #include "EntitySystem/Camera/Camera.h"
-#include "Core/GDI/GfxGDI.h"
+#include "Core/GDI/Base/GfxGDI.h"
 #include "imgui_editor_types.h"
 #include "imgui_debug.h"
 #include <Brofiler.h>
@@ -100,7 +100,7 @@ namespace Dawn
 				InSceneData->SelectionData.ModelMatrix = PointLight.second->WorldSpace;
 			}
 
-			InSceneData->GizmoDrawList->AddImage(Texture->GetGPUAddress(), pos[0], pos[1], ImVec2(0, 0), ImVec2(1, 1), ConvertedColor);
+			//InSceneData->GizmoDrawList->AddImage(Texture->GetGPUAddress(), pos[0], pos[1], ImVec2(0, 0), ImVec2(1, 1), ConvertedColor);
 		}
 	}
 
@@ -139,8 +139,8 @@ namespace Dawn
 				InSceneData->SelectionData.ModelMatrix = DirLight.second->WorldSpace;
 			}
 
-			InSceneData->GizmoDrawList->AddImage(LightBulbDirTexture->GetGPUAddress(), pos[0], pos[1], 
-				ImVec2(0, 0), ImVec2(1, 1), ConvertedColor);
+			//InSceneData->GizmoDrawList->AddImage(LightBulbDirTexture->GetGPUAddress(), pos[0], pos[1], 
+			//	ImVec2(0, 0), ImVec2(1, 1), ConvertedColor);
 		}
 	}
 
@@ -182,8 +182,8 @@ namespace Dawn
 				InSceneData->GizmoDrawList->AddLine(ImVec2(ScreenPos.x, ScreenPos.y), ImVec2(ForwardPos.x, ForwardPos.y), 0xff0000ff, 5.0f);
 			}
 
-			InSceneData->GizmoDrawList->AddImage(Texture->GetGPUAddress(), pos[0], pos[1],
-				ImVec2(0, 0), ImVec2(1, 1), 0xffffffff);
+			//InSceneData->GizmoDrawList->AddImage(Texture->GetGPUAddress(), pos[0], pos[1],
+			//	ImVec2(0, 0), ImVec2(1, 1), 0xffffffff);
 		}
 	}
 

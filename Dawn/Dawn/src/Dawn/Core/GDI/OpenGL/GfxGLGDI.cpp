@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "GfxGLGDI.h"
-#include "GLShaders.h"
+/*#include "GLShaders.h"
 #include "GLTexture.h"
 #include "GLImmediatePrimitives.h"
 #include "GLRenderBuffer.h"
@@ -79,7 +79,7 @@ namespace Dawn
 		}
 
 		if (GLAD_GL_VERSION_3_0) {
-			/* We support at least OpenGL version 3 */
+			/* We support at least OpenGL version 3
 		}
 
 		if (InSettings.ShowGDIDebug)
@@ -186,11 +186,11 @@ namespace Dawn
 		glActiveTexture(slot);
 	}
 
-	GfxResId GfxGLGDI::CreateVertexBuffer(void* Vertices, u32 Size, GfxVertexBuffer** OutBuffer)
+	GfxResId GfxGLGDI::CreateVertexBuffer(void* Vertices, u32 Size, u32 InStride, u32 InOffset, GfxVertexBuffer** OutBuffer)
 	{
 		VertexBufferSlot* Slot = VertexBufferPool.Request();
 		Allocators::LinearAllocator* Arena = VertexBufferPool.GetMemArena();
-		Slot->Element = new (Arena->Allocate(sizeof(GLVertexBuffer), __alignof(GLVertexBuffer), 0)) GLVertexBuffer(Vertices, Size, Slot->GetId()); //D_NEW_ALLOC(GLVertexBuffer, 0, Arena)(Vertices, Size, Slot->GetId());
+		Slot->Element = new (Arena->Allocate(sizeof(GLVertexBuffer), __alignof(GLVertexBuffer), 0)) GLVertexBuffer(Vertices, Size, InStride, InOffset, Slot->GetId()); //D_NEW_ALLOC(GLVertexBuffer, 0, Arena)(Vertices, Size, Slot->GetId());
 
 		if (OutBuffer != nullptr)
 			*OutBuffer = Slot->Element;
@@ -262,4 +262,4 @@ namespace Dawn
 
 
 }
-//#endif
+//#endif */

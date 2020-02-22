@@ -24,8 +24,8 @@ namespace Dawn
 	Model* usedModel;
 	Image* DiffuseImage;
 	Material* SampleMaterial;
-	GfxVertexArray* CubeMeshArray;
-	GfxVertexBuffer* ModelMatrixBuffer;
+	//GfxVertexArray* CubeMeshArray;
+	//GfxVertexBuffer* ModelMatrixBuffer;
 
 	std::vector<ResourceId> Materials;
 
@@ -82,6 +82,10 @@ namespace Dawn
 		g_camTransform = g_camera->GetTransform(EditorWorld.get());
 		CameraUtils::CalculateView(g_camera, g_camTransform);
 
+		vec3 eulers = glm::eulerAngles(g_camTransform->Rotation);
+		yaw = -eulers.y;
+		pitch = -eulers.x;
+
 		g_camera1 = g_World->GetCamera(0);
 		World->SetActiveCamera(g_camera1);
 		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(World.get()));
@@ -96,7 +100,7 @@ namespace Dawn
 
 
 		auto Quad = GfxPrimitiveFactory::AllocateQuad(GDI.get(), vec2(1.0f, -1.0f), 1.0f);
-		FinalPassQuadId = Quad->GetId();
+		//FinalPassQuadId = Quad->GetId();
 
 		u32 i = 0;
 		for (u32 row = 0; row < nrRows; ++row)
@@ -139,9 +143,9 @@ namespace Dawn
 			}
 		}
 
-		CubeMeshArray = GfxPrimitiveFactory::AllocateCube(GDI.get());
+		//CubeMeshArray = GfxPrimitiveFactory::AllocateCube(GDI.get());
 
-		GfxBufferLayout Layout =
+		/*GfxBufferLayout Layout =
 		{
 			{ GfxShaderDataType::Float4, "model" },
 			{ GfxShaderDataType::Float4, "model" },
@@ -152,7 +156,7 @@ namespace Dawn
 		GDI->CreateVertexBuffer(&modelMatrices[0], Size * sizeof(glm::mat4), &ModelMatrixBuffer);
 		ModelMatrixBuffer->SetLayout(Layout);
 		CubeMeshArray->AttachVertexBuffer(ModelMatrixBuffer, 1);
-		delete[] modelMatrices;
+		delete[] modelMatrices;*/
 
 		CubeDrawKey = GenDrawKey64(true, SampleMaterial->Id.Index, RenderLayer::StaticGeom, 0.0f);
 	}
@@ -163,8 +167,6 @@ namespace Dawn
 
 		if (Parent->GetIsInEditMode())
 		{
-			Model = glm::translate(mat4(1), vec3(0.0f, 2.0f, 0.0f)) * glm::scale(mat4(1), vec3(1.0f));// glm::mat4_cast(rotation);
-
 			vec2 mousePosition = GetMousePosition();
 
 			if (firstMouse)
@@ -255,7 +257,7 @@ namespace Dawn
 	{
 		BROFILER_CATEGORY("RenderLayer_Render", Brofiler::Color::AliceBlue);
 
-
+/*
 		auto Renderer = Parent->GetRenderer();
 		auto GDI = Parent->GetGDI();
 		auto World = Parent->GetWorld();
@@ -307,7 +309,7 @@ namespace Dawn
 						++i;
 					}
 				}
-			}*/
+			}
 
 
 			//JobSystem::CreateJob();
@@ -370,7 +372,7 @@ namespace Dawn
 			FXAAPass->RenderBufferId = Renderer->TransientData.FinalBufferId;
 			FXAAPass->FSQuadVAOId = FinalPassQuadId;
 		}
-
+		*/
 
 		
 		/*

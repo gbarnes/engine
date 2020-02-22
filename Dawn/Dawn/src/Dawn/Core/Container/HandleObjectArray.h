@@ -3,7 +3,7 @@
 
 namespace Dawn
 {
-	template<typename T>
+	template<typename T, u32 S = _4MB>
 	class HandleObjectArray;
 
 	template<typename T>
@@ -34,7 +34,7 @@ namespace Dawn
 	// memory content. Handles will be reused once a slot 
 	// is freed!
 	// 
-	template<typename T>
+	template<typename T, u32 S>
 	class DAWN_API HandleObjectArray
 	{
 	public:
@@ -45,7 +45,7 @@ namespace Dawn
 			FreeHandle.Index = 0;
 
 			// todo --- we should really use another allocator which supports deleting / pool allocator?!
-			HeapMemory = Memory::HeapArea(_4MB);
+			HeapMemory = Memory::HeapArea(S);
 			Allocator = Allocators::LinearAllocator(HeapMemory.GetStart(), HeapMemory.GetEnd());
 		}
 
@@ -77,7 +77,7 @@ namespace Dawn
 			return &Slots.emplace_back(Slot);
 		}
 
-		T* Find(const GenericHandle& Id)
+		T* Find(const GenericHandle& Id) const
 		{
 			assert(Id.IsValid == true);
 			auto& Slot = Slots[Id.Index];
@@ -94,13 +94,13 @@ namespace Dawn
 			auto& Slot = Slots[Id.Index];
 			Allocator.Free(Slot.Element);
 			Slot.Element = nullptr;
+			Slot.Id.IsValid = false;
 		}
 
 		void Clear()
 		{
-			Allocator.Reset();
 			Slots.clear();
-
+			Allocator.Reset();
 			FreeHandle.IsValid = true;
 			FreeHandle.Generation = 0;
 			FreeHandle.Index = 0;

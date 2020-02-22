@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Layer.h"
-#include "Core/GDI/inc_gfx_types.h"
+#include "Core/GDI/Base/inc_gfx_types.h"
 
 namespace Dawn
 {

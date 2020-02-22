@@ -21,15 +21,15 @@ namespace Dawn
 
 				if (meta->bIsActive)
 				{
-					InShader->SetVec3("pointLights[" + std::to_string(i) + "].position", pair.second->Position);
-					InShader->SetVec3("pointLights[" + std::to_string(i) + "].color", pair.first->Color);
-					InShader->SetFloat("pointLights[" + std::to_string(i) + "].intensity", pair.first->Intensity);
-					InShader->SetFloat("pointLights[" + std::to_string(i) + "].range", pair.first->Range);
+					//InShader->SetVec3("pointLights[" + std::to_string(i) + "].position", pair.second->Position);
+					//InShader->SetVec3("pointLights[" + std::to_string(i) + "].color", pair.first->Color);
+					//InShader->SetFloat("pointLights[" + std::to_string(i) + "].intensity", pair.first->Intensity);
+					//InShader->SetFloat("pointLights[" + std::to_string(i) + "].range", pair.first->Range);
 					++i;
 				}
 				
 			}
-			InShader->SetInt("pointLightNum", i);
+			//InShader->SetInt("pointLightNum", i);
 
 			i = 0;
 			auto directionalLights = InWorld->GetComponentSets<DirectionalLight, Transform>();
@@ -41,16 +41,16 @@ namespace Dawn
 				if (meta->bIsActive)
 				{
 					TransformUtils::CalculateForward(pair.second);
-					InShader->SetVec3("directionalLights[" + std::to_string(i) + "].direction", pair.second->Forward);
-					InShader->SetVec3("directionalLights[" + std::to_string(i) + "].color", pair.first->Color);
-					InShader->SetFloat("directionalLights[" + std::to_string(i) + "].intensity", pair.first->Intensity);
-					InShader->SetMat4("directionalLights[" + std::to_string(i) + "].lightSpace", pair.first->LightSpace);
+					//InShader->SetVec3("directionalLights[" + std::to_string(i) + "].direction", pair.second->Forward);
+					//InShader->SetVec3("directionalLights[" + std::to_string(i) + "].color", pair.first->Color);
+					//InShader->SetFloat("directionalLights[" + std::to_string(i) + "].intensity", pair.first->Intensity);
+					//InShader->SetMat4("directionalLights[" + std::to_string(i) + "].lightSpace", pair.first->LightSpace);
 					++i;
 				}
 				
 			}
 
-			InShader->SetInt("directionalLightsNum", i);
+			//InShader->SetInt("directionalLightsNum", i);
 		}
 	};
 

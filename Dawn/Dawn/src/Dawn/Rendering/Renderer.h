@@ -3,6 +3,7 @@
 #include "inc_common.h"
 #include "Core/Math.h"
 #include "Core/GDI/inc_gfx.h"
+#include "Core/GDI/Base/GfxRTBundle.h"
 #include "RenderBucket.h"
 #include "DrawCallCommands.h"
 
@@ -26,6 +27,9 @@ namespace Dawn
 	// DrawCalls are submitted to the gpu and rendered (one thread)
 	// GDI Presents the screen
 	// Per Frame Memory is cleared.
+
+	// https://kosmonautblog.wordpress.com/ great resource
+	// http://svenandersson.se/2014/realtime-rendering-blogs.html more resources
 	//
 	class DAWN_API IRenderer
 	{
@@ -49,13 +53,38 @@ namespace Dawn
 		}
 	};
 
+	struct GfxConstantPerAppData
+	{
+		mat4 Projection;
+	};
+
+	struct GfxConstantPerFrameData
+	{
+		mat4 View;
+	};
+
+	struct GfxConstantPerObjectData
+	{
+		mat4 World;
+	};
+	
 	struct DAWN_API TransientData
 	{
+		GfxRTBundle GBuffer;
+		GfxRTBundle SSAOBuffer;
+		GfxRTBundle SSAOBlurBuffer;
+		GfxRTBundle ShadowMapBuffer;
+		GfxRTBundle FinalBuffer;
+
 		GfxResId GBufferId = INVALID_HANDLE;
 		GfxResId FinalBufferId = INVALID_HANDLE;
 		GfxResId SSAOBufferId = INVALID_HANDLE;
 		GfxResId SSAOBlurBufferId = INVALID_HANDLE;
 		GfxResId ShadowMapBufferId = INVALID_HANDLE;
+
+		GfxResId PerAppBuffer;
+		GfxResId PerFrameBuffer;
+		GfxResId PerObjectBuffer;
 	};
 
 	struct Camera;

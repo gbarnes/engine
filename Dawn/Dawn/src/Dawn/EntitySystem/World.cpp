@@ -3,8 +3,10 @@
 #include "Camera/Camera.h"
 #include "Transform/Transform.h"
 #include "Lights/LightComponents.h"
+#include "Model/MeshFilter.h"
 #include "ResourceSystem/Resources.h"
 #include "ResourceSystem/ResourceSystem.h"
+
 #include "Application.h"
 #include "EntityTable.h"
 
@@ -61,11 +63,9 @@ namespace Dawn
 		float InNearZ, float InFarZ, float InFoV, vec4 InClearColor, 
 		const vec3& InPosition, const quat& InOrientation)
 	{
-		Entity e = CreateEntity(InName);
+		Entity e = CreateEntity(InName, InPosition, vec3(1), InOrientation);
 		if (!e.IsValid())
 			return nullptr;
-
-		CreateTransform(e, InPosition, vec3(1), InOrientation);
 
 		Camera* c = this->MakeComponent<Camera>();
 		c->AspectRatio = (float)Width / (float)Height;
@@ -87,13 +87,76 @@ namespace Dawn
 
 	i32 World::CreateModelEntity(std::string& InName, std::string& InModelName, vec3& InPosition, vec3& InScale, quat& InRotation)
 	{
-		Entity e = CreateEntity(InName);
+		auto rs = g_Application->GetResourceSystem();
+		FileId fileId = rs->GetFileId(InModelName);
+		ResourceId id = rs->LoadFile(fileId);
+		D_ASSERT(id.IsValid, fmt::format("Couldn't find model {0}", InModelName).c_str());
+
+		std::function<void(Transform*, Model*, HierarchyGraph<ModelNodeData>&, const std::vector<HierarchyNode*>&)> CreateChildsRecursive;
+		CreateChildsRecursive = [&](Transform* InParent, Model* InModel, HierarchyGraph<ModelNodeData>& InHierarchy, const std::vector<HierarchyNode*>& InChilds)
+		{
+			for (const HierarchyNode* child : InChilds)
+			{
+				auto* rootData = InHierarchy.GetDataFromIndex(child->DataIndex);
+				Entity rootEntity = CreateEntity(rootData->Name, vec3(0), rootData->Scale, rootData->Rotation);
+				
+				Transform* rootTransform = rootEntity.GetTransform(this);
+				rootTransform->SetParent(this, InParent);
+
+				// create entity for each mesh.
+				for (int meshIndex : rootData->Meshes)
+				{
+					Entity e = CreateEntity(rootData->Name, vec3(0), rootData->Scale, rootData->Rotation);
+					if (e.IsValid())
+					{
+						MeshFilter* meshFilter = MakeComponent<MeshFilter>();
+						meshFilter->Layer = RenderLayer::StaticGeom;
+						meshFilter->MeshIndex = meshIndex;
+						meshFilter->MeshId = InModel->Meshes[meshIndex];
+						meshFilter->WorldRef = this;
+						meshFilter->ModelFileId = fileId;
+						AddComponent<MeshFilter>(e, meshFilter);
+
+						e.GetTransform(this)->SetParent(this, rootTransform);
+					}
+				}
+
+				if (child->Childs.size() > 0)
+					CreateChildsRecursive(rootTransform, InModel, InHierarchy, child->Childs);
+			}
+		};
+
+		Entity e = CreateEntity(InName, InPosition, InScale, InRotation);
 		if (!e.IsValid())
 			return -1;
 
-		auto rs = g_Application->GetResourceSystem();
+		Model* model = rs->FindModel(id);
 
-		CreateTransform(e, InPosition, InScale, InRotation);
+		for (HierarchyNode* root : model->Hierarchy.GetRoots())
+		{
+			ModelNodeData* rootData = model->Hierarchy.GetDataFromIndex(root->DataIndex);
+			
+			// create entity for each mesh.
+			for (int meshIndex : rootData->Meshes)
+			{
+				Entity rootEntity = CreateEntity(rootData->Name, vec3(0), rootData->Scale, rootData->Rotation);
+				if (rootEntity.IsValid())
+				{
+					MeshFilter* meshFilter = MakeComponent<MeshFilter>();
+					meshFilter->Layer = RenderLayer::StaticGeom;
+					meshFilter->MeshIndex = meshIndex;
+					meshFilter->MeshId = model->Meshes[meshIndex];
+					meshFilter->WorldRef = this;
+					meshFilter->ModelFileId = fileId;
+					AddComponent<MeshFilter>(rootEntity, meshFilter);
+				}
+
+				rootEntity.GetTransform(this)->SetParent(this, e.GetTransform(this));
+			}
+
+			if(root->Childs.size() > 0)
+				CreateChildsRecursive(e.GetTransform(this), model, model->Hierarchy, root->Childs);
+		}
 
 		return e.Id;
 	}
@@ -151,7 +214,7 @@ namespace Dawn
 			auto* Transform = InWorld->GetComponentById<Dawn::Transform>(Obj->TransformId);
 
 			Transform->CalculateLocalSpace();
-			Transform->WorldSpace = glm::translate(mat4(1), Transform->Position) * ParentTransform->WorldSpace * glm::toMat4(Transform->Rotation) *  glm::scale(mat4(1), Transform->Scale);
+			Transform->WorldSpace = glm::translate(mat4(1), Transform->Position) * ParentTransform->WorldSpace * glm::scale(mat4(1), Transform->Scale)  * glm::toMat4(Transform->Rotation) ;
 			
 			if (Node->Childs.size() > 0)
 				CalculateChildsRecursively(InWorld, Node->Childs, Transform);
@@ -177,10 +240,26 @@ namespace Dawn
 	}
 
 	//
-	// Creates a new Entity with the given name and returns it's 
+	// Creates a new Entity and a transform component with the given name and returns it's 
 	// entity handle.
 	//
-	Entity World::CreateEntity(const std::string &InName)
+	Entity World::CreateEntity(const std::string &InName, const vec3& InPosition, const vec3& InScale, const quat& InRotation)
+	{
+		Entity e = Entities.Create(InName);
+		if (e.IsValid())
+		{
+			Transform* t = CreateTransform(e, InPosition, InScale, InRotation);
+			D_ASSERT(t != nullptr, fmt::format("Couldn't create transform for entity {0}", InName).c_str());
+		}
+
+		return e;
+	}
+
+	//
+	// Creates an entity without a transform. This is only used for internal usage and cannot be 
+	// called from the outside!
+	//
+	Entity World::CreateEntityNonTransform(const std::string &InName)
 	{
 		return Entities.Create(InName);
 	}
@@ -253,7 +332,7 @@ namespace Dawn
 		for (i32 i = 0; i < InLevel->Entities.size(); ++i)
 		{
 			auto EntityData = &InLevel->Entities[i];
-			auto Entity = InWorld->CreateEntity(EntityData->Name);
+			auto Entity = InWorld->CreateEntityNonTransform(EntityData->Name);
 			entities.insert(std::make_pair(UUIDToString(EntityData->Guid), Entity));
 
 			for (i32 x = 0; x < EntityData->IdToComponent.size(); ++x)

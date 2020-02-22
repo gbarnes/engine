@@ -33,6 +33,7 @@
 #include "UI/Editor/imgui_debug.h"
 #include "Vendor/ImGui/ImGuiWrapper.h"
 #include "Vendor/ImGuizmo/ImGuizmo.h"
+#include "Core/GDI/Base/GfxVertexArrayObject.h"
 
 #define USE_OPENGL_GFX
 #include "Core/GDI/inc_gfx.h"
@@ -66,19 +67,20 @@ namespace Dawn
 		ImGuiWrapper::BeginNewFrame();
 		ImGuizmo::BeginFrame();
 
+
+	
+		//if (g_Application->GetIsInEditMode())
+		//	Editor_RenderUI();
+
+		//if(bShowGBuffer)
+		//	ShowGBuffer(InGDI->GetRenderBuffer(InRenderer->TransientData.GBufferId), InGDI->GetRenderBuffer(InRenderer->TransientData.ShadowMapBufferId), 
+		//		InGDI->GetRenderBuffer(InRenderer->TransientData.SSAOBlurBufferId));
+
+		ShowDebugText();
 		if (bShowFPS)
 			ShowFpsCounter();
 
-		ShowDebugText();
-
-		if(bShowGBuffer)
-			ShowGBuffer(InGDI->GetRenderBuffer(InRenderer->TransientData.GBufferId), InGDI->GetRenderBuffer(InRenderer->TransientData.ShadowMapBufferId), 
-				InGDI->GetRenderBuffer(InRenderer->TransientData.SSAOBlurBufferId));
-
-
-		if (g_Application->GetIsInEditMode())
-			Editor_RenderUI();
-
+		ShowFramegraph();
 		ImGuiWrapper::Render();
 	}
 	
@@ -96,9 +98,9 @@ namespace Dawn
 		//AppSettings* Settings2 = D_NEW(AppSettings, Arena);
 		//Settings2->AlphaBits = 0;
 
-		ResourceSystem = Dawn::ResourceSystem::Create(Paths::ProjectContentDir(), { ".obj", ".jpg", ".png", ".shader", ".PNG", ".fbx", ".level" }, true);
+		ResourceSystem = Dawn::ResourceSystem::Create(Paths::ProjectContentDir(), { ".obj", ".jpg", ".png", ".gshader", ".PNG", ".fbx", ".level", ".h_vs", ".h_ps" }, true);
 		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadModel), BIND_FS_LOADER(Dawn::RS_ReloadModel), { ".obj", ".fbx" });
-		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadShader), BIND_FS_LOADER(Dawn::RS_LoadShader), { ".shader" });
+		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadShader), BIND_FS_LOADER(Dawn::RS_LoadShader), { ".h_vs", ".h_ps" });
 		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadImage), BIND_FS_LOADER(Dawn::RS_ReloadImage), { ".jpg", ".png", ".PNG" });
 		ResourceSystem->RegisterLoader(BIND_FS_LOADER(Dawn::RS_LoadLevel), BIND_FS_LOADER(Dawn::RS_ReloadLevel), { ".level"});
 
@@ -139,10 +141,13 @@ namespace Dawn
 			return;
 		}
 
+		RenderResourceHelper::LoadCommonShaders(ResourceSystem.get());
+
 		Renderer = std::make_shared<DeferredRenderer>();
 		Renderer->AllocateTransientData(this);
 		Renderer->OnPostRender = std::bind(&OnPostRender, std::placeholders::_1, std::placeholders::_2);
 
+		
 		JobSystem::Initialize();
 
 		// Boot up World!
@@ -162,6 +167,8 @@ namespace Dawn
 		EditorWorld->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
 		//
 
+		GetWorld()->CreateModelEntity(std::string("spaceCraft"), std::string("Model/spaceCraft1.fbx"), vec3(0, 0, 0));
+
 		Physics = std::make_shared<PhysicsWorld>();
 		if(!Physics->Initialize())
 		{
@@ -170,19 +177,41 @@ namespace Dawn
 			return;
 		}
 
-		{
-			InitInput(Window->GetInstance(), Window->GetHwnd(), Settings.Width, Settings.Height);
-			Load();
+		InitInput(Window->GetInstance(), Window->GetHwnd(), Settings.Width, Settings.Height);
+
+
+		Load();
+		/*{
+			
+			
 			SetupLayers();
 		}
 
 		ImGuizmo::SetOrthographic(false);
-
+		*/
 		DWN_CORE_INFO("Core Context initialized.");
 
+		auto* vao = GfxPrimitiveFactory::AllocateQuad(GDI.get(), vec2(0.0, 1.0f));
+
+		GfxConstantPerAppData appData;
+		appData.Projection = mat4();
+
+		GfxBuffer* constantBuffer;
+		GfxBufferDesc desc;
+		desc.AccessFlags = GfxCpuAccessFlags::CpuAccess_Write;
+		desc.Usage = GfxUsageFlags::Usage_Dynamic;
+		desc.BindFlags = GfxBindFlags::Bind_ConstantBuffer;
+		desc.ByteWidth = sizeof(GfxConstantPerAppData); 
+
+		GfxBufferData data;
+		data.Data = &appData;
+		data.Size = sizeof(GfxConstantPerAppData);
+
+		GDI->CreateBuffer(desc, data, &constantBuffer);
+
+		GDI->BindPipelineShaders();
+		
 		{
-			// todo --- move this into a custom clock/timer class!
-			// since we only target windows we can use the performance functions.
 			InitTime(Time);
 			IsInitialized = true;
 			bool bExit = false;
@@ -198,25 +227,31 @@ namespace Dawn
 					DispatchMessage(&msg);
 				}
 
-				Tick();
+
+				GDI->ClearWithColor(vec4(0.4, 0.4, 0.8, 1));
+				GDI->DrawIndexed(vao->GetId());
+				OnPostRender(GDI.get(), Renderer.get());
+				GDI->Present();
+				//Tick();
 			}
 		}
 
 		// -------- CLEANUP
 		{
 			Cleanup();
-			ClearLayers();
+			/*ClearLayers();*/
+			ShutdownInput();
 			Physics->Shutdown();
 			JobSystem::Shutdown();
 			World->Shutdown();
 			EditorWorld->Shutdown();
 			GDI->Shutdown();
 			ResourceSystem->Shutdown();
-			ShutdownInput();
 			
-			World.reset();
-			EditorWorld.reset();
-
+			World = nullptr;
+			EditorWorld = nullptr;
+			GDI = nullptr;
+			ResourceSystem = nullptr;
 			DWN_CORE_INFO("Core Context shutdown.");
 		}
 	}
@@ -334,7 +369,10 @@ namespace Dawn
 
 		Settings.Width = width;
 		Settings.Height = height;
+
+		
 		Renderer->Resize(GDI.get(), width, height);
+		GDI->Resize(width, height);
 		DWN_CORE_INFO("Resizing Window to {0}x{1}!", width, height);
 	}
 

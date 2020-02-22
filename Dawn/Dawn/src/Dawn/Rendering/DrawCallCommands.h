@@ -41,7 +41,7 @@ namespace Dawn
 		struct DAWN_API SetStateData
 		{
 			static const DrawDispatchFunction DRAW_FUNCTION;
-			GfxState State;
+			//GfxState State;
 		};
 
 		struct DAWN_API ClearSceneWithColorData

@@ -1,5 +1,5 @@
 #pragma once
-
+/*
 #include "../GfxImmediatePrimitives.h"
 
 namespace Dawn
@@ -21,4 +21,4 @@ namespace Dawn
 		void Quad(GfxTexture* InTexture, const vec3& InPosition, const vec3& InScale, const quat& InOrientation = quat()) override;
 	};
 
-}
+}*/

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "imgui_editor_components.h"
 #include "imgui_editor_functions.h"
+#include "imgui_editor_utils.h"
 #include "imgui.h"
 #include "EntitySystem/Entity.h"
 #include "EntitySystem/Camera/Camera.h"
@@ -56,7 +57,7 @@ namespace Dawn
 
 			ImGui::Spacing();
 
-			ImGui::InputFloat3("Position", &SceneData->SelectionData.Position[0]);
+			ImGui::InputFloat3("Position", (InEditSpace == ImGuizmo::LOCAL) ? &InTransform->Position[0] : &SceneData->SelectionData.Position[0]);
 			ImGui::InputFloat3("Scale", &InTransform->Scale[0]);
 			ImGui::InputFloat3("Rotation", &SceneData->SelectionData.Rotation[0]);
 		
@@ -144,12 +145,30 @@ namespace Dawn
 	{
 		D_ASSERT(InModelView, "Model to inspect is null");
 
-		if (ImGui::CollapsingHeader("Model"))
+		if (ImGui::CollapsingHeader("Mesh"))
 		{
 			auto* ModelMetaData = InResourceSystem->GetMetaDataFromHandle(InModelView->ModelFileId);
 
+			auto* mesh = InResourceSystem->FindMesh(InModelView->MeshId);
+
 			ImGui::Indent(10.0f);
 			ImGui::Text("File: %s", (ModelMetaData) ? ModelMetaData->Name.c_str() : "Not set");
+
+			if (mesh)
+			{
+				auto materialId = mesh->Materials[0];
+				auto* material = InResourceSystem->FindMaterial(materialId);
+				if (material)
+				{
+					if (ImGui::CollapsingHeader("Material"))
+					{
+						ImGui::Indent(10.0f);
+						Editor_ShowMaterial(material);
+						ImGui::Unindent(10.0f);
+					}
+				}
+			}
+
 			ImGui::Unindent(10.0f);
 		}
 	}

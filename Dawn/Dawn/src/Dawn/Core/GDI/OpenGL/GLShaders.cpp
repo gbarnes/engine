@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "GLShaders.h"
-#include "Core/Logging/Log.h"
+/*#include "Core/Logging/Log.h"
 #include <glad.h>
 
 namespace Dawn
@@ -101,4 +101,4 @@ namespace Dawn
 	{
 		glUniformMatrix4fv(glGetUniformLocation(ProgramId, Name.c_str()), 1, GL_FALSE, &Value[0][0]);
 	}
-}
+}*/

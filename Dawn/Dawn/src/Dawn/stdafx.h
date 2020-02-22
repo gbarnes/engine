@@ -227,3 +227,12 @@ using Unique = std::unique_ptr<T>;
 
 extern std::string UUIDToString(const UUID& InUUID);
 extern UUID StringToUUID(const std::string& InUUIDString);
+
+template<typename T>
+extern inline bool IsFlagSet(T Flags, T Flag)
+{
+	return (Flags & Flag) != 0x0;
+}
+
+//template<typename T>
+//using ComPtr = Microsoft::WRL::ComPtr<T>;

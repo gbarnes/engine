@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "GLImmediatePrimitives.h"
-#include "../inc_gfx.h"
+/*#include "../inc_gfx.h"
 #include "glad.h"
 #include "EntitySystem/Camera/Camera.h"
 #include "ResourceSystem/Resources.h"
@@ -69,7 +69,7 @@ namespace Dawn
 			VertexBuffer->Reset(vertices, sizeof(vertices));
 			
 
-			vertexArray->Bind();
+			vertexArray->Bind(0);
 			glDrawArrays(GL_LINE_STRIP, 0, 2);
 			vertexArray->Unbind();
 		}
@@ -109,7 +109,7 @@ namespace Dawn
 				auto VertexBuffer = vertexArray->GetVertexBuffer(GDI.get(), 0);
 				VertexBuffer->Reset(vertices, sizeof(vertices));
 
-				vertexArray->Bind();
+				vertexArray->Bind(0);
 				glDrawArrays(GL_LINE_STRIP, 0, 2);
 				vertexArray->Unbind();
 			}
@@ -126,7 +126,7 @@ namespace Dawn
 				auto VertexBuffer = vertexArray->GetVertexBuffer(GDI.get(), 0);
 				VertexBuffer->Reset(vertices, sizeof(vertices));
 
-				vertexArray->Bind();
+				vertexArray->Bind(0);
 				glDrawArrays(GL_LINE_STRIP, 0, 2);
 				vertexArray->Unbind();
 			}
@@ -143,7 +143,7 @@ namespace Dawn
 				auto VertexBuffer = vertexArray->GetVertexBuffer(GDI.get(), 0);
 				VertexBuffer->Reset(vertices, sizeof(vertices));
 
-				vertexArray->Bind();
+				vertexArray->Bind(0);
 				glDrawArrays(GL_LINE_STRIP, 0, 2);
 				vertexArray->Unbind();
 			}
@@ -225,4 +225,4 @@ namespace Dawn
 
 	}
 
-}
+}*/

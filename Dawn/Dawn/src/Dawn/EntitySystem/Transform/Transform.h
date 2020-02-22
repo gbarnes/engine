@@ -36,20 +36,23 @@ namespace Dawn
 		Transform* GetParent(World* InWorld);
 		void SetParent(World* InWorld, Transform* InParent);
 
-		void CalculateLocalSpace() {
-			LocalSpace =  glm::translate(mat4(1), this->Position) * glm::toMat4(this->Rotation) *  glm::scale(mat4(1), this->Scale);
+		void CalculateLocalSpace() 
+		{
+			LocalSpace =  glm::translate(mat4(1), this->Position) * glm::scale(mat4(1), this->Scale) * glm::toMat4(this->Rotation);
 		}
 
-		mat4 GetInverseTransform() {
-			vec3 invertedPos = -1.0f*Position;
-			return glm::translate(mat4(1), invertedPos)  *  glm::scale(mat4(1), 1.0f / Scale) * glm::transpose(glm::toMat4(Rotation));
+		mat4 GetInverseTransform() 
+		{
+			return glm::inverse(glm::toMat4(Rotation)) *  glm::scale(mat4(1), 1.0f / Scale)  * glm::translate(mat4(1), -1.0f*Position);
 		}
 
-		vec3 GetWorldPosition() {
+		vec3 GetWorldPosition() 
+		{
 			return WorldSpace * vec4(Position, 1);
 		}
 
-		vec3 GetWorldScale() {
+		vec3 GetWorldScale() 
+		{
 			return WorldSpace * vec4(Scale, 1);
 		}
 

@@ -72,9 +72,10 @@ namespace Math
 	}
 
 	// Negate
+#pragma warning(disable:4146)
 	static inline uint32_t _uint32_neg(uint32_t a)
 	{
-		return (-a);
+		return uint32_t((-a));
 	}
 
 	// Extend sign

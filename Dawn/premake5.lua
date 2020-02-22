@@ -53,7 +53,8 @@ project "Dawn"
 		"Dawn/src/Dawn/",
 		"Dawn/vendor/physx/physx/include/",
 		"Dawn/vendor/physx/physx/include/**",
-		"Dawn/vendor/physx/pxshared/include/"
+		"Dawn/vendor/physx/pxshared/include/",
+		"Dawn/vendor/DirectX/Include/"
 	}
 	
 	links 
@@ -61,7 +62,7 @@ project "Dawn"
 		
 	}
 	
-	libdirs { "Dawn/vendor/assimp/lib/x64/*", "Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/*"  }
+	libdirs { "Dawn/vendor/assimp/lib/x64/*", "Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/*", "Dawn/vendor/DirectX/Lib/*" }
 
 	filter "system:windows"
 		cppdialect "C++17"
@@ -165,6 +166,7 @@ project "Sandbox"
 		"Dawn/vendor/physx/physx/include/",
 		"Dawn/vendor/physx/physx/include/**",
 		"Dawn/vendor/physx/pxshared/include/",
+		"Dawn/vendor/DirectX/Include/",
 		"Sandbox/src/"
 	}
 	
@@ -189,6 +191,7 @@ project "Sandbox"
 		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/FastXml_static_64.lib",
 		"Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevel_static_64.lib",
 		"Dawn/vendor/assimp/lib/x64/assimp-vc140-mt.lib",
+		"Dawn/vendor/DirectX/Lib/*",
 		"Dawn"
 	}
 

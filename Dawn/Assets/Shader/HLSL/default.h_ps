@@ -1,0 +1,10 @@
+struct VSOutput
+{
+    float4 color : COLOR;
+    float4 position : SV_POSITION;
+};
+ 
+float4 Main( VSOutput IN ) : SV_TARGET
+{
+    return IN.color;
+}

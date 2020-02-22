@@ -1,5 +1,5 @@
 #pragma once
-#include "inc_common.h"
+/*#include "inc_common.h"
 #include "../GfxResource.h"
 
 namespace Dawn
@@ -14,7 +14,7 @@ namespace Dawn
 		void Bind() override;
 		void Unbind() override;
 		void Reset(const GfxTextureDesc& InDesc) override;
-		void* GetGPUAddress() override
+		void* GetGPUAddress() const override
 		{
 			return (void*)(intptr_t)RendererId;
 		}
@@ -23,4 +23,4 @@ namespace Dawn
 		GfxWrapDesc Wrap;
 		GfxFilterDesc Filter;
 	};
-}
+}*/

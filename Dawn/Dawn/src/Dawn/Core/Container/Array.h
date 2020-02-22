@@ -23,6 +23,16 @@ namespace Dawn
 			this->Values = TempData;
 		}
 
+		Array(const Array &InArrayToCopy) 
+			: Size(InArrayToCopy.Size), this->Capacity(InArrayToCopy.Capacity)
+		{
+			T* TempData = (T*)malloc(sizeof(T) * InArrayToCopy.Capacity);
+			assert(TempData);
+			this->Values = TempData;
+
+			memcpy(this->Values, InArrayToCopy.Values, sizeof(T) * Capacity);
+		}
+
 		~Array() 
 		{
 			Clear();
@@ -43,6 +53,16 @@ namespace Dawn
 				this->Resize();
 
 			*(this->Values + this->Size++) = Data;
+		}
+
+		const T* Data() const
+		{
+			return &this->Values[0];
+		}
+
+		T* Data()
+		{
+			return &this->Values[0];
 		}
 
 		T Pop()
@@ -91,11 +111,18 @@ namespace Dawn
 		}
 
 	public:
-		T operator[](u32 Index)
+		T operator[](i32 Index) const
 		{
 			assert(Index < this->Size);
 			return this->Values[Index];
 		}
+
+		T& operator[](i32 Index)
+		{
+			assert(Index < this->Size);
+			return this->Values[Index];
+		}
+
 	protected:
 		// 
 		void Resize() 

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "GLRenderBuffer.h"
-#include "../GfxGDI.h"
+/*#include "../GfxGDI.h"
 #include "glad.h"
 
 namespace Dawn
@@ -145,4 +145,4 @@ namespace Dawn
 	{
 		return (void*)(intptr_t)InternalDepthBufferId;
 	}
-}
+}*/

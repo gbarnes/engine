@@ -1,5 +1,5 @@
 #pragma once
-#include "../GfxGDI.h"
+/*#include "../GfxGDI.h"
 
 //#ifdef USE_OPENGL_GFX
 #include "inc_opengl.h"
@@ -23,7 +23,7 @@ namespace Dawn
 		void SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom) override;
 		void SetState(const GfxState& InState) override;
 	public:
-		GfxResId CreateVertexBuffer(void* Vertices, u32 Size, GfxVertexBuffer** OutBuffer) override;
+		GfxResId CreateVertexBuffer(void* Vertices, u32 Size, u32 InStride, u32 InOffset, GfxVertexBuffer** OutBuffer) override;
 		GfxResId CreateIndexBuffer(u32* Indices, u32 Size, GfxIndexBuffer** OutBuffer) override;
 		GfxResId CreateVertexArray(GfxVertexArray** OutBuffer) override;
 		GfxResId CreateShader(GfxShader** OutShader) override;
@@ -37,4 +37,4 @@ namespace Dawn
 		HDC hDC;
 	};
 }
-//#endif
+//#endif*/

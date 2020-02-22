@@ -149,27 +149,32 @@ namespace Dawn
 			if (meta->bIsHiddenInEditorHierarchy)
 				continue;
 
-			ImGuiTreeNodeFlags flags = 0;
-
+			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
+			
 			if (SceneData->SelectionData.Entity.IsValid() && entity.Id == SceneData->SelectionData.Entity.Id)
 				flags |= ImGuiTreeNodeFlags_Selected;
 
 			if(sceneNode->Childs.size() == 0)
 				flags |= ImGuiTreeNodeFlags_Leaf;
 
-			if (ImGui::TreeNodeEx(meta->Name.c_str(), flags))
+			
+			
+			bool isOpen = ImGui::TreeNodeEx(meta->Name.c_str(), flags);
+
+			if (ImGui::IsItemClicked())
 			{
-				if (ImGui::IsItemClicked())
-				{
-					g_ShowPropertyWindow = true;
+				g_ShowPropertyWindow = true;
 
-					SceneData->SelectionData.Entity = entity;
-					SceneData->SelectionData.ModelMatrix = transform->WorldSpace;
-					//SceneData->LastEulerRotation = glm::eulerAngles(transform->Rotation);
-				}
+				SceneData->SelectionData.Entity = entity;
+				SceneData->SelectionData.ModelMatrix = transform->WorldSpace;
+				Editor_ReadGizmoManipulation(World);
+				Editor_WriteGizmoManipulation(World);
+				//SceneData->LastEulerRotation = glm::eulerAngles(transform->Rotation);
+			}
 
+			if(isOpen)
+			{
 				BuildEntitiesRecursively(World, SceneData, Scene, sceneNode->Childs);
-
 				ImGui::TreePop();
 			}
 		}
@@ -221,9 +226,7 @@ namespace Dawn
 		{
 			ImGui::BeginChild("Inspector");
 			
-			ImGui::ColorEdit4("Color", &SelectedMaterial->Albedo[0]);
-			ImGui::SliderFloat("Metallic", &SelectedMaterial->Metallic, 0.0f, 1.0f);
-			ImGui::SliderFloat("Roughness", &SelectedMaterial->Roughness, 0.0f, 1.0f);
+			Editor_ShowMaterial(SelectedMaterial);
 
 			ImGui::EndChild();
 		}

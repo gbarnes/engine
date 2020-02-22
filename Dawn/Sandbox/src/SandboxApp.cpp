@@ -25,15 +25,14 @@ SandboxApp::~SandboxApp()
 
 // note-- these will be removed once we get a better structure into the "game"
 
-GfxRenderBuffer* g_RenderBuffer;
-GfxVertexArray* g_ScreenQuadVAO;
+//GfxRenderBuffer* g_RenderBuffer;
+//GfxVertexArray* g_ScreenQuadVAO;
 
 void SandboxApp::Load()
 {
-	RenderResourceHelper::LoadCommonShaders(ResourceSystem.get());
+	//RenderResourceHelper::LoadCommonShaders(ResourceSystem.get());
 
 	
-
 	/*auto Cam1 = CreateCamera(GetWorld().get(),
 		"Cam",
 		Settings.Width,
@@ -45,25 +44,25 @@ void SandboxApp::Load()
 
 	CameraUtils::CalculatePerspective(Cam1);*/
 
-	auto Id = ResourceSystem->LoadFile("Textures/grid.png");
-	if (auto GridImage = ResourceSystem->FindImage(Id))
-	{
-		GDI->GetPrimitiveHelper()->AllocateBuffers
+	//auto Id = ResourceSystem->LoadFile("Textures/grid.png");
+	//if (auto GridImage = ResourceSystem->FindImage(Id))
+	//{
+		/*GDI->GetPrimitiveHelper()->AllocateBuffers
 		(
 			GridImage,
 			ResourceSystem->FindShader(CommonShaderHandles::DebugPrim),
 			ResourceSystem->FindShader(EditorShaderHandles::Grid)
-		);
-	}
+		);*/
+	//}
 
-	auto IdBuffer = GDI->CreateRenderBuffer(&g_RenderBuffer);
+	/*auto IdBuffer = GDI->CreateRenderBuffer(&g_RenderBuffer);
 	if (IdBuffer.IsValid)
 	{
 		g_RenderBuffer->AttachColorTarget(0, Settings.Width, Settings.Height);
 		g_RenderBuffer->AttachDepthStencilTarget(Settings.Width, Settings.Height);
-	}
+	}*/
 
-	g_ScreenQuadVAO = GfxPrimitiveFactory::AllocateQuad(GDI.get(), vec2(1.0f, -1.0f), 1.0f);
+	//g_ScreenQuadVAO = GfxPrimitiveFactory::AllocateQuad(GDI.get(), vec2(1.0f, -1.0f), 1.0f);
 
 	ImGuiWrapper::Create(this->Settings.Hwnd, this->GetGDI().get());
 	//World::SetActiveCamera(Cam1);
@@ -73,7 +72,7 @@ void SandboxApp::Load()
 	//GetWorld()->CreateModelEntity(std::string("tank"), std::string("Model/Tank.fbx"), vec3(20, 0, 0), vec3(0.05f, 0.05f, 0.05f));
 
 
-	auto LevelId = ResourceSystem->LoadFile("Scenes/Test.level");
+	/*auto LevelId = ResourceSystem->LoadFile("Scenes/Test.level");
 	auto Level = ResourceSystem->FindLevel(LevelId);
 	World::LoadLevel(GetWorld().get(), Level);
 
@@ -91,18 +90,18 @@ void SandboxApp::Load()
 
 	auto meta = GetEditorWorld()->GetEntityMetaData(editorCam->GetEntity());
 	meta->bIsHiddenInEditorHierarchy = true;
-	CameraUtils::CalculatePerspective(editorCam);
+	CameraUtils::CalculatePerspective(editorCam); */
 }
 
 void SandboxApp::Resize(int InWidth, int InHeight)
 {
 	Application::Resize(InWidth, InHeight);
 
-	if (g_RenderBuffer)
+	/*if (g_RenderBuffer)
 	{
 		g_RenderBuffer->AttachColorTarget(0, InWidth, InHeight);
 		g_RenderBuffer->AttachDepthStencilTarget(InWidth, InHeight);
-	}
+	}*/
 }
 
 void SandboxApp::Update(float InDeltaTime)

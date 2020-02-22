@@ -1,68 +1,100 @@
 #include "stdafx.h"
 #include "GfxPrimitiveFactory.h"
+#include "Base/GfxBuffer.h"
+#include "Base/GfxVertexArrayObject.h"
 
 namespace Dawn
 {
-	GfxVertexArray* GfxPrimitiveFactory::AllocateQuad(GfxGDI* InGDI, const vec2& UVCoords, float InSize)
+	GfxVertexArrayObject* GfxPrimitiveFactory::AllocateQuad(GfxGDI* InGDI, const vec2& UVCoords, float InSize)
 	{
-		float GridVertices[4 * 5] = {
-		-InSize,  InSize, 0.0f,		0.0f, 0.0f,
-		InSize,  InSize,  0.0f,		UVCoords.x, 0.0f,
-		InSize, -InSize,  0.0f,		UVCoords.x,  UVCoords.y,
-		-InSize, -InSize, 0.0f,		0.0f, UVCoords.y
+		float QuadVertices[4 * 5] = {
+			-InSize,  InSize, 0.0f,		0.0f, 0.0f,
+			InSize,  InSize,  0.0f,		UVCoords.x, 0.0f,
+			InSize, -InSize,  0.0f,		UVCoords.x,  UVCoords.y,
+			-InSize, -InSize, 0.0f,		0.0f, UVCoords.y
 		};
 
-		u32 GridIndices[6] = {  // note that we start from 0!
+		u32 QuadIndices[6] = {  // note that we start from 0!
 			0, 1, 3,  // first Triangle
 			1, 2, 3   // second Triangle
 		};
 
-		GfxVertexArray* GridArray;
-		InGDI->CreateVertexArray(&GridArray);
+		GfxVertexArrayObject* VAO;
+		InGDI->CreateVertexArrayObject(&VAO);
 
-		GfxBufferLayout Layout =
+		/*GfxBufferLayout Layout =
 		{
 			{ GfxShaderDataType::Float3, "position" },
 			{ GfxShaderDataType::Float2, "uv0" }
-		};
+		};*/
 
-		GfxVertexBuffer* VertexBuffer;
-		InGDI->CreateVertexBuffer(GridVertices, sizeof(GridVertices), &VertexBuffer);
-		VertexBuffer->SetLayout(Layout);
-		GridArray->AttachVertexBuffer(VertexBuffer);
+		GfxBufferDesc vbDesc;
+		vbDesc.AccessFlags = GfxCpuAccessFlags::CpuAccess_None;
+		vbDesc.BindFlags = GfxBindFlags::Bind_VertexBuffer;
+		vbDesc.ByteWidth = sizeof(QuadVertices);
+		vbDesc.Usage = GfxUsageFlags::Usage_Default;
+		vbDesc.StructureByteStride = sizeof(float) * 5;
 
-		GfxIndexBuffer* IndexBuffer;
-		InGDI->CreateIndexBuffer(GridIndices, sizeof(GridIndices) / sizeof(u32), &IndexBuffer);
+		GfxBufferData vbData;
+		vbData.Data = QuadVertices;
+		vbData.Size = sizeof(QuadVertices);
 
-		GridArray->SetIndexBuffer(IndexBuffer);
+		GfxBuffer* VertexBuffer;
+		InGDI->CreateBuffer(vbDesc, vbData, &VertexBuffer);
+		VAO->AttachVertexBuffer(VertexBuffer);
 
-		return GridArray;
+		GfxBufferDesc ibDesc;
+		ibDesc.AccessFlags = GfxCpuAccessFlags::CpuAccess_None;
+		ibDesc.BindFlags = GfxBindFlags::Bind_IndexBuffer;
+		ibDesc.ByteWidth = sizeof(QuadIndices);
+		ibDesc.Usage = GfxUsageFlags::Usage_Default;
+		ibDesc.StructureByteStride = sizeof(u32);
+
+		GfxBufferData ibData;
+		ibData.Data = QuadIndices;
+		ibData.Size = sizeof(QuadIndices);
+
+		GfxBuffer* IndexBuffer;
+		InGDI->CreateBuffer(ibDesc, ibData, &IndexBuffer);
+		VAO->SetIndexBuffer(IndexBuffer);
+		
+		return VAO;
 	}
 
-	GfxVertexArray* GfxPrimitiveFactory::AllocateLine(GfxGDI* InGDI)
+	GfxVertexArrayObject* GfxPrimitiveFactory::AllocateLine(GfxGDI* InGDI)
 	{
-		GfxVertexArray* LineArray;
-		InGDI->CreateVertexArray(&LineArray);
-
 		float LineVertices[2 * 3] = {
 			0, 0, 0, 
 			0, 0, 1
 		};
 
-		GfxBufferLayout Layout =
+		GfxVertexArrayObject* VAO;
+		InGDI->CreateVertexArrayObject(&VAO);
+
+		/*GfxBufferLayout Layout =
 		{
 			{ GfxShaderDataType::Float3, "aPos" }
-		};
+		};*/
 
-		GfxVertexBuffer* VertexBuffer;
-		InGDI->CreateVertexBuffer(LineVertices, sizeof(LineVertices), &VertexBuffer);
-		VertexBuffer->SetLayout(Layout);
-		LineArray->AttachVertexBuffer(VertexBuffer);
+		GfxBufferDesc vbDesc;
+		vbDesc.AccessFlags = GfxCpuAccessFlags::CpuAccess_None;
+		vbDesc.BindFlags = GfxBindFlags::Bind_VertexBuffer;
+		vbDesc.ByteWidth = sizeof(LineVertices);
+		vbDesc.Usage = GfxUsageFlags::Usage_Default;
+		vbDesc.StructureByteStride = sizeof(float);
 
-		return LineArray;
+		GfxBufferData vbData;
+		vbData.Data = &LineVertices[0];
+		vbData.Size = sizeof(LineVertices);
+
+		GfxBuffer* VertexBuffer;
+		InGDI->CreateBuffer(vbDesc, vbData, &VertexBuffer);
+		VAO->AttachVertexBuffer(VertexBuffer);
+
+		return VAO;
 	}
 
-	GfxVertexArray* GfxPrimitiveFactory::AllocateCube(GfxGDI* InGDI)
+	GfxVertexArrayObject* GfxPrimitiveFactory::AllocateCube(GfxGDI* InGDI)
 	{
 		u32 indices[] = {
 			0,1,2,
@@ -81,126 +113,73 @@ namespace Dawn
 		};
 
 		float vertices[] = {
-			-0.500000,-0.500000,0.500000,		
-			0.500000,-0.500000,0.500000,		
-			0.500000,0.500000,0.500000,			
-			-0.500000,0.500000,0.500000,		
-			-0.500000,0.500000,0.500000,		
-			0.500000,0.500000,0.500000,			
-			0.500000,0.500000,-0.500000,		
-			-0.500000,0.500000,-0.500000,		
-			-0.500000,0.500000,-0.500000,		
-			0.500000,0.500000,-0.500000,		
-			0.500000,-0.500000,-0.500000,		
-			-0.500000,-0.500000,-0.500000,		
-			-0.500000,-0.500000,-0.500000,		
-			0.500000,-0.500000,-0.500000,		
-			0.500000,-0.500000,0.500000,		
-			-0.500000,-0.500000,0.500000,		
-			0.500000,-0.500000,0.500000,		
-			0.500000,-0.500000,-0.500000,		
-			0.500000,0.500000,-0.500000,		
-			0.500000,0.500000,0.500000,			
-			-0.500000,-0.500000,-0.500000,		
-			-0.500000,-0.500000,0.500000,		
-			-0.500000,0.500000,0.500000,		
-			-0.500000,0.500000,-0.500000,		
+			-0.500000,-0.500000,0.500000,	0.000000,0.000000,1.000000,    0.375000,0.000000,	0.000000,0.000000,
+			0.500000,-0.500000,0.500000,	0.000000,0.000000,1.000000,	   0.625000,0.000000,	0.000000,0.000000,
+			0.500000,0.500000,0.500000,		0.000000,0.000000,1.000000,	   0.625000,0.250000,	0.000000,0.000000,
+			-0.500000,0.500000,0.500000,	0.000000,0.000000,1.000000,	   0.375000,0.250000,	0.000000,0.000000,
+			-0.500000,0.500000,0.500000,	0.000000,1.000000,0.000000,	   0.375000,0.250000,	0.000000,0.000000,
+			0.500000,0.500000,0.500000,		0.000000,1.000000,0.000000,	   0.625000,0.250000,	0.000000,0.000000,
+			0.500000,0.500000,-0.500000,	0.000000,1.000000,0.000000,	   0.625000,0.500000,	0.000000,0.000000,
+			-0.500000,0.500000,-0.500000,	0.000000,1.000000,0.000000,	   0.375000,0.500000,	0.000000,0.000000,
+			-0.500000,0.500000,-0.500000,	0.000000,0.000000,-1.000000,   0.375000,0.500000,	0.000000,0.000000,
+			0.500000,0.500000,-0.500000,	0.000000,0.000000,-1.000000,   0.625000,0.500000,	0.000000,0.000000,
+			0.500000,-0.500000,-0.500000,	0.000000,0.000000,-1.000000,   0.625000,0.750000,	0.000000,0.000000,
+			-0.500000,-0.500000,-0.500000,	0.000000,0.000000,-1.000000,   0.375000,0.750000,	0.000000,0.000000,
+			-0.500000,-0.500000,-0.500000,	0.000000,-1.000000,0.000000,   0.375000,0.750000,	0.000000,0.000000,
+			0.500000,-0.500000,-0.500000,	0.000000,-1.000000,0.000000,   0.625000,0.750000,	0.000000,0.000000,
+			0.500000,-0.500000,0.500000,	0.000000,-1.000000,0.000000,   0.625000,1.000000,	0.000000,0.000000,
+			-0.500000,-0.500000,0.500000,	0.000000,-1.000000,0.000000,   0.375000,1.000000,	0.000000,0.000000,
+			0.500000,-0.500000,0.500000,	1.000000,0.000000,0.000000,	   0.625000,0.000000,	0.000000,0.000000,
+			0.500000,-0.500000,-0.500000,	1.000000,0.000000,0.000000,	   0.875000,0.000000,	0.000000,0.000000,
+			0.500000,0.500000,-0.500000,	1.000000,0.000000,0.000000,	   0.875000,0.250000,	0.000000,0.000000,
+			0.500000,0.500000,0.500000,		1.000000,0.000000,0.000000,	   0.625000,0.250000,	0.000000,0.000000,
+			-0.500000,-0.500000,-0.500000,	-1.000000,0.000000,0.000000,   0.125000,0.000000,	0.000000,0.000000,
+			-0.500000,-0.500000,0.500000,	-1.000000,0.000000,0.000000,   0.375000,0.000000,	0.000000,0.000000,
+			-0.500000,0.500000,0.500000,	-1.000000,0.000000,0.000000,   0.375000,0.250000,	0.000000,0.000000,
+			-0.500000,0.500000,-0.500000,	-1.000000,0.000000,0.000000,   0.125000,0.250000,	0.000000,0.000000
 		};
 
-		float normals[] = {
-			0.000000,0.000000,1.000000,
-			0.000000,0.000000,1.000000,
-			0.000000,0.000000,1.000000,
-			0.000000,0.000000,1.000000,
-			0.000000,1.000000,0.000000,
-			0.000000,1.000000,0.000000,
-			0.000000,1.000000,0.000000,
-			0.000000,1.000000,0.000000,
-			0.000000,0.000000,-1.000000,
-			0.000000,0.000000,-1.000000,
-			0.000000,0.000000,-1.000000,
-			0.000000,0.000000,-1.000000,
-			0.000000,-1.000000,0.000000,
-			0.000000,-1.000000,0.000000,
-			0.000000,-1.000000,0.000000,
-			0.000000,-1.000000,0.000000,
-			1.000000,0.000000,0.000000,
-			1.000000,0.000000,0.000000,
-			1.000000,0.000000,0.000000,
-			1.000000,0.000000,0.000000,
-			-1.000000,0.000000,0.000000,
-			-1.000000,0.000000,0.000000,
-			-1.000000,0.000000,0.000000,
-			-1.000000,0.000000,0.000000
-		};
+		GfxVertexArrayObject* VAO;
+		InGDI->CreateVertexArrayObject(&VAO);
 
-		float textures[] = {
-			0.375000,0.000000,	0.000000,0.000000,
-			0.625000,0.000000,	0.000000,0.000000,
-			0.625000,0.250000,	0.000000,0.000000,
-			0.375000,0.250000,	0.000000,0.000000,
-			0.375000,0.250000,	0.000000,0.000000,
-			0.625000,0.250000,	0.000000,0.000000,
-			0.625000,0.500000,	0.000000,0.000000,
-			0.375000,0.500000,	0.000000,0.000000,
-			0.375000,0.500000,	0.000000,0.000000,
-			0.625000,0.500000,	0.000000,0.000000,
-			0.625000,0.750000,	0.000000,0.000000,
-			0.375000,0.750000,	0.000000,0.000000,
-			0.375000,0.750000,	0.000000,0.000000,
-			0.625000,0.750000,	0.000000,0.000000,
-			0.625000,1.000000,	0.000000,0.000000,
-			0.375000,1.000000,	0.000000,0.000000,
-			0.625000,0.000000,	0.000000,0.000000,
-			0.875000,0.000000,	0.000000,0.000000,
-			0.875000,0.250000,	0.000000,0.000000,
-			0.625000,0.250000,	0.000000,0.000000,
-			0.125000,0.000000,	0.000000,0.000000,
-			0.375000,0.000000,	0.000000,0.000000,
-			0.375000,0.250000,	0.000000,0.000000,
-			0.125000,0.250000,	0.000000,0.000000
-		};
-
-		GfxVertexArray* GridArray;
-		InGDI->CreateVertexArray(&GridArray);
-
-		GfxBufferLayout Layout =
+		/*GfxBufferLayout Layout =
 		{
 			{ GfxShaderDataType::Float3, "position" },
-		};
-
-		GfxVertexBuffer* VertexBuffer;
-		InGDI->CreateVertexBuffer(vertices, sizeof(vertices), &VertexBuffer);
-		VertexBuffer->SetLayout(Layout);
-		GridArray->AttachVertexBuffer(VertexBuffer);
-
-		Layout =
-		{
 			{ GfxShaderDataType::Float3, "normal" },
-		};
-
-		GfxVertexBuffer* NormalBuffer;
-		InGDI->CreateVertexBuffer(normals, sizeof(normals), &NormalBuffer);
-		NormalBuffer->SetLayout(Layout);
-		GridArray->AttachVertexBuffer(NormalBuffer);
-
-		Layout =
-		{
 			{ GfxShaderDataType::Float2, "uv0" },
 			{ GfxShaderDataType::Float2, "uv1" }
-		};
+		};*/
 
-		GfxVertexBuffer* UvBuffer;
-		InGDI->CreateVertexBuffer(textures, sizeof(textures), &UvBuffer);
-		UvBuffer->SetLayout(Layout);
-		GridArray->AttachVertexBuffer(UvBuffer);
+		GfxBufferDesc vbDesc;
+		vbDesc.AccessFlags = GfxCpuAccessFlags::CpuAccess_None;
+		vbDesc.BindFlags = GfxBindFlags::Bind_VertexBuffer;
+		vbDesc.ByteWidth = sizeof(vertices);
+		vbDesc.Usage = GfxUsageFlags::Usage_Default;
+		vbDesc.StructureByteStride = sizeof(float) * 10;
 
-		GfxIndexBuffer* IndexBuffer;
-		InGDI->CreateIndexBuffer(indices, sizeof(indices) / sizeof(u32), &IndexBuffer);
+		GfxBufferData vbData;
+		vbData.Data = &vertices[0];
+		vbData.Size = sizeof(vertices);
 
-		GridArray->SetIndexBuffer(IndexBuffer);
+		GfxBuffer* VertexBuffer;
+		InGDI->CreateBuffer(vbDesc, vbData, &VertexBuffer);
+		VAO->AttachVertexBuffer(VertexBuffer);
 
-		return GridArray;
+		GfxBufferDesc ibDesc;
+		ibDesc.AccessFlags = GfxCpuAccessFlags::CpuAccess_None;
+		ibDesc.BindFlags = GfxBindFlags::Bind_IndexBuffer;
+		ibDesc.ByteWidth = sizeof(indices);
+		ibDesc.Usage = GfxUsageFlags::Usage_Default;
+		ibDesc.StructureByteStride = sizeof(u32);
 
+		GfxBufferData ibData;
+		ibData.Data = &indices[0];
+		ibData.Size = sizeof(indices);
+
+		GfxBuffer* IndexBuffer;
+		InGDI->CreateBuffer(ibDesc, ibData, &IndexBuffer);
+		VAO->SetIndexBuffer(IndexBuffer);
+
+		return VAO;
 	}
 }

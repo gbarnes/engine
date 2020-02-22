@@ -38,9 +38,9 @@ namespace Dawn
 			CommandCount = 0;
 		}
 
-		void Reset(u32 InMaxSize, GfxResId InFrameBuffer, const mat4& InViewMatrix, const mat4& InProjMatrix)
+		void Reset(u32 InMaxSize, GfxRTBundle* InBundle, const mat4& InViewMatrix, const mat4& InProjMatrix)
 		{
-			RenderBufferId = InFrameBuffer;
+			RenderBundle = InBundle;
 
 			if (Keys == nullptr && Data == nullptr)
 			{
@@ -100,12 +100,12 @@ namespace Dawn
 			const Shared<World> World = InApp->GetWorld();
 			const Shared<DeferredRenderer> Renderer = InApp->GetRenderer();
 
-			ScopedGfxBind<GfxRenderBuffer> Binder;
+			/*ScopedGfxBind<GfxRenderBuffer> Binder;
 			if (RenderBufferId.IsValid)
 			{
 				auto Buffer = GDI->GetRenderBuffer(RenderBufferId);
 				Binder.Bind(Buffer);
-			}
+			}*/
 
 			u32 LastMatId = UINT_MAX;
 			GfxShader* GfxShader = nullptr;
@@ -130,20 +130,20 @@ namespace Dawn
 					auto Material = Resources->FindMaterial(ResId);
 					auto Shader = Resources->FindShader(Material->ShaderId);
 
-					if (Renderer->CurrentShader == nullptr || Renderer->CurrentShader->GetId().Index != Shader->ResourceId.Index)
+					/*if (Renderer->CurrentShader == nullptr || Renderer->CurrentShader->GetId().Index != Shader->ResourceId.Index)
 					{
 						Renderer->CurrentShader = GDI->GetShader(Shader->ResourceId);
-						Renderer->CurrentShader->Bind();
-					}
+						//Renderer->CurrentShader->Bind();
+					}*/
 
-					Renderer->CurrentShader->SetMat4("proj", Projection);
-					Renderer->CurrentShader->SetMat4("view", View);
+					//Renderer->CurrentShader->SetMat4("proj", Projection);
+					//Renderer->CurrentShader->SetMat4("view", View);
 
-					Renderer->CurrentShader->SetVec4("material.albedo", Material->Albedo);
-					Renderer->CurrentShader->SetVec4("material.emissive", Material->Emissive);
-					Renderer->CurrentShader->SetFloat("material.metallic", Material->Metallic);
-					Renderer->CurrentShader->SetFloat("material.roughness", Material->Roughness);
-					Renderer->CurrentShader->SetFloat("material.ao", Material->Ao);
+					//Renderer->CurrentShader->SetVec4("material.albedo", Material->Albedo);
+					//Renderer->CurrentShader->SetVec4("material.emissive", Material->Emissive);
+					//Renderer->CurrentShader->SetFloat("material.metallic", Material->Metallic);
+					//Renderer->CurrentShader->SetFloat("material.roughness", Material->Roughness);
+					//Renderer->CurrentShader->SetFloat("material.ao", Material->Ao);
 
 					// remove this again! this is only here as a test
 					// but since we use a deferred renderer later this should really
@@ -162,7 +162,7 @@ namespace Dawn
 			}
 		}
 	private:
-		GfxResId RenderBufferId;
+		GfxRTBundle* RenderBundle;
 		Key* Keys;
 		CommandPacket* Data;
 		std::atomic<u32> CommandCount;

@@ -16,6 +16,7 @@ namespace Dawn
 		std::string Path;
 		std::string Ext;
 		u64 Size;
+		std::map<std::string, std::string> Data;
 	};
 
 

@@ -20,6 +20,9 @@
 
 #include "Application.h"
 #include "Core/GDI/inc_gfx.h"
+#include "Core/GDI/Base/GfxShader.h"
+#include "Core/GDI/Base/GfxBuffer.h"
+#include "Core/GDI/Base/GfxVertexArrayObject.h"
 #include "Core/Loading/File.h"
 #include "Core/Logging/Log.h"
 #include "Core/Paths.h"
@@ -138,30 +141,20 @@ namespace Dawn
 
 				}
 
-				GfxBufferLayout MeshLayout
-				(
-					{
-						{ GfxShaderDataType::Float3, "position" },
-						{ GfxShaderDataType::Float3, "normal" },
-						{ GfxShaderDataType::Float2, "uv0" },
-						{ GfxShaderDataType::Float2, "uv1" }
-					}
-				);
+				GfxVAOCreationData data = {};
+				data.IndexBuffer.Data = &IndexData[0];
+				data.IndexBuffer.Num = IndexData.size();
+				data.IndexBuffer.Size = u32(IndexData.size() * sizeof(u32));
+				data.IndexBuffer.StrideSize = sizeof(u32);
 
-				// Buffer Setup
-				GfxVertexArray* VertexArray = nullptr;
-				auto VertexArrayId = GDI->CreateVertexArray(&VertexArray);
+				data.VertexBuffer.Data = &VertexData[0];
+				data.VertexBuffer.Num = VertexData.size();
+				data.VertexBuffer.Size = u32(VertexData.size() * sizeof(float));
+				data.VertexBuffer.StrideSize = u32(sizeof(float) * 10);
 
-				GfxVertexBuffer* VertexBuffer;
-				GDI->CreateVertexBuffer(&VertexData[0], (u32)(VertexData.size() * sizeof(float)), &VertexBuffer);
-				VertexBuffer->SetLayout(MeshLayout);
-				VertexArray->AttachVertexBuffer(VertexBuffer);
-
-				GfxIndexBuffer* IndexBuffer;
-				GDI->CreateIndexBuffer(&IndexData[0], (u32)IndexData.size(), &IndexBuffer);
-				VertexArray->SetIndexBuffer(IndexBuffer);
-
-				Mesh->VertexArrayId = VertexArrayId;
+				auto* vao = CreateVAO(GDI, data);
+				D_ASSERT(vao != nullptr, "Couldn't create vertex array object for loaded mesh!");
+				Mesh->VertexArrayId = vao->GetId();
 
 				// Creating Material
 				if (InScene->HasMaterials())
@@ -283,6 +276,7 @@ namespace Dawn
 				if (InProcessingFunc != nullptr)
 					InProcessingFunc(std::string(line));
 			}
+			
 			file.close();
 			return true;
 		}
@@ -307,15 +301,15 @@ namespace Dawn
 		return IncludedFile;
 	}
 
-	const std::set<std::string> PragmaKeywords = { "vert_begin", "include", "frag_begin" };
+	const std::set<std::string> PragmaKeywords = { "include"};
 	const std::string PragmaDefine = "#pragma ";
 	const std::string VersionDefine = "#version";
-	bool ParseShaderFile(const std::string& InPath, std::string* OutVersionString, std::string* OutVertexSource, std::string* OutFragSource)
+	bool ParseShaderFile(const std::string& InFilePath, const std::string& InRelPath, std::string* source)
 	{
 		bool bIsParsingVertexShader = false;
 		bool bIsParsingFragShader = false;
 
-		bool bIsShaderLoaded = ReadFileLineByLine(InPath, [&](const std::string& Line)
+		bool bIsShaderLoaded = ReadFileLineByLine(InFilePath, [&](const std::string& Line)
 		{
 			if (Line.substr(0, PragmaDefine.size()) == PragmaDefine)
 			{
@@ -331,92 +325,135 @@ namespace Dawn
 
 				if (PragmaKeywords.find(PragmaKeyword) != PragmaKeywords.end())
 				{
-					if (PragmaKeyword == "vert_begin")
-					{
-						bIsParsingFragShader = false;
-						bIsParsingVertexShader = true;
-					}
-					else if (PragmaKeyword == "frag_begin")
-					{
-						bIsParsingVertexShader = false;
-						bIsParsingFragShader = true;
-					}
-					else if (PragmaKeyword == "include" && PragmaValue.size() > 2 && (bIsParsingVertexShader || bIsParsingFragShader))
+					if (PragmaKeyword == "include" && PragmaValue.size() > 0)
 					{
 						// include statments look like this #pragma include "filename" 
 						// so we have to remove character from the front and back to get the path
 						std::string IncludeName = PragmaValue.substr(2, PragmaValue.size() - 3);
-						std::string SourceCode = LoadShaderInclude(Paths::ProjectShaderDir().append(IncludeName).string());
+						std::string SourceCode = LoadShaderInclude(Paths::ProjectContentDir().append(InRelPath).append(IncludeName).string());
 						
 						if (!SourceCode.empty())
 						{
-							if (bIsParsingVertexShader)
-								OutVertexSource->append(SourceCode + "\n");
-							else if (bIsParsingFragShader)
-								OutFragSource->append(SourceCode + "\n");
+							source->append(SourceCode + "\n");
 						}
 					}
 				}
 			}
-			else if (Line.substr(0, VersionDefine.size()) == VersionDefine)
-			{
-				*OutVersionString = Line + "\n";
-			}
 			else
 			{
-				if (bIsParsingVertexShader)
-					OutVertexSource->append(Line + "\n");
-				else if (bIsParsingFragShader)
-					OutFragSource->append(Line + "\n");
+				source->append(Line + "\n");
 			}
 		});
 
 		return bIsShaderLoaded;
 	}
+
+	GfxShaderType GetShaderTypeFromExt(const std::string& ext)
+	{
+		if (ext.find("ps") != std::string::npos)
+		{
+			return GfxShaderType::Pixel;
+		}
+		else if (ext.find("vs") != std::string::npos)
+		{
+			return GfxShaderType::Vertex;
+		}
+		else if (ext.find("hs") != std::string::npos)
+		{
+			return GfxShaderType::Hull;
+		}
+		else if (ext.find("gs") != std::string::npos)
+		{
+			return GfxShaderType::Geometry;
+		}
+		else if (ext.find("cs") != std::string::npos)
+		{
+			return GfxShaderType::Compute;
+		}
+
+		return GfxShaderType::Vertex;
+	}
+
+	const char* GetShaderProfileFromExt(const std::string& ext)
+	{
+		if (ext.find("ps") != std::string::npos)
+		{
+			return "ps_5_0";
+		}
+		else if (ext.find("vs") != std::string::npos)
+		{
+			return "vs_5_0";
+		}
+		else if (ext.find("hs") != std::string::npos)
+		{
+			return "hs_5_0";
+		}
+		else if (ext.find("gs") != std::string::npos)
+		{
+			return "gs_5_0";
+		}
+		else if (ext.find("cs") != std::string::npos)
+		{
+			return "cs_5_0";
+		}
+
+		return "vs_5_0";
+	}
 	
-
-
 	ResourceId RS_LoadShader(ResourceSystem* InResourceSystem, const std::string& InWorkspacePath, FileMetaData* InMetaData)
 	{
 		const auto GDI = g_Application->GetGDI();
 		ResourceId ShaderId = InResourceSystem->FindResourceIdFromFileId(InMetaData->Id);
 
 		std::string FullPath = ToFullFilePath(InWorkspacePath, InMetaData);
-
-		// Todo -- add other shader types later on ... and we of course should be able to somehow use 
-		//		   this with directx (hlsl) too once we get that back in (gb, 10/12/19).
-		
-		std::string VertexSource = "";
-		std::string FragSource = "";
-		std::string VersionString = "";
-
-		bool bIsShaderLoaded = ParseShaderFile(FullPath, &VersionString, &VertexSource, &FragSource);
-
-		if (bIsShaderLoaded)
+	
+		std::string source;
+		bool isShaderLoaded = ParseShaderFile(FullPath, InMetaData->Path, &source);
+		if (isShaderLoaded)
 		{
-			std::string FinalVertexShader = VersionString + VertexSource;
-			std::string FinalPixelShader = VersionString + FragSource;
-
-			GfxShader* InternalShader = nullptr;
-			if (!ShaderId.IsValid)
+			if (!ShaderId.IsValid) 
 			{
 				Shader* shader;
 				InResourceSystem->CreateShader(&shader);
+				D_ASSERT(shader != nullptr, "Couldn't create shader resource.");
 
 				shader->FileId = InMetaData->Id;
 				ShaderId = shader->Id;
-				shader->ResourceId = GDI->CreateShader(&InternalShader);
+
+				GfxShaderDesc desc;
+				desc.FileName = InMetaData->Name.c_str();
+				desc.Type = GetShaderTypeFromExt(InMetaData->Ext);
+				desc.FunctionName = "Main";	 // note(gb): static for now!
+				desc.ProfileName = GetShaderProfileFromExt(InMetaData->Ext); // note(gb): static for now!
+
+				GfxShaderData data;
+				data.Data = source.c_str();
+				data.Size = source.size();
+
+				GfxShader* gfxShader = nullptr;
+				shader->GfxShaderId = GDI->CreateShader(desc, data, &gfxShader);
+				D_ASSERT(gfxShader != nullptr, "Gfx shader null.");
 			}
 			else
 			{
-				auto Shader = InResourceSystem->FindShader(ShaderId);
-				InternalShader = GDI->GetShader(Shader->ResourceId);
-			}
+				auto shader = InResourceSystem->FindShader(ShaderId);
+				D_ASSERT(shader != nullptr, "Shader resource not found by id.");
 
-			assert(InternalShader != nullptr && "Gfx shader null.");
-			InternalShader->AttachSource(GfxShaderType::ST_Vertex, FinalVertexShader.c_str());
-			InternalShader->AttachSource(GfxShaderType::ST_Pixel, FinalPixelShader.c_str());
-			InternalShader->SetName(FullPath);
+				GfxShader* gfxShader = GDI->GetShader(shader->GfxShaderId);
+				D_ASSERT(gfxShader != nullptr, "No corresponding shader found.");
+
+				GfxShaderDesc desc;
+				desc.FileName = InMetaData->Name.c_str();
+				desc.Type = GetShaderTypeFromExt(InMetaData->Ext);
+				desc.FunctionName = "Main";	 // note(gb): static for now!
+				desc.ProfileName = "vs_5_0"; // note(gb): static for now!
+
+				GfxShaderData data;
+				data.Data = source.c_str();
+				data.Size = source.size();
+
+				gfxShader->Create(desc, data);
+			}
 		}
 
 		return ShaderId;
@@ -447,11 +484,11 @@ namespace Dawn
 			image->Height = y;
 			image->ChannelsPerPixel = n;
 
-			GfxTextureDesc Desc = 
+			/*GfxTextureDesc Desc = 
 			{
-				GfxTextureFormat::RGBA,
+				GfxTextureFormat::RGBA32F,
 				GfxMemoryType::UnsignedByte,
-				GfxTextureFormat::RGBA,
+				GfxTextureFormat::RGBA32F,
 				data, // raw pixel data
 				(u32)x, // width of the image
 				(u32)y, // height of the image
@@ -465,7 +502,7 @@ namespace Dawn
 			// these settings will later be filled by meta files
 			// associated to the file
 			image->TextureId = GDI->CreateTexture(Desc, nullptr);
-			
+			*/
 
 			// Note(gb): remove this later since we don't want another dependency in the resource
 			//			 system - maybe there shouldn't be a dependency to the gdi as well
@@ -511,11 +548,11 @@ namespace Dawn
 				if (data)
 				{
 					
-					GfxTextureDesc Desc =
+					/*GfxTextureDesc Desc =
 					{
-						GfxTextureFormat::RGBA,
+						GfxTextureFormat::RGBA32F,
 						GfxMemoryType::UnsignedByte,
-						GfxTextureFormat::RGBA,
+						GfxTextureFormat::RGBA32F,
 						data, // raw pixel data
 						static_cast<u32>(x), // width of the image
 						static_cast<u32>(y), // height of the image
@@ -529,7 +566,7 @@ namespace Dawn
 					//			 system - maybe there shouldn't be a dependency to the gdi as well
 					Renderer->Stats.TextureMemory += InMetaData->Size;
 
-					Texture->Reset(Desc);
+					Texture->Reset(Desc);*/
 					stbi_image_free(data);
 				}
 			}

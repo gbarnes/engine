@@ -22,11 +22,9 @@ namespace Dawn
 
 	DirectionalLight* LightUtils::CreateDirectionalLight(World* InWorld, quat InOrientation, vec4 InColor, float InIntensity)
 	{
-		Entity e = InWorld->CreateEntity("Light");
+		Entity e = InWorld->CreateEntity("Light", vec3(0, 0, 0), vec3(1), InOrientation);
 		if (!e.IsValid())
 			return nullptr;
-
-		InWorld->CreateTransform(e, vec3(0, 0, 0), vec3(1), InOrientation);
 
 		DirectionalLight* l = InWorld->MakeComponent<DirectionalLight>();
 		l->Color = InColor;
@@ -37,11 +35,9 @@ namespace Dawn
 
 	PointLight* LightUtils::CreatePointLight(World* InWorld, vec3 InPosition, vec4 InColor, float InIntensity, float InRange)
 	{
-		Entity e = InWorld->CreateEntity("Pointlight");
+		Entity e = InWorld->CreateEntity("Pointlight", InPosition, vec3(1), quat(1, 0, 0, 0));
 		if (!e.IsValid())
 			return nullptr;
-
-		InWorld->CreateTransform(e, InPosition, vec3(1), quat(1, 0, 0, 0));
 
 		PointLight* l = InWorld->MakeComponent<PointLight>();
 		l->Color = InColor;

@@ -39,7 +39,7 @@ namespace Dawn
 		do
 		{
 			bPending = ReadDirectoryChangesW(InData->DirHandle,
-				&buffer[0], buffer.size(),
+				&buffer[0], DWORD(buffer.size()),
 				TRUE, FILE_NOTIFY_CHANGE_FILE_NAME |
 				 FILE_NOTIFY_CHANGE_SIZE,
 				&dwBytes, &o, NULL);

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "GLTexture.h"
-#include "glad.h"
+/*#include "glad.h"
 
 namespace Dawn
 {
@@ -42,4 +42,4 @@ namespace Dawn
 	{
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
-}
+}*/

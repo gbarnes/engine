@@ -35,7 +35,7 @@ namespace Dawn
 	public:
 		std::vector<std::string> GetComponentTypesByEntity(const Entity& InEntity);
 		
-		Transform* CreateTransform(const Entity& InEntity, const vec3& InPos, const vec3& InScale, const quat& InOrientation);
+		
 		Camera* CreateCamera(std::string& InName, u32 Width, u32 Height,
 			float InNearZ, float InFarZ, float InFoV, vec4 InClearColor, 
 			const vec3& InPosition = vec3(0), const quat& InOrientation = quat());
@@ -46,7 +46,7 @@ namespace Dawn
 
 		i32 CreateModelEntity(std::string& InName, std::string& InModelName, vec3& InPosition, vec3& InScale = vec3(1), quat& InRotation = quat());
 
-		Entity CreateEntity(const std::string &InName);
+		Entity CreateEntity(const std::string &InName, const vec3& InPosition, const vec3& InScale = vec3(1), const quat& InRotation = quat());
 		void DestroyEntity(const Entity& InEntity);
 		EntityMetaData* GetEntityMetaData(const Entity& InEntity);
 		EntityMetaData* GetEntityMetaData(const UUID& InUUID);
@@ -169,5 +169,7 @@ namespace Dawn
 		}
 
 		BaseComponentTable* GetTableByString(const std::string& InName);
+		Transform* CreateTransform(const Entity& InEntity, const vec3& InPos, const vec3& InScale, const quat& InOrientation);
+		Entity CreateEntityNonTransform(const std::string &InName);
 	};
 }

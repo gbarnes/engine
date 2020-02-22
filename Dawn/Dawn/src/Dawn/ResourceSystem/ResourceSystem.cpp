@@ -84,6 +84,10 @@ namespace Dawn
 				metaData.Path = path;
 				metaData.Size = entry.file_size();
 				metaData.Ext = file.extension().string();
+
+				// try to load meta file
+
+
 				MetaDatabase.emplace(std::pair<FileId, FileMetaData>(metaData.Id, metaData));
 
 

@@ -46,7 +46,7 @@ namespace Dawn
 
 	struct DAWN_API Shader : Resource
 	{
-		GfxResId ResourceId;
+		GfxResId GfxShaderId;
 	};
 
 	struct DAWN_API Material : Resource
@@ -85,6 +85,11 @@ namespace Dawn
 		u32 Height;
 		u16 ChannelsPerPixel;
 		GfxResId TextureId;
+	};
+
+	struct SoundEffect : Resource
+	{
+		
 	};
 
 	

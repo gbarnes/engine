@@ -1,5 +1,5 @@
 #pragma once
-#include "inc_common.h"
+/*#include "inc_common.h"
 #include "../GfxResource.h"
 
 namespace Dawn
@@ -26,4 +26,4 @@ namespace Dawn
 		u32 ProgramId;
 		std::map<GfxShaderType, u32> ShaderIds;
 	};
-}
+}*/

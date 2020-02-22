@@ -8,4 +8,5 @@ namespace Dawn
 	void ShowFpsCounter();
 	void OutputDebugText(const std::string& InText);
 	void ShowDebugText();
+	void ShowFramegraph();
 }

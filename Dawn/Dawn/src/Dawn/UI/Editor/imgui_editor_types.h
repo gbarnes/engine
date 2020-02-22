@@ -1,6 +1,6 @@
 #pragma once
 #include "Vendor/ImGuizmo/ImGuizmo.h"
-#include "Core/GDI/inc_gfx_types.h"
+#include "Core/GDI/Base/inc_gfx_types.h"
 #include "EntitySystem/Entity.h"
 #include "imgui.h"
 

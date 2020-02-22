@@ -1,5 +1,5 @@
 #pragma once
-
+/*
 #include "../GfxResource.h"
 
 namespace Dawn
@@ -10,20 +10,17 @@ namespace Dawn
 	{
 	public:
 
-		GLVertexBuffer()
-			: GfxVertexBuffer(GfxResId()) {};
+		GLVertexBuffer(u32 InStride, u32 InOffset)
+			: GfxVertexBuffer(GfxResId(), InStride, InOffset) {};
 
-		GLVertexBuffer(void* Vertices, u32 Size, GfxResId InId);
+		GLVertexBuffer(void* Vertices, u32 Size, u32 InStride, u32 InOffset, GfxResId InId);
 		virtual ~GLVertexBuffer();
 
 		virtual void Bind() override;
 		virtual void Unbind() override;
 		virtual void Reset(void* InData, u32 InSize) override;
-		virtual const GfxBufferLayout& GetLayout() const override;
-		virtual void SetLayout(GfxBufferLayout& InLayout) override;
 
 	protected:
-		GfxBufferLayout Layout;
 		u32 RendererId;
 	};
 
@@ -54,11 +51,11 @@ namespace Dawn
 
 		~GLVertexArray();
 
-		void Bind() override;
+		void Bind(u32 InStride, u32 InOffset = 0) override;
 		void Unbind() override;
-		void AttachVertexBuffer(GfxVertexBuffer* InBuffer, i32 InDivisor = -1) override;
+		void AttachVertexBuffer(const GfxBufferLayout& InLayout, GfxVertexBuffer* InBuffer, i32 InDivisor = -1) override;
 		void SetIndexBuffer(GfxIndexBuffer* InBuffer) override;
-		void SetName(std::string Name) override;
+		void SetName(const std::string& Name) override;
 		GfxVertexBuffer* GetVertexBuffer(GfxGDI* InGDI, u32 InIndex) override;
 		GfxIndexBuffer* GetIndexBuffer(GfxGDI* InGDI) override;
 
@@ -73,4 +70,4 @@ namespace Dawn
 		std::vector<GfxResId> Vertices;
 		GfxResId Indices;
 	};
-}
+}*/

@@ -1,10 +1,20 @@
 #include "stdafx.h"
 #include "ImGuiWrapper.h"
 #include "imgui.h"
-#include "Core/GDI/GfxGDI.h"
-#include "Core/GDI/OpenGL/GfxGLGDI.h"
+#include "Core/GDI/Base/GfxGDI.h"
 #include "Vendor/ImGui/imgui_impl_win32.h"
+
+#define USE_DX11_GFX
+
+#ifdef USE_DX11_GFX
+#include "Core/GDI/DX11/DX11GDI.h"
+#include "Vendor/ImGui/imgui_impl_dx11.h"
+#endif
+
+#ifdef USE_OPENGL_GFX
+#include "Core/GDI/OpenGL/GfxGLGDI.h"
 #include "Vendor/ImGui/imgui_impl_opengl3.h"
+#endif
 
 #ifdef USE_DX12_GFX
 #include "Vendor/ImGui/imgui_impl_dx12.h"
@@ -23,11 +33,12 @@ namespace Dawn
 
 	void ImGuiWrapper::Create(void* InHwnd, GfxGDI* InGDI)
 	{
-		GfxGLGDI* GLGDI = dynamic_cast<GfxGLGDI*>(InGDI);
+		DX11GDI* gdi = static_cast<DX11GDI*>(InGDI);
 
 		// Todo: Add error checking & Logs 
 		IMGUI_CHECKVERSION();
-		ImGui::CreateContext();
+		auto* context = ImGui::CreateContext();
+		ImGui::SetCurrentContext(context);
 		ImGui::StyleColorsDark();
 
 		ImGuiIO& io = ImGui::GetIO();
@@ -38,10 +49,17 @@ namespace Dawn
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; //| ImGuiConfigFlags_ViewportsEnable;
 
 		g_hwnd = (HWND)InHwnd;
-		g_glcontext = (HGLRC)GLGDI->hRC;
 		ImGui_ImplWin32_Init(InHwnd);
-		ImGui_ImplOpenGL3_Init("#version 150");
 
+#ifdef USE_DX11_GFX
+		ImGui_ImplDX11_Init(gdi->GetD3D11Device(), gdi->GetD3D11Context());
+#endif
+
+#ifdef USE_OPENGL_GFX
+		g_glcontext = (HGLRC)GLGDI->hRC;
+		ImGui_ImplOpenGL3_Init("#version 150");
+#endif
+		
 
 #ifdef USE_DX12_GFX
 		auto Device = GfxBackend::GetDevice();
@@ -76,7 +94,14 @@ namespace Dawn
 		ImGui_ImplDX12_Shutdown();
 #endif
 
+#ifdef USE_OPENGL_GFX
 		ImGui_ImplOpenGL3_Shutdown();
+#endif
+
+#ifdef USE_DX11_GFX
+		ImGui_ImplDX11_Shutdown();
+#endif
+
 		ImGui_ImplWin32_Shutdown();
 		ImGui::DestroyContext();
 	}
@@ -86,7 +111,14 @@ namespace Dawn
 #ifdef USE_DX12_GFX
 		ImGui_ImplDX12_NewFrame();
 #endif
+
+#ifdef USE_OPENGL_GFX
 		ImGui_ImplOpenGL3_NewFrame();
+#endif
+
+#ifdef USE_DX11_GFX
+		ImGui_ImplDX11_NewFrame();
+#endif
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 	}
@@ -170,6 +202,19 @@ namespace Dawn
 #endif
 		ImGuiIO& io = ImGui::GetIO();
 		ImGui::Render();
+		
+#ifdef USE_DX11_GFX
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+		// Update and Render additional Platform Windows
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
+		}
+#endif
+
+#ifdef USE_OPENGL_GFX
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		// Update and Render additional Platform Windows
@@ -182,6 +227,7 @@ namespace Dawn
 			ImGui::RenderPlatformWindowsDefault();
 			wglMakeCurrent(backup_current_context, g_glcontext);
 		}
+#endif
 
 #ifdef USE_DX12_GFX
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), InCmdList);

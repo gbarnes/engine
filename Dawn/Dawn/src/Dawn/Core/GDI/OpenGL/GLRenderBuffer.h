@@ -1,5 +1,5 @@
 #pragma once
-#include "../GfxResource.h"
+/*#include "../GfxResource.h"
 
 namespace Dawn
 {
@@ -29,4 +29,4 @@ namespace Dawn
 		std::array<u32, 7> ColorTargets;
 	};
 
-}
+}*/
