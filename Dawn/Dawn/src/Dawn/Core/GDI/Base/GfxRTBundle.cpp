@@ -55,7 +55,7 @@ void Dawn::GfxRTBundle::AttachColorTarget(u32 InWidth, u32 InHeight, GfxFormat I
 	++CurrentRTIndex;
 }
 
-void Dawn::GfxRTBundle::SetDephtStencilTarget(u32 InWidth, u32 InHeight, GfxFormat InFormat)
+void Dawn::GfxRTBundle::SetDepthStencilTarget(u32 InWidth, u32 InHeight, GfxFormat InFormat)
 {
 	D_ASSERT(!DepthStencilTarget.IsValid, "A depth stencil target already set!");
 

@@ -5,6 +5,7 @@
 #include "Core/GDI/inc_gfx.h"
 #include "Core/GDI/Base/GfxRTBundle.h"
 #include "RenderBucket.h"
+#include "Core/Memory/MemoryAllocators.h"
 #include "DrawCallCommands.h"
 
 namespace Dawn
@@ -18,6 +19,23 @@ namespace Dawn
 	// stateless rendering resources.
 	//
 
+	struct RenderPass
+	{
+		RenderPass(const char* InName)
+			: Name(InName)
+		{
+
+		}
+
+		const char* Name;
+		bool IsActive = true;
+		GfxRTBundle RenderTargets;
+		RenderBucket<u64> Bucket;
+		std::function<void(RenderPass*)> Setup;
+		std::function<void(RenderPass*)> PerFrameSetup;
+		std::function<void(RenderPass*)> EndFrame;
+	};
+
 	// 
 	// Design Idea:
 	// note-- maybe we just have one method (process or render which sorts -> submits -> presents -> clears buckets) ... meshes are queued before process
@@ -30,21 +48,56 @@ namespace Dawn
 
 	// https://kosmonautblog.wordpress.com/ great resource
 	// http://svenandersson.se/2014/realtime-rendering-blogs.html more resources
+	// https://seanmiddleditch.com/
 	//
 	class DAWN_API IRenderer
 	{
 	public:
-		virtual void AllocateTransientData(Application* InApp) = 0;
+		std::function<void(GfxGDI*, IRenderer*)> OnPostRender;
+
+		IRenderer()
+		{
+			HeapMem = Memory::HeapArea(_64KB);
+			PassAllocator = Allocators::LinearAllocator(HeapMem.GetStart(), HeapMem.GetEnd());
+		}
+
+		virtual ~IRenderer()
+		{
+			PassAllocator.Reset();
+			HeapMem.Free();
+		}
+
+	//	virtual void AllocateTransientData(Application* InApp) = 0;
+		virtual void CreatePasses(Application* InApp) = 0;
 		virtual void Resize(GfxGDI* InGDI, u32 InWidth, u32 InHeight) = 0;
 		virtual void BeginFrame(GfxGDI* InGDI, Camera* InCamera) = 0;
 		virtual void Submit(Application* InApp) = 0;
 		virtual void EndFrame(GfxGDI* InGDI) = 0;
+
+		RenderPass* BeginPass(const char* InName)
+		{
+			return new (PassAllocator.Allocate(sizeof(RenderPass), __alignof(RenderPass), 0)) RenderPass(InName);
+		}
+
+		void PushPass(RenderPass* InPass)
+		{
+			Passes.push_back(InPass);
+		}
+
+		RenderPass* GetPass(i32 InIndex) 
+		{
+			return Passes[InIndex];
+		}
+	protected:
+		Memory::HeapArea HeapMem;
+		Allocators::LinearAllocator PassAllocator;
+		std::vector<RenderPass*> Passes;
 	};
 
 	class DAWN_API NullRenderer : public IRenderer
 	{
 	public:
-		void AllocateTransientData(Application* InApp) override {}
+		void CreatePasses(Application* InApp) override {}
 		void Resize(GfxGDI* InGDI, u32 InWidth, u32 InHeight) override {}
 		void BeginFrame(GfxGDI* InGDI, Camera* InCamera) override {}
 		void Submit(Application* InApp) override {}
@@ -53,21 +106,6 @@ namespace Dawn
 		}
 	};
 
-	struct GfxConstantPerAppData
-	{
-		mat4 Projection;
-	};
-
-	struct GfxConstantPerFrameData
-	{
-		mat4 View;
-	};
-
-	struct GfxConstantPerObjectData
-	{
-		mat4 World;
-	};
-	
 	struct DAWN_API TransientData
 	{
 		GfxRTBundle GBuffer;
@@ -122,24 +160,5 @@ namespace Dawn
 		float Bias = 0.005f;
 	};
 
-
-	class DAWN_API DeferredRenderer : public IRenderer
-	{
-	public:
-		std::function<void(GfxGDI*, DeferredRenderer*)> OnPostRender;
-
-		RenderStats Stats;
-		GfxShader* CurrentShader;
-		TransientData TransientData;
-		PerFrameData PerFrameData;
-		SSAOSettings SSAOSettings;
-		ShadowMapSettings ShadowSettings;
-
-		void AllocateTransientData(Application* InApp) override;
-		void Resize(GfxGDI* InGDI, u32 InWidth, u32 InHeight) override;
-		void BeginFrame(GfxGDI* InGDI, Camera* InCamera) override;
-		void Submit(Application* InApp) override;
-		void EndFrame(GfxGDI* InGDI) override;
-	};
 
 }

@@ -27,7 +27,7 @@
 #include "Core/Logging/Log.h"
 #include "Core/Paths.h"
 #include "Rendering/RenderResourceHelper.h"
-#include "Rendering/Renderer.h"
+#include "Rendering/DeferredRenderer.h"
 
 namespace Dawn
 {

@@ -10,7 +10,7 @@
 #include "EntitySystem/Model/MeshFilter.h"
 #include "ResourceSystem/Resources.h"
 #include "ResourceSystem/ResourceSystem.h"
-#include "Rendering/Renderer.h"
+#include "Rendering/DeferredRenderer.h"
 #include "Application.h"
 #include "vendor/ImGuizmo/ImGuizmo.h"
 #include "imgui_editor_types.h"

@@ -5,7 +5,7 @@
 #include "EntitySystem/World.h"
 #include "ResourceSystem/ResourceSystem.h"
 #include "Application.h"
-#include "Rendering/Renderer.h"
+#include "Rendering/DeferredRenderer.h"
 #include "EntitySystem/Camera/Camera.h"
 #include <Brofiler.h>
 
@@ -40,7 +40,7 @@ namespace Dawn
 
 			auto Key = GenDrawKey64(true, material->Id.Index, RenderLayer::StaticGeom, 0.0f);
 
-			auto DrawCmd = renderer->PerFrameData.GeometryBucket.AddCommand<Draw::DrawIndexedData>(Key);
+			/*auto DrawCmd = renderer->PerFrameData.GeometryBucket.AddCommand<Draw::DrawIndexedData>(Key);
 			DrawCmd->IndexCount = mesh->NumIndices;
 			DrawCmd->VertexArrayId = mesh->VertexArrayId;
 			DrawCmd->Model = transform->WorldSpace;
@@ -48,7 +48,7 @@ namespace Dawn
 			auto ShadowDrawCmd = renderer->PerFrameData.ShadowBucket.AddCommand<Draw::DrawIndexedData>(0u);
 			ShadowDrawCmd->IndexCount = mesh->NumIndices;
 			ShadowDrawCmd->VertexArrayId = mesh->VertexArrayId;
-			ShadowDrawCmd->Model = transform->WorldSpace;
+			ShadowDrawCmd->Model = transform->WorldSpace;*/
 		}
 	}
 }

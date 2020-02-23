@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "imgui_debug.h"
 #include "Core/GDI/Base/GfxResource.h"
-#include "Rendering/Renderer.h"
+#include "Rendering/DeferredRenderer.h"
 #include "Application.h"
 #include "imgui.h"
 

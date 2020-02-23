@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "TestRenderLayer.h"
 #include "Core/GDI/inc_gfx.h"
-#include "Rendering/Renderer.h"
+#include "Rendering/DeferredRenderer.h"
 #include "Application.h"
 #include "inc_core.h"
 #include "UI/UIEditorEvents.h"
@@ -239,12 +239,12 @@ namespace Dawn
 			if (Mesh)
 			{
 				auto Key = GenDrawKey64(true, Material.Index, RenderLayer::StaticGeom, 0.0f);
-				auto DrawCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::DrawIndexedData>(Key);
+				auto DrawCmd = Renderer->GetPass(RenderPassId::Geometry)->Bucket.AddCommand<Draw::DrawIndexedData>(Key);
 				DrawCmd->IndexCount = Mesh->NumIndices;
 				DrawCmd->VertexArrayId = Mesh->VertexArrayId;
 				DrawCmd->Model = InModelMatrix;
 
-				auto ShadowDrawCmd = Renderer->PerFrameData.ShadowBucket.AddCommand<Draw::DrawIndexedData>(0u);
+				auto ShadowDrawCmd = Renderer->GetPass(RenderPassId::ShadowMap)->Bucket.AddCommand<Draw::DrawIndexedData>(0u);
 				ShadowDrawCmd->IndexCount = Mesh->NumIndices;
 				ShadowDrawCmd->VertexArrayId = Mesh->VertexArrayId;
 				ShadowDrawCmd->Model = InModelMatrix;

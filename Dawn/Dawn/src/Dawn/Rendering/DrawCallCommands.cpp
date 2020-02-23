@@ -7,7 +7,7 @@
 #include "EntitySystem/Lights/LightComponents.h"
 #include "EntitySystem/Transform/Transform.h"
 #include "EntitySystem/Lights/LightSystem.h"
-#include "Renderer.h"
+#include "DeferredRenderer.h"
 #include "EntitySystem/Camera/Camera.h"
 
 namespace Dawn

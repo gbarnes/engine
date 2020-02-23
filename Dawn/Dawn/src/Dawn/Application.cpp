@@ -27,8 +27,9 @@
 #include "EntitySystem/RigidBody/RigidbodySystem.h"
 #include "EntitySystem/Model/MeshFilterSystem.h"
 #include "EntitySystem/Model/MeshFilter.h"
+#include "Core/GDI/Base/GfxPipelineStateObject.h"
 #include "Core/Config.h"
-#include "Rendering/Renderer.h"
+#include "Rendering/DeferredRenderer.h"
 #include "UI/Editor/imgui_editor_functions.h"
 #include "UI/Editor/imgui_debug.h"
 #include "Vendor/ImGui/ImGuiWrapper.h"
@@ -62,13 +63,11 @@ namespace Dawn
 	static bool bShowGBuffer = false;
 	static bool bShowFPS = false;
 
-	void OnPostRender(GfxGDI* InGDI, DeferredRenderer* InRenderer)
+	void OnPostRender(GfxGDI* InGDI, IRenderer* InRenderer)
 	{
 		ImGuiWrapper::BeginNewFrame();
 		ImGuizmo::BeginFrame();
 
-
-	
 		//if (g_Application->GetIsInEditMode())
 		//	Editor_RenderUI();
 
@@ -141,10 +140,8 @@ namespace Dawn
 			return;
 		}
 
-		RenderResourceHelper::LoadCommonShaders(ResourceSystem.get());
-
 		Renderer = std::make_shared<DeferredRenderer>();
-		Renderer->AllocateTransientData(this);
+		Renderer->CreatePasses(this);
 		Renderer->OnPostRender = std::bind(&OnPostRender, std::placeholders::_1, std::placeholders::_2);
 
 		
@@ -178,9 +175,36 @@ namespace Dawn
 		}
 
 		InitInput(Window->GetInstance(), Window->GetHwnd(), Settings.Width, Settings.Height);
-
-
 		Load();
+
+		RenderResourceHelper::LoadCommonShaders(ResourceSystem.get());
+		RenderResourceHelper::CreatePSODefaults(this);
+		RenderResourceHelper::CreateConstantBuffers(GDI.get());
+
+		auto psoId = RenderResourceHelper::GetCachedPSO("Debug");
+
+		auto* pso = GDI->GetPipelineState(psoId);
+		pso->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(GDI->GetBuffer(CommonConstantBuffers::PerAppData));
+		pso->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(GDI->GetBuffer(CommonConstantBuffers::PerFrameData));
+		pso->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(GDI->GetBuffer(CommonConstantBuffers::PerObjectData));
+
+		GDI->SetPipelineState(psoId);
+		GDI->CommitShaderResources(psoId);
+
+		CBPerAppData appData = {};
+		appData.Projection = World::GetActiveCamera()->GetProjection();
+
+		GDI->UpdateConstantBuffer(CommonConstantBuffers::PerAppData, &appData, sizeof(appData));
+
+
+		CBPerFrameData frameData = {};
+		frameData.View = World::GetActiveCamera()->GetView();
+		GDI->UpdateConstantBuffer(CommonConstantBuffers::PerFrameData, &frameData, sizeof(frameData));
+
+		CBPerObjectData objectData = {};
+		objectData.World = glm::scale(mat4(1), vec3(0.2f)) * glm::rotate(mat4(1), glm::radians(80.0f), vec3(1.f, -1.0f, 1.0f));
+		GDI->UpdateConstantBuffer(CommonConstantBuffers::PerObjectData, &objectData, sizeof(objectData));
+
 		/*{
 			
 			
@@ -191,23 +215,7 @@ namespace Dawn
 		*/
 		DWN_CORE_INFO("Core Context initialized.");
 
-		auto* vao = GfxPrimitiveFactory::AllocateQuad(GDI.get(), vec2(0.0, 1.0f));
-
-		GfxConstantPerAppData appData;
-		appData.Projection = mat4();
-
-		GfxBuffer* constantBuffer;
-		GfxBufferDesc desc;
-		desc.AccessFlags = GfxCpuAccessFlags::CpuAccess_Write;
-		desc.Usage = GfxUsageFlags::Usage_Dynamic;
-		desc.BindFlags = GfxBindFlags::Bind_ConstantBuffer;
-		desc.ByteWidth = sizeof(GfxConstantPerAppData); 
-
-		GfxBufferData data;
-		data.Data = &appData;
-		data.Size = sizeof(GfxConstantPerAppData);
-
-		GDI->CreateBuffer(desc, data, &constantBuffer);
+		auto* vao = GfxPrimitiveFactory::AllocateCube(GDI.get());
 
 		GDI->BindPipelineShaders();
 		

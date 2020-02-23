@@ -224,7 +224,7 @@ std::string ShaderTypeToDX11SemanticName(Dawn::GfxShaderDataType InType)
 
 	if (InType == Dawn::GfxShaderDataType::TexCoord1)
 	{
-		return "TEXCOORD1";
+		return "TEXCOORD";
 	}
 
 	if (InType == Dawn::GfxShaderDataType::Normal)
@@ -233,6 +233,16 @@ std::string ShaderTypeToDX11SemanticName(Dawn::GfxShaderDataType InType)
 	}
 
 	return "FLOAT";
+}
+
+i32 GetSemanticIndexFromType(Dawn::GfxShaderDataType InType)
+{
+	i32 semanticIndex = 0;
+
+	if (InType == Dawn::GfxShaderDataType::TexCoord1)
+		semanticIndex = 1;
+
+	return semanticIndex;
 }
 
 std::vector<D3D11_INPUT_ELEMENT_DESC> Dawn::ToDX11Layout(const GfxInputLayout& InLayout)
@@ -259,16 +269,16 @@ std::vector<D3D11_INPUT_ELEMENT_DESC> Dawn::ToDX11Layout(const GfxInputLayout& I
 		}
 		else
 		{
-			
+			std::string s = ShaderTypeToDX11SemanticName(it->Type);
+
 			D3D11_INPUT_ELEMENT_DESC desc = {};
 			
-			std::string s = ShaderTypeToDX11SemanticName(it->Type);
 			char* ws = new char[s.size() + 1]; // +1 for zero at the end
 			copy(s.begin(), s.end(), ws);
 			ws[s.size()] = 0; // zero at the end
 
 			desc.SemanticName = ws;
-			desc.SemanticIndex = 0;
+			desc.SemanticIndex = GetSemanticIndexFromType(it->Type);
 			desc.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
 			desc.Format = ShaderTypeToDX11Format(it->Type);
 			desc.InstanceDataStepRate = 0;

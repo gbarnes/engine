@@ -1,7 +1,10 @@
 #include "stdafx.h"
 #include "RenderResourceHelper.h"
 #include "Core/GDI/Base/inc_gfx_types.h"
+#include "Core/Container/Map.h"
 #include "ResourceSystem/ResourceSystem.h"
+#include "Application.h"
+#include "Core/GDI/Base/GfxInputLayouts.h"
 
 namespace Dawn 
 {
@@ -20,6 +23,9 @@ namespace Dawn
 	ResourceId CommonShaderHandles::DebugVS;
 	ResourceId CommonShaderHandles::DebugPS;
 
+	ResourceId CommonShaderHandles::ShadowMapVS;
+	ResourceId CommonShaderHandles::ColoredSimplePS;
+
 	void RenderResourceHelper::LoadCommonShaders(ResourceSystem* InResourceSystem)
 	{
 		/*CommonShaderHandles::FXAA = InResourceSystem->LoadFile("Shader/fxaa.shader");
@@ -36,10 +42,91 @@ namespace Dawn
 
 		CommonShaderHandles::DebugVS = InResourceSystem->LoadFile("Shader/HLSL/default.h_vs");
 		CommonShaderHandles::DebugPS = InResourceSystem->LoadFile("Shader/HLSL/default.h_ps");
+
+		CommonShaderHandles::ShadowMapVS = InResourceSystem->LoadFile("Shader/HLSL/shadowpass.h_vs");
+		CommonShaderHandles::ColoredSimplePS = InResourceSystem->LoadFile("Shader/HLSL/colored_simple.h_ps");
 	}
 
-	void RenderResourceHelper::CreateCommonPipelineStates()
+	GfxResId CommonConstantBuffers::PerAppData;
+	GfxResId CommonConstantBuffers::PerObjectData;
+	GfxResId CommonConstantBuffers::PerFrameData;
+
+	Map<std::string, Dawn::GfxResId> CachedObjects;
+
+	void RenderResourceHelper::CreateConstantBuffers(GfxGDI* InGDI)
 	{
-		
+		CBPerAppData perAppData = {};
+		CommonConstantBuffers::PerAppData = CreateConstantBuffer(InGDI, &perAppData, sizeof(perAppData));
+		CBPerFrameData perFrameData = {};
+		CommonConstantBuffers::PerFrameData = CreateConstantBuffer(InGDI, &perFrameData, sizeof(perFrameData));
+		CBPerObjectData perObjectData = {};
+		CommonConstantBuffers::PerObjectData = CreateConstantBuffer(InGDI, &perObjectData, sizeof(perObjectData));
+	}
+
+	GfxResId RenderResourceHelper::CreateConstantBuffer(GfxGDI* InGDI, void* InData, i32 InSize)
+	{
+		GfxBuffer* constantBuffer = nullptr;
+
+		GfxBufferDesc desc;
+		desc.AccessFlags = GfxCpuAccessFlags::CpuAccess_Write;
+		desc.Usage = GfxUsageFlags::Usage_Dynamic;
+		desc.BindFlags = GfxBindFlags::Bind_ConstantBuffer;
+		desc.ByteWidth = InSize;
+
+		GfxBufferData data;
+		data.Data = &InData;
+		data.Size = InSize;
+
+		return InGDI->CreateBuffer(desc, data, &constantBuffer);
+	}
+
+	void RenderResourceHelper::CreatePSODefaults(Application* InApplication)
+	{
+		auto gdi = InApplication->GetGDI();
+		auto rs = InApplication->GetResourceSystem();
+
+		// Create DEBUG PSO!
+		GfxPipelineStateObjectDesc desc = {};
+		desc.RasterizerState.CullMode = GfxCullMode::CullNone;
+		desc.RasterizerState.FillMode = GfxFillMode::FillWireframe;
+		desc.RasterizerState.FrontCounterClockwise =1;
+
+		desc.BlendState.RenderTarget[0].BlendEnable = FALSE;
+		desc.BlendState.RenderTarget[0].RenderTargetWriteMask = (((1 | 2) | 4) | 8);
+
+		desc.InputLayout = gPositionNormUV2Layout;
+		desc.TopologyType = GfxTopologyType::TopologyPolygon;
+		desc.PixelShaderId = rs->FindShader(CommonShaderHandles::DebugPS)->GfxShaderId;
+		desc.VertexShaderId = rs->FindShader(CommonShaderHandles::DebugVS)->GfxShaderId;
+
+		CachePSO("Debug", gdi->CreatePSO(desc, nullptr));
+
+		// Create Shadow PSO
+		GfxPipelineStateObjectDesc shadowDesc = {};
+		shadowDesc.RasterizerState.CullMode = GfxCullMode::CullFront;
+		shadowDesc.RasterizerState.FillMode = GfxFillMode::FillSolid;
+		shadowDesc.RasterizerState.FrontCounterClockwise = 0;
+
+		shadowDesc.BlendState.RenderTarget[0].BlendEnable = FALSE;
+		shadowDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = (((1 | 2) | 4) | 8);
+
+		shadowDesc.InputLayout = gPositionNormUV2Layout;
+		shadowDesc.TopologyType = GfxTopologyType::TopologyPolygon;
+		shadowDesc.PixelShaderId = rs->FindShader(CommonShaderHandles::ColoredSimplePS)->GfxShaderId;
+		shadowDesc.VertexShaderId = rs->FindShader(CommonShaderHandles::ShadowMapVS)->GfxShaderId;
+
+		CachePSO("Shadow", gdi->CreatePSO(shadowDesc, nullptr));
+	}
+
+	void RenderResourceHelper::CachePSO(const std::string& InName, Dawn::GfxResId InId)
+	{
+		D_ASSERT(!CachedObjects.Exists(InName), std::string("PSO with the same name " + InName + " already added!").c_str());
+		CachedObjects.Push(InName, InId);
+	}
+
+	Dawn::GfxResId RenderResourceHelper::GetCachedPSO(const std::string& InName)
+	{
+		D_ASSERT(CachedObjects.Exists(InName), std::string("Couldn't find PSO with name " + InName).c_str());
+		return CachedObjects[InName];
 	}
 }

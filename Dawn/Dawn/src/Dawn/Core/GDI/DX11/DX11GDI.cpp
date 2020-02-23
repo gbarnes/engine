@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "DX11GDI.h"
-#include "DX11RenderBuffer.h"
 #include "DX11Shader.h"
 #include "DX11VertexArrayObject.h"
 #include "DX11Buffer.h"
@@ -236,6 +235,18 @@ void Dawn::DX11GDI::CommitShaderResources(const GfxResId& InPSOId)
 			Context->VSSetConstantBuffers(0, u32(cache->NumConstantBuffers()), cache->ToConstantBuffers());
 		}
 	}
+}
+
+void Dawn::DX11GDI::UpdateConstantBuffer(const GfxResId& InBufferId, void* InData, i32 InSize)
+{
+	// todo (gb): should this method be written to take multiple buffers??
+	DX11Buffer* buffer = static_cast<DX11Buffer*>(GetBuffer(InBufferId));
+	D_ASSERT(buffer != nullptr, "The constant buffer couldn't be found!");
+
+	D3D11_MAPPED_SUBRESOURCE mappedRes = {};
+	Context->Map(buffer->ToD3DBuffer(), 0, D3D11_MAP::D3D11_MAP_WRITE_DISCARD, 0, &mappedRes);
+	memcpy(mappedRes.pData, InData, InSize);
+	Context->Unmap(buffer->ToD3DBuffer(), 0);
 }
 
 Dawn::GfxResId Dawn::DX11GDI::CreateBuffer(const GfxBufferDesc& InDesc, const GfxBufferData& InData, GfxBuffer** OutBuffer)

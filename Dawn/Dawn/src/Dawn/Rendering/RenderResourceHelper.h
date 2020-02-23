@@ -3,17 +3,6 @@
 
 namespace Dawn
 {
-	enum RootSignatureTypes {
-		RS_Standard,
-		RS_Debug
-	};
-
-	enum PipelineStateTypes {
-		PS_Standard,
-		PS_Debug_Line,
-		PS_Debug_Point
-	};
-
 	struct DAWN_API CommonShaderHandles
 	{
 		static ResourceId FXAA;
@@ -29,6 +18,8 @@ namespace Dawn
 
 		static ResourceId DebugVS;
 		static ResourceId DebugPS;
+		static ResourceId ShadowMapVS;
+		static ResourceId ColoredSimplePS;
 	};
 
 	struct DAWN_API EditorShaderHandles
@@ -36,11 +27,48 @@ namespace Dawn
 		static ResourceId Grid;
 	};
 
+	struct CommonConstantBuffers
+	{
+		static GfxResId PerAppData;
+		static GfxResId PerObjectData;
+		static GfxResId PerFrameData;
+	};
+
+	struct CBPerAppData
+	{
+		mat4 Projection;
+	};
+
+	struct CBPerFrameData
+	{
+		mat4 View;
+	};
+
+	struct CBPerObjectData
+	{
+		mat4 World;
+	};
+
+	enum RenderCachedPSO
+	{
+		PSO_Debug,
+		PSO_Shadow,
+		PSO_Num
+	};
+
 	class ResourceSystem;
+	class Application;
 
 	namespace RenderResourceHelper
 	{
+		
+
 		DAWN_API void LoadCommonShaders(ResourceSystem* InResourceSystem);
-		DAWN_API void CreateCommonPipelineStates();
+		DAWN_API void CreateConstantBuffers(GfxGDI* InGDI);
+		DAWN_API GfxResId CreateConstantBuffer(GfxGDI* InGDI, void* InData, i32 InSize);
+
+		DAWN_API void CreatePSODefaults(Application* InApplication);
+		DAWN_API void CachePSO(const std::string& InName, Dawn::GfxResId InId);
+		DAWN_API Dawn::GfxResId GetCachedPSO(const std::string& InName);
 	}
 }

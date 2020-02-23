@@ -14,7 +14,7 @@ namespace Dawn
 		~GfxRTBundle();
 
 		void AttachColorTarget(u32 InWidth, u32 InHeight, GfxFormat InFormat);
-		void SetDephtStencilTarget(u32 InWidth, u32 InHeight, GfxFormat InFormat);
+		void SetDepthStencilTarget(u32 InWidth, u32 InHeight, GfxFormat InFormat);
 
 		GfxTextureView* GetColorTarget(i32 InIndex) const;
 		GfxTextureView* GetDepthStencilTarget() const;

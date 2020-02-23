@@ -59,6 +59,7 @@ namespace Dawn
 		float Metallic;
 		float Roughness;
 		float Ao;
+		GfxResId PSOId = INVALID_HANDLE;
 		GfxResId ShaderId;
 		GfxResId DiffuseTexture = INVALID_HANDLE;
 	};

@@ -79,9 +79,9 @@ namespace Dawn
 
 		T* Find(const GenericHandle& Id) const
 		{
-			assert(Id.IsValid == true);
+			D_ASSERT(Id.IsValid == true, "The passed ID isn't valid!");
 			auto& Slot = Slots[Id.Index];
-			assert(Slot.Id.Generation == Id.Generation);
+			D_ASSERT(Slot.Id.Generation == Id.Generation, "The passed ID doesn't match the generation!");
 			return Slot.Element;
 		}
 
@@ -94,7 +94,7 @@ namespace Dawn
 			auto& Slot = Slots[Id.Index];
 			Allocator.Free(Slot.Element);
 			Slot.Element = nullptr;
-			Slot.Id.IsValid = false;
+			//Slot.Id.IsValid = false;
 		}
 
 		void Clear()

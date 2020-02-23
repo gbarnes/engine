@@ -26,6 +26,7 @@ namespace Dawn
 		virtual void SetVAO(const GfxResId& InId) override;
 		virtual void BindPipelineShaders() override;
 		virtual void CommitShaderResources(const GfxResId& InPSOId) override;
+		virtual void UpdateConstantBuffer(const GfxResId& InBufferId, void* InData, i32 InSize) override;
 	public:
 		virtual GfxResId CreateBuffer(const GfxBufferDesc& InDesc, const GfxBufferData& InData, GfxBuffer** OutBuffer) override;
 		virtual GfxResId CreateVertexArrayObject(GfxVertexArrayObject** OutBuffer) override;

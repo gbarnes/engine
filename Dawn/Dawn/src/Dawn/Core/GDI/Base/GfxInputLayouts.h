@@ -27,7 +27,7 @@ namespace Dawn
 		{ GfxShaderDataType::Position, "position" },
 		{ GfxShaderDataType::Normal, "normal" },
 		{ GfxShaderDataType::TexCoord0, "uv" },
-		{ GfxShaderDataType::TexCoord1, "uv_x" }
+		{ GfxShaderDataType::TexCoord1, "uv1" }
 	};
 
 	const GfxInputLayout gPositionNormUV2InstancedLayout =

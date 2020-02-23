@@ -47,6 +47,7 @@ namespace Dawn
 		virtual void SetVAO(const GfxResId& InId) = 0;
 		virtual void CommitShaderResources(const GfxResId& InPSOId) = 0;
 		virtual void BindPipelineShaders() = 0;
+		virtual void UpdateConstantBuffer(const GfxResId& InBufferId, void* InData, i32 InSize) = 0;
 
 	public:
 		virtual GfxResId CreateBuffer(const GfxBufferDesc& InDesc, const GfxBufferData& InData, GfxBuffer** OutBuffer) = 0;

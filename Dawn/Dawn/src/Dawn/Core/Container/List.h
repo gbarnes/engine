@@ -120,7 +120,7 @@ namespace Dawn
 			{
 				SListNode<T>* temp = Node;
 				Node = Node->Previous;
-				delete temp;
+				SafeDelete(temp);
 			}
 
 			Tail = nullptr;
