@@ -76,7 +76,7 @@ void Dawn::DeferredRenderer::CreatePasses(Application* InApplication)
 {
 	// Push passes in the order you want them to be processed!!
 
-	auto* shadowPass = BeginPass("Shadow");
+	/*auto* shadowPass = BeginPass("Shadow");
 	shadowPass->Setup = [&](RenderPass* InPass)
 	{
 		auto Settings = InApplication->GetSettings();
@@ -97,37 +97,33 @@ void Dawn::DeferredRenderer::CreatePasses(Application* InApplication)
 		ShadowPassCmd->ShaderId = CommonShaderHandles::ShadowMapCompute;
 		ShadowPassCmd->LightSpace = directionalLights[0]->LightSpace;
 	};
-	PushPass(shadowPass);
+	PushPass(shadowPass);*/
 
 	// -----------------------------------------------------------------------------------------
 	auto* geometryPass = BeginPass("Geometry");
 	geometryPass->Setup = [&](RenderPass* InPass) 
 	{
-		auto Settings = InApplication->GetSettings();
-		InPass->RenderTargets.SetGDI(InApplication->GetGDI());
+		auto Settings = g_Application->GetSettings();
+		InPass->RenderTargets.SetGDI(g_Application->GetGDI());
 		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA32F); // Position
 		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA32F); // Normal
 		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA32F); // Albedo, AO
 		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA32F); // Metallic,Roughness
 		InPass->RenderTargets.SetDepthStencilTarget(Settings->Width, Settings->Height, GfxFormat::D24S8);
 	};
-	geometryPass->PerFrameSetup = [&](RenderPass* InPass) 
+	geometryPass->PerFrameSetup = [](RenderPass* InPass) 
 	{
 		auto* cam = World::GetActiveCamera();
-		
+		auto gdi = g_Application->GetGDI();
+
 		InPass->Bucket.Reset(2048, &InPass->RenderTargets, cam->GetView(), cam->GetProjection());
 
-		auto ViewportCmd = InPass->Bucket.AddCommand<Draw::SetViewportData>(1u);
-		ViewportCmd->Width = cam->Width;
-		ViewportCmd->Height = cam->Height;
-
-		auto ClearColor = InPass->Bucket.AppendCommand<Draw::ClearSceneWithColorData>(ViewportCmd);
-		ClearColor->ClearColor = vec4(0.0, 0.0, 0.0, 1.0f);
+		gdi->ClearWithColor(gdi->GetBackBufferId(), vec4(0.4f, 0.5f, 0.7f, 1.0f));
 	};
 	PushPass(geometryPass);
 
 	// -----------------------------------------------------------------------------------------
-	auto* lightingPass = BeginPass("Lighting");
+	/*auto* lightingPass = BeginPass("Lighting");
 	lightingPass->Setup = [&](RenderPass* InPass)
 	{
 		
@@ -143,7 +139,7 @@ void Dawn::DeferredRenderer::CreatePasses(Application* InApplication)
 		LightingPassData->FSQuadVAOId = FinalPassQuadId;
 		LightingPassData->ViewPosition = World::GetActiveCamera()->GetTransform()->Position;
 		LightingPassData->SSAOBufferId = SSAOBlurBufferId;*/
-	};
+	/*};
 	PushPass(lightingPass);
 
 	// -----------------------------------------------------------------------------------------
@@ -201,113 +197,10 @@ void Dawn::DeferredRenderer::CreatePasses(Application* InApplication)
 		//FXAAPass->RenderBufferId = Renderer->TransientData.FinalBufferId;
 		//FXAAPass->FSQuadVAOId = FinalPassQuadId;
 	};
-	PushPass(fxaaPass);
+	PushPass(fxaaPass);*/
 }
-
-/*
-void Dawn::DeferredRenderer::AllocateTransientData(Application* InApp)
-{
-	auto GDI = InApp->GetGDI();
-	auto Settings = InApp->GetSettings();
-
-	/*
-	auto* cache = pso->GetResourceCache(GfxShaderType::Vertex);
-
-	// create per app data constant buffer
-	{
-		GfxConstantPerAppData appData;
-		appData.Projection = mat4();
-
-		GfxBuffer* constantBuffer;
-		GfxBufferDesc desc;
-		desc.AccessFlags = GfxCpuAccessFlags::CpuAccess_Write;
-		desc.Usage = GfxUsageFlags::Usage_Dynamic;
-		desc.BindFlags = GfxBindFlags::Bind_ConstantBuffer;
-		desc.ByteWidth = sizeof(GfxConstantPerAppData);
-
-		GfxBufferData data;
-		data.Data = &appData;
-		data.Size = sizeof(appData);
-
-		TransientData.PerAppBuffer = GDI->CreateBuffer(desc, data, &constantBuffer);
-		cache->BindConstantBuffer(constantBuffer);
-	}
-
-	// create per app data constant buffer
-	{
-		GfxConstantPerFrameData frameData;
-		frameData.View = mat4();
-
-		GfxBuffer* constantBuffer;
-
-		GfxBufferDesc desc;
-		desc.AccessFlags = GfxCpuAccessFlags::CpuAccess_Write;
-		desc.Usage = GfxUsageFlags::Usage_Dynamic;
-		desc.BindFlags = GfxBindFlags::Bind_ConstantBuffer;
-		desc.ByteWidth = sizeof(GfxConstantPerAppData);
-
-		GfxBufferData data;
-		data.Data = &frameData;
-		data.Size = sizeof(frameData);
-
-		TransientData.PerAppBuffer = GDI->CreateBuffer(desc, data, &constantBuffer);
-		cache->BindConstantBuffer(constantBuffer);
-	}
-
-	// create per app data constant buffer
-	{
-		GfxConstantPerObjectData objectData;
-		objectData.World = mat4();
-
-		GfxBuffer* constantBuffer;
-
-		GfxBufferDesc desc;
-		desc.AccessFlags = GfxCpuAccessFlags::CpuAccess_Write;
-		desc.Usage = GfxUsageFlags::Usage_Dynamic;
-		desc.BindFlags = GfxBindFlags::Bind_ConstantBuffer;
-		desc.ByteWidth = sizeof(GfxConstantPerAppData);
-
-		GfxBufferData data;
-		data.Data = &objectData;
-		data.Size = sizeof(objectData);
-
-		TransientData.PerObjectBuffer = GDI->CreateBuffer(desc, data, &constantBuffer);
-		cache->BindConstantBuffer(constantBuffer);
-	}
-}*/
-
 void Dawn::DeferredRenderer::Resize(GfxGDI* InGDI, u32 InWidth, u32 InHeight)
 {
-	/*if (auto GBuffer = InGDI->GetRenderBuffer(TransientData.GBufferId))
-	{
-		GBuffer->AttachColorTarget(0, InWidth, InHeight);	// Position
-		GBuffer->AttachColorTarget(1, InWidth, InHeight);	// Normal
-		GBuffer->AttachColorTarget(2, InWidth, InHeight);	// Albedo
-		GBuffer->AttachColorTarget(3, InWidth, InHeight);	// Albedo
-		GBuffer->AttachDepthStencilTarget(InWidth, InHeight);
-	}
-
-	if (auto FinalBuffer = InGDI->GetRenderBuffer(TransientData.FinalBufferId))
-	{
-		FinalBuffer->AttachColorTarget(0, InWidth, InHeight);	// Position
-		FinalBuffer->AttachDepthStencilTarget(InWidth, InHeight);
-	}
-
-	if (auto SSAOBuffer = InGDI->GetRenderBuffer(TransientData.SSAOBufferId))
-	{
-		SSAOBuffer->AttachColorTarget(0, InWidth, InHeight, RGBA16F, R);
-	}
-
-	if (auto SSAOBlurBuffer = InGDI->GetRenderBuffer(TransientData.SSAOBlurBufferId))
-	{
-		SSAOBlurBuffer->AttachColorTarget(0, InWidth, InHeight, RGBA16F, R);
-	}
-
-	if (auto ShadowMapBuffer = InGDI->GetRenderBuffer(TransientData.ShadowMapBufferId))
-	{
-		ShadowMapBuffer->AttachDepthTarget(InWidth, InHeight);
-	}*/
-
 	InGDI->Resize(InWidth, InHeight);
 }
 

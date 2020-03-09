@@ -118,17 +118,16 @@ namespace Dawn
 
 	void ShowFramegraph()
 	{
-		float fps = ImGui::GetIO().DeltaTime * 1000;
+		const auto time = g_Application->GetTime();
+		float fps = time.FrameDeltaTime * 1000;//ImGui::GetIO().DeltaTime * 1000;
 
-		
 		for (size_t i = 1; i < AmountFrames; ++i)
 		{
 			gFrames[i - 1] = gFrames[i];
 		}
 
-		gFrames[AmountFrames - 1] = fps;
+		gFrames[AmountFrames - 1] = std::max(fps, 16.66f);
 		
-
 		auto Settings = g_Application->GetSettings();
 
 		ImGui::Begin(PlotLabel, nullptr, ImGuiWindowFlags_NoTitleBar |

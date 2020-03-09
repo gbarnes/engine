@@ -19,7 +19,7 @@ namespace Dawn
 		virtual void DrawArray(const GfxResId& VertexArrayId) override;
 		virtual void DrawInstanced(const GfxResId& VertexArrayId, u32 InAmount) override;
 		virtual void SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom) override;
-		virtual void ClearWithColor(const vec4& InColor) override;
+		virtual void ClearWithColor(const GfxResId& InTextureViewId, const vec4& InColor) override;
 		virtual void Clear() override;
 
 		virtual void SetPipelineState(const GfxResId& InId) override;
@@ -27,6 +27,10 @@ namespace Dawn
 		virtual void BindPipelineShaders() override;
 		virtual void CommitShaderResources(const GfxResId& InPSOId) override;
 		virtual void UpdateConstantBuffer(const GfxResId& InBufferId, void* InData, i32 InSize) override;
+		GfxResId GetBackBufferId() override
+		{
+			return BackbufferId;
+		}
 	public:
 		virtual GfxResId CreateBuffer(const GfxBufferDesc& InDesc, const GfxBufferData& InData, GfxBuffer** OutBuffer) override;
 		virtual GfxResId CreateVertexArrayObject(GfxVertexArrayObject** OutBuffer) override;

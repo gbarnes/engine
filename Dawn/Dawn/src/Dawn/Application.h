@@ -31,7 +31,7 @@ namespace Dawn
 		Shared<ResourceSystem> GetResourceSystem();
 		Window* GetWindow() const;
 		bool GetIsInEditMode() const { return bIsInEditMode;}
-
+		const Time& GetTime() const { return Time; }
 	protected:
 		std::vector<Layer*> Layers;
 		std::vector<Layer*>::iterator LayerInsertCount;

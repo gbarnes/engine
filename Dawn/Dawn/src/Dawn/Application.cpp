@@ -164,7 +164,7 @@ namespace Dawn
 		EditorWorld->AddTable("Camera", std::make_unique<ComponentTable<Camera>>());
 		//
 
-		GetWorld()->CreateModelEntity(std::string("spaceCraft"), std::string("Model/spaceCraft1.fbx"), vec3(0, 0, 0));
+		//GetWorld()->CreateModelEntity(std::string("spaceCraft"), std::string("Model/spaceCraft1.fbx"), vec3(0, 0, 0));
 
 		Physics = std::make_shared<PhysicsWorld>();
 		if(!Physics->Initialize())
@@ -206,17 +206,15 @@ namespace Dawn
 		GDI->UpdateConstantBuffer(CommonConstantBuffers::PerObjectData, &objectData, sizeof(objectData));
 
 		/*{
-			
-			
 			SetupLayers();
-		}
+		}*/
 
 		ImGuizmo::SetOrthographic(false);
-		*/
+		
 		DWN_CORE_INFO("Core Context initialized.");
 
 		auto* vao = GfxPrimitiveFactory::AllocateCube(GDI.get());
-
+		
 		GDI->BindPipelineShaders();
 		
 		{
@@ -236,11 +234,11 @@ namespace Dawn
 				}
 
 
-				GDI->ClearWithColor(vec4(0.4, 0.4, 0.8, 1));
-				GDI->DrawIndexed(vao->GetId());
-				OnPostRender(GDI.get(), Renderer.get());
-				GDI->Present();
-				//Tick();
+				//GDI->ClearWithColor(vec4(0.4, 0.4, 0.8, 1));
+				//GDI->DrawIndexed(vao->GetId());
+				//OnPostRender(GDI.get(), Renderer.get());
+				//GDI->Present();
+				Tick();
 			}
 		}
 
@@ -270,7 +268,8 @@ namespace Dawn
 		Time.FrameCount++;
 		
 #if DAWN_DEBUG
-		if (IsKeyPressed(KeyCode::KeyCode_F6)) {
+		if (IsKeyPressed(KeyCode::KeyCode_F6)) 
+		{
 			bIsInEditMode = !bIsInEditMode;
 			
 			if(bIsInEditMode)
@@ -311,7 +310,7 @@ namespace Dawn
 				if (scene)
 				{
 					scene->simulate(FixedTime);
-					scene->fetchResults(true);
+					scene->fetchResults(false);
 				}
 
 				ResourceSystem->Refresh();
@@ -323,15 +322,15 @@ namespace Dawn
 
 		// Rendering
 		{BROFILER_EVENT("Rendering")
-			World->UpdateSceneGraph();
+			//World->UpdateSceneGraph();
 			auto* Camera = World::GetActiveCamera();
 			Renderer->BeginFrame(GDI.get(), Camera);
 		
-			for (auto Layer : Layers)
-				Layer->Render();
+			//for (auto Layer : Layers)
+			//	Layer->Render();
 
 			// todo (gb): do this differently?! :D
-			GetWorld()->GetSystemByType<MeshFilterSystem>(MeshFilterSystem::GetType())->Update(GetWorld().get());
+			//GetWorld()->GetSystemByType<MeshFilterSystem>(MeshFilterSystem::GetType())->Update(GetWorld().get());
 
 			Renderer->Submit(this);
 			Renderer->EndFrame(GDI.get());

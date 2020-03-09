@@ -17,7 +17,7 @@ void Dawn::PSOCache::CreateDefaults(Application* InApplication)
 	// Create DEBUG PSO!
 	GfxPipelineStateObjectDesc desc = {};
 	desc.RasterizerState.CullMode = GfxCullMode::CullBack;
-	desc.RasterizerState.FillMode = GfxFillMode::FillWireframe;
+	desc.RasterizerState.FillMode = GfxFillMode::FillSolid; 
 	desc.RasterizerState.FrontCounterClockwise = 1;
 
 	desc.BlendState.RenderTarget[0].BlendEnable = FALSE;

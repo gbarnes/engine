@@ -149,9 +149,9 @@ void Dawn::DX11GDI::SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom
 	Context->RSSetScissorRects(1, &rect);
 }
 
-void Dawn::DX11GDI::ClearWithColor(const vec4& InColor)
+void Dawn::DX11GDI::ClearWithColor(const GfxResId& InTextureViewId, const vec4& InColor)
 {
-	auto* buffer = static_cast<DX11TextureView*>(GetTextureView(BackbufferId));
+	auto* buffer = static_cast<DX11TextureView*>(GetTextureView(InTextureViewId));
 	auto* rt = static_cast<ID3D11RenderTargetView*>(buffer->GetD3DView());
 	Context->OMSetRenderTargets(1, &rt, nullptr);
 

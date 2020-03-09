@@ -20,6 +20,7 @@ namespace Dawn
 		typedef T Key;
 	public:
 		RenderBucket()
+			: Keys(nullptr), Data(nullptr)
 		{
 			HeapMemory = Memory::HeapArea(_2MB);
 			Allocator = Allocators::LinearAllocator(HeapMemory.GetStart(), HeapMemory.GetEnd());
@@ -48,6 +49,7 @@ namespace Dawn
 				Data = new CommandPacket[InMaxSize];
 			}
 
+			CommandCount = 0;
 			Projection = InProjMatrix;
 			View = InViewMatrix;
 		}

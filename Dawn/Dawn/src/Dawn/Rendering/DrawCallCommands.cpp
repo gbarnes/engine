@@ -66,7 +66,7 @@ namespace Dawn
 	DAWN_API void Draw::ClearWithColor(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
 	{
 		const ClearSceneWithColorData* RenderData = static_cast<const ClearSceneWithColorData*>(data);
-		InGDI->ClearWithColor(RenderData->ClearColor);
+		//InGDI->ClearWithColor(RenderData->ClearColor);
 	}
 
 	DAWN_API void Draw::SetViewport(GfxGDI* InGDI, DeferredRenderer* InRenderer, const void* data)
@@ -199,7 +199,7 @@ namespace Dawn
 		InRenderer->CurrentShader = InGDI->GetShader(RenderData->ShaderId);
 		//glCullFace(GL_FRONT);
 		InGDI->SetViewport(0, 0, InRenderer->PerFrameData.Camera->Width, InRenderer->PerFrameData.Camera->Height);
-		InGDI->ClearWithColor(vec4(1, 1, 1, 1));
+		//InGDI->ClearWithColor(vec4(1, 1, 1, 1));
 		//InRenderer->CurrentShader->Bind();
 		//InRenderer->CurrentShader->SetMat4("lightSpace", RenderData->LightSpace);
 	}
