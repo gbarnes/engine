@@ -111,11 +111,10 @@ void Dawn::DX11GDI::DrawIndexed(const GfxResId& InVertexArrayId)
 	DX11VertexArrayObject* vao = static_cast<DX11VertexArrayObject*>(GetVertexArrayObject(InVertexArrayId));
 	
 	ID3D11Buffer* ib = vao->GetD3D11IndexBuffer();
-	ID3D11Buffer* vb = vao->GetD3D11VertexBuffers();
 	Context->IASetIndexBuffer(ib, DXGI_FORMAT::DXGI_FORMAT_R32_UINT, 0);
 
 	u32 offsets = 0;
-	Context->IASetVertexBuffers(0, vao->GetVertexBufferCount(), &vb, vao->GetStrides(), &offsets);
+	Context->IASetVertexBuffers(0, vao->GetVertexBufferCount(), vao->GetD3D11VertexBuffers(), vao->GetStrides(), &offsets);
 	Context->DrawIndexed(vao->GetIndiceCount(), 0, 0);
 }
 
@@ -126,7 +125,15 @@ void Dawn::DX11GDI::DrawArray(const GfxResId& VertexArrayId)
 
 void Dawn::DX11GDI::DrawInstanced(const GfxResId& VertexArrayId, u32 InAmount)
 {
+	DX11VertexArrayObject* vao = static_cast<DX11VertexArrayObject*>(GetVertexArrayObject(VertexArrayId));
 
+	ID3D11Buffer* ib = vao->GetD3D11IndexBuffer();
+	Context->IASetIndexBuffer(ib, DXGI_FORMAT::DXGI_FORMAT_R32_UINT, 0);
+
+	// todo(gb): pass this by the vao!
+	u32 offsets[] = { 0, 0 };
+	Context->IASetVertexBuffers(0, vao->GetVertexBufferCount(), vao->GetD3D11VertexBuffers(), vao->GetStrides(), offsets);
+	Context->DrawIndexedInstanced(vao->GetIndiceCount(), InAmount, 0, 0, 0);
 }
 
 void Dawn::DX11GDI::SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom)
@@ -187,10 +194,8 @@ void Dawn::DX11GDI::SetPipelineState(const GfxResId& InId)
 
 void Dawn::DX11GDI::SetVAO(const GfxResId& InId)
 {
-	const auto* vao = static_cast<const DX11VertexArrayObject*>(GetVertexArrayObject(InId));
-	
-	auto* vbs = vao->GetD3D11VertexBuffers();
-	Context->IASetVertexBuffers(0, vao->GetVertexBufferCount(), &vbs, vao->GetStrides(), 0);
+	auto* vao = static_cast<DX11VertexArrayObject*>(GetVertexArrayObject(InId));
+	Context->IASetVertexBuffers(0, vao->GetVertexBufferCount(), vao->GetD3D11VertexBuffers(), vao->GetStrides(), 0);
 
 	auto* ibs = vao->GetD3D11IndexBuffer();
 	if (ibs != nullptr)

@@ -22,9 +22,9 @@ namespace Dawn
 			return Vertices.Count();
 		}
 
-		ID3D11Buffer* GetD3D11VertexBuffers() const
+		ID3D11Buffer*const* GetD3D11VertexBuffers() const
 		{
-			return VertexBuffers.Data()[0];
+			return VertexBuffers.Data();
 		}
 
 		const u32* GetStrides() const
@@ -32,11 +32,11 @@ namespace Dawn
 			return Strides.Data();
 		}
 
-
-		const u32 GetIndiceCount() const
+		virtual i32 GetIndiceCount() const override
 		{
 			return NumIndices;
 		}
+
 
 		ID3D11Buffer* GetD3D11IndexBuffer() const
 		{

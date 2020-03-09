@@ -193,7 +193,6 @@ namespace Dawn
 
 		CBPerAppData appData = {};
 		appData.Projection = World::GetActiveCamera()->GetProjection();
-
 		GDI->UpdateConstantBuffer(CommonConstantBuffers::PerAppData, &appData, sizeof(appData));
 
 
@@ -205,10 +204,7 @@ namespace Dawn
 		objectData.World = glm::scale(mat4(1), vec3(0.2f)) * glm::rotate(mat4(1), glm::radians(80.0f), vec3(1.f, -1.0f, 1.0f));
 		GDI->UpdateConstantBuffer(CommonConstantBuffers::PerObjectData, &objectData, sizeof(objectData));
 
-		/*{
-			SetupLayers();
-		}*/
-
+		SetupLayers();
 		ImGuizmo::SetOrthographic(false);
 		
 		DWN_CORE_INFO("Core Context initialized.");
@@ -299,18 +295,20 @@ namespace Dawn
 
 		{BROFILER_EVENT("FIXED UPDATE")
 			
+			// The physics engine is being updated at a different fixed 
+			// rate to have more consistent results. 
+			// The framerate is being updated every 33ms 
 			Time.AlignedPhysicsDeltaTime += Time.FrameDeltaTime;
 			while (Time.AlignedPhysicsDeltaTime >= Time::TargetPhysicsUpdateRate)
 			{
 				const float FixedTime = Time.AlignedPhysicsDeltaTime * Time.TimeScale;
 				FixedUpdate(FixedTime);
 
-				// Take care of updating the physics engine!
 				auto scene = GetPhysics()->GetScene();
 				if (scene)
 				{
 					scene->simulate(FixedTime);
-					scene->fetchResults(false);
+					scene->fetchResults(true);
 				}
 
 				ResourceSystem->Refresh();
@@ -318,16 +316,14 @@ namespace Dawn
 			}
 		}
 
-		StepTime(Time);
-
 		// Rendering
 		{BROFILER_EVENT("Rendering")
-			//World->UpdateSceneGraph();
-			auto* Camera = World::GetActiveCamera();
-			Renderer->BeginFrame(GDI.get(), Camera);
+			World->UpdateSceneGraph();
+			
+			Renderer->BeginFrame(GDI.get(), World::GetActiveCamera());
 		
-			//for (auto Layer : Layers)
-			//	Layer->Render();
+			for (auto Layer : Layers)
+				Layer->Render();
 
 			// todo (gb): do this differently?! :D
 			//GetWorld()->GetSystemByType<MeshFilterSystem>(MeshFilterSystem::GetType())->Update(GetWorld().get());
@@ -335,6 +331,8 @@ namespace Dawn
 			Renderer->Submit(this);
 			Renderer->EndFrame(GDI.get());
 		}
+
+		StepTime(Time);
 	}
 
 	void Application::Render()

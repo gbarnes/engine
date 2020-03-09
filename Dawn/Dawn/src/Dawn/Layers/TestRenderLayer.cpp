@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "TestRenderLayer.h"
-#include "Core/GDI/inc_gfx.h"
+#include "Core/GDI/Base/GfxVertexArrayObject.h"
 #include "Rendering/DeferredRenderer.h"
 #include "Application.h"
 #include "inc_core.h"
@@ -24,7 +24,8 @@ namespace Dawn
 	Model* usedModel;
 	Image* DiffuseImage;
 	Material* SampleMaterial;
-	//GfxVertexArray* CubeMeshArray;
+	Material* SampleMaterial2;
+	GfxVertexArrayObject* CubeMeshArray;
 	//GfxVertexBuffer* ModelMatrixBuffer;
 
 	std::vector<ResourceId> Materials;
@@ -82,13 +83,13 @@ namespace Dawn
 		g_camTransform = g_camera->GetTransform(EditorWorld.get());
 		CameraUtils::CalculateView(g_camera, g_camTransform);
 
-		vec3 eulers = glm::eulerAngles(g_camTransform->Rotation);
+		/*vec3 eulers = glm::eulerAngles(g_camTransform->Rotation);
 		yaw = -eulers.y;
 		pitch = -eulers.x;
 
 		g_camera1 = g_World->GetCamera(0);
 		World->SetActiveCamera(g_camera1);
-		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(World.get()));
+		CameraUtils::CalculateView(g_camera1, g_camera1->GetTransform(World.get()));*/
 
 		/*auto Light = LightUtils::CreateDirectionalLight(World.get(), quat(), vec4(0.9, 0.9, 0.9, 1.0f));
 		DirectionalLightId = Light->Id.Entity;
@@ -125,7 +126,13 @@ namespace Dawn
 		auto MatId = RS->CreateMaterial(&SampleMaterial);
 		SampleMaterial->Albedo = vec4(0.7f, 0.7f, 0.7f, 1.0f);
 		SampleMaterial->ShaderId = CommonShaderHandles::StandardInstanced;
+		SampleMaterial->PSOId = RenderResourceHelper::GetCachedPSO("Debug");
 
+		
+
+		auto MatId2 = RS->CreateMaterial(&SampleMaterial2);
+		SampleMaterial2->Albedo = vec4(0.7f, 0.7f, 0.7f, 1.0f);
+		SampleMaterial2->PSOId = RenderResourceHelper::GetCachedPSO("DebugInstanced");
 
 		glm::mat4* modelMatrices = new glm::mat4[Size];
 		u32 row = 0;
@@ -143,22 +150,25 @@ namespace Dawn
 			}
 		}
 
-		//CubeMeshArray = GfxPrimitiveFactory::AllocateCube(GDI.get());
+		CubeMeshArray = GfxPrimitiveFactory::AllocateCube(GDI.get());
+		
+		GfxBufferDesc instanceDesc = {};
+		instanceDesc.BindFlags = GfxBindFlags::Bind_VertexBuffer;
+		instanceDesc.ByteWidth = sizeof(glm::mat4) * Size;
+		instanceDesc.StructureByteStride = sizeof(glm::mat4);
+		instanceDesc.AccessFlags = GfxCpuAccessFlags::CpuAccess_None;
+		instanceDesc.Usage = GfxUsageFlags::Usage_Default;
 
-		/*GfxBufferLayout Layout =
-		{
-			{ GfxShaderDataType::Float4, "model" },
-			{ GfxShaderDataType::Float4, "model" },
-			{ GfxShaderDataType::Float4, "model" },
-			{ GfxShaderDataType::Float4, "model" }
-		};
+		GfxBufferData instanceData = {};
+		instanceData.Size = instanceDesc.ByteWidth;
+		instanceData.Data = &modelMatrices[0];
 
-		GDI->CreateVertexBuffer(&modelMatrices[0], Size * sizeof(glm::mat4), &ModelMatrixBuffer);
-		ModelMatrixBuffer->SetLayout(Layout);
-		CubeMeshArray->AttachVertexBuffer(ModelMatrixBuffer, 1);
-		delete[] modelMatrices;*/
+		GfxBuffer* instanceBuffer = nullptr;
+		GDI->CreateBuffer(instanceDesc, instanceData, &instanceBuffer);
+		CubeMeshArray->AttachVertexBuffer(instanceBuffer);
+		delete[] modelMatrices;
 
-		CubeDrawKey = GenDrawKey64(true, SampleMaterial->Id.Index, RenderLayer::StaticGeom, 0.0f);
+		CubeDrawKey = GenDrawKey64(true, SampleMaterial2->Id.Index, RenderLayer::StaticGeom, 0.0f);
 	}
 
 	void TestRenderLayer::Update(float InDeltaTime)
@@ -227,6 +237,10 @@ namespace Dawn
 				}
 
 				CameraUtils::CalculateView(g_camera, g_camTransform);
+
+				CBPerFrameData frameData = {};
+				frameData.View = g_camera->GetView();
+				g_Application->GetGDI()->UpdateConstantBuffer(CommonConstantBuffers::PerFrameData, &frameData, sizeof(frameData));
 			}
 		}
 	}
@@ -244,10 +258,10 @@ namespace Dawn
 				DrawCmd->VertexArrayId = Mesh->VertexArrayId;
 				DrawCmd->Model = InModelMatrix;
 
-				auto ShadowDrawCmd = Renderer->GetPass(RenderPassId::ShadowMap)->Bucket.AddCommand<Draw::DrawIndexedData>(0u);
+				/*auto ShadowDrawCmd = Renderer->GetPass(RenderPassId::ShadowMap)->Bucket.AddCommand<Draw::DrawIndexedData>(0u);
 				ShadowDrawCmd->IndexCount = Mesh->NumIndices;
 				ShadowDrawCmd->VertexArrayId = Mesh->VertexArrayId;
-				ShadowDrawCmd->Model = InModelMatrix;
+				ShadowDrawCmd->Model = InModelMatrix*/
 			}
 		}
 	}
@@ -257,122 +271,24 @@ namespace Dawn
 	{
 		BROFILER_CATEGORY("RenderLayer_Render", Brofiler::Color::AliceBlue);
 
-/*
 		auto Renderer = Parent->GetRenderer();
 		auto GDI = Parent->GetGDI();
 		auto World = Parent->GetWorld();
 		auto ActiveCam = World->GetActiveCamera();
 		auto ActiveCamTransform = ActiveCam->GetTransform(ActiveCam->WorldRef);
 
-		// Geometry bucket
-		{
-			auto SetStateCmd = Renderer->PerFrameData.ShadowBucket.AddCommand<Draw::SetStateData>(0u);
-			SetStateCmd->State = { true, false, GCF_Back };
+		mat4 model = mat4(1);
+		DrawSphere(model, SampleMaterial->Id, Parent->GetResourceSystem().get(), Parent->GetRenderer().get(), usedModel);
 
-			auto ShadowPassCmd = Renderer->PerFrameData.ShadowBucket.AppendCommand<Draw::ShadowPassData>(SetStateCmd);
-			ShadowPassCmd->Width = Renderer->ShadowSettings.Width;
-			ShadowPassCmd->Height = Renderer->ShadowSettings.Height;
-			ShadowPassCmd->ShaderId = CommonShaderHandles::ShadowMapCompute;
+		auto DrawCmd = Renderer->GetPass(RenderPassId::Geometry)->Bucket.AddCommand<Draw::DrawInstancedData>(CubeDrawKey);
+		DrawCmd->VertexArrayId = CubeMeshArray->GetId();
+		DrawCmd->IndexCount = CubeMeshArray->GetIndiceCount();
+		DrawCmd->Amount = Size;
 
-			//todo (gb) this should really be done differently...
-			auto directionalLights = World->GetComponentsByType<DirectionalLight>();
-			LightUtils::CalculateOrthoLightMatrix(World.get(), directionalLights[0], 0.1f, 1000.0f);
-			ShadowPassCmd->LightSpace = directionalLights[0]->LightSpace;
-
-			auto SetStateBackCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::SetStateData>(0u);
-			SetStateBackCmd->State = { true, false, GCF_Front };
-
-			auto ViewportCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::SetViewportData>(1u);
-			ViewportCmd->Width = ActiveCam->Width;
-			ViewportCmd->Height = ActiveCam->Height;
-
-			auto ClearColor = Renderer->PerFrameData.GeometryBucket.AppendCommand<Draw::ClearSceneWithColorData>(ViewportCmd);
-			ClearColor->ClearColor = vec4(0.0, 0.0, 0.0, 1.0f);
-
-			/*const auto ResourceSystem = Parent->GetResourceSystem();
-			if (usedModel != nullptr && CommonShaderHandles::Standard.IsValid)
-			{
-				u32 i = 0;
-				float spacing = 2.5;
-				for (u32 row = 0; row < nrRows; ++row)
-				{
-					for (u32 col = 0; col < nrColumns; ++col)
-					{
-						mat4 model = glm::mat4(1.0f);
-						model = glm::translate(model, glm::vec3(
-							col * spacing,
-							row * spacing + 2.0f,
-							0.0f
-						));
-						
-						DrawSphere(model, Materials[i], ResourceSystem.get(), Renderer.get(), usedModel);
-						++i;
-					}
-				}
-			}
-
-
-			//JobSystem::CreateJob();
-			auto DrawCmd = Renderer->PerFrameData.GeometryBucket.AddCommand<Draw::DrawInstancedData>(CubeDrawKey);
-			DrawCmd->VertexArrayId = CubeMeshArray->GetId();
-			DrawCmd->IndexCount = CubeMeshArray->GetIndexBuffer(GDI.get())->GetSize();
-			DrawCmd->Amount = Size;
-
-			auto DrawShadowCmd = Renderer->PerFrameData.ShadowBucket.AddCommand<Draw::DrawInstancedData>(0u);
-			DrawShadowCmd->VertexArrayId = CubeMeshArray->GetId();
-			DrawShadowCmd->IndexCount = CubeMeshArray->GetIndexBuffer(GDI.get())->GetSize();
-			DrawShadowCmd->Amount = Size;
-
-		}
-
-		// Lighting Pass
-		{
-			
-			auto ClearSSAO = Renderer->PerFrameData.SSAOBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
-			ClearSSAO->ClearColor = vec4(1, 1, 1, 1);
-
-			if (Renderer->SSAOSettings.bIsActive)
-			{
-				auto SSAOComputePass = Renderer->PerFrameData.SSAOBucket.AppendCommand<Draw::SSAOComputePassData>(ClearSSAO);
-				SSAOComputePass->GBufferId = Renderer->TransientData.GBufferId;
-				SSAOComputePass->FSQuadVAOId = FinalPassQuadId;
-				SSAOComputePass->ShaderId = CommonShaderHandles::SSAOCompute;
-				SSAOComputePass->SSAOKernelData = &Renderer->SSAOSettings.Kernel;
-				SSAOComputePass->NoiseTextureId = Renderer->SSAOSettings.NoiseTextureId;
-				SSAOComputePass->Radius = Renderer->SSAOSettings.Radius;
-				SSAOComputePass->Bias = Renderer->SSAOSettings.Bias;
-				SSAOComputePass->Power = Renderer->SSAOSettings.Power;
-
-
-				auto SSAOBlurPass = Renderer->PerFrameData.SSAOBucket.AppendCommand<Draw::SSAOBlurPassData>(SSAOComputePass);
-				SSAOBlurPass->ShaderId = CommonShaderHandles::SSAOBlur;
-				SSAOBlurPass->SSAOBlurBufferId = Renderer->TransientData.SSAOBlurBufferId;
-				SSAOBlurPass->SSAOBufferId = Renderer->TransientData.SSAOBufferId;
-				SSAOBlurPass->FSQuadVAOId = FinalPassQuadId;
-			}
-
-
-			auto ClearColor = Renderer->PerFrameData.LightingBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
-			ClearColor->ClearColor = ActiveCam->ClearColor;
-
-			auto LightingPassData = Renderer->PerFrameData.LightingBucket.AppendCommand<Draw::LightingPassData>(ClearColor);
-			LightingPassData->ShaderId = CommonShaderHandles::LightingPass;
-			LightingPassData->GBufferId = Renderer->TransientData.GBufferId;
-			LightingPassData->FSQuadVAOId = FinalPassQuadId;
-			LightingPassData->ViewPosition = ActiveCamTransform->Position;
-			LightingPassData->SSAOBufferId = Renderer->TransientData.SSAOBlurBufferId;
-
-		}
-		
-		{
-			auto ClearFinalPass = Renderer->PerFrameData.FinalPassBucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
-			ClearFinalPass->ClearColor = ActiveCam->ClearColor;
-			auto FXAAPass = Renderer->PerFrameData.FinalPassBucket.AppendCommand<Draw::FXAAData>(ClearFinalPass);
-			FXAAPass->ShaderId = CommonShaderHandles::FXAA;
-			FXAAPass->RenderBufferId = Renderer->TransientData.FinalBufferId;
-			FXAAPass->FSQuadVAOId = FinalPassQuadId;
-		}
-		*/
+		/*auto DrawShadowCmd = Renderer->PerFrameData.ShadowBucket.AddCommand<Draw::DrawInstancedData>(0u);
+		DrawShadowCmd->VertexArrayId = CubeMeshArray->GetId();
+		DrawShadowCmd->IndexCount = CubeMeshArray->GetIndexBuffer(GDI.get())->GetSize();
+		DrawShadowCmd->Amount = Size;*/
 
 		
 		/*

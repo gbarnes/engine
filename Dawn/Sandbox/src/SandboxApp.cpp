@@ -76,9 +76,9 @@ void SandboxApp::Load()
 
 	/*auto LevelId = ResourceSystem->LoadFile("Scenes/Test.level");
 	auto Level = ResourceSystem->FindLevel(LevelId);
-	World::LoadLevel(GetWorld().get(), Level);
+	World::LoadLevel(GetWorld().get(), Level);*/
 
-	auto* CamTransform = GetWorld()->GetCamera(0)->GetTransform(GetWorld().get());
+	auto* CamTransform = GetWorld()->GetCamera(0)->GetTransform(GetWorld().get()); 
 	
 	auto editorCam = CreateCamera(GetEditorWorld().get(),
 		"EditorCam",
@@ -92,7 +92,7 @@ void SandboxApp::Load()
 
 	auto meta = GetEditorWorld()->GetEntityMetaData(editorCam->GetEntity());
 	meta->bIsHiddenInEditorHierarchy = true;
-	CameraUtils::CalculatePerspective(editorCam); */
+	CameraUtils::CalculatePerspective(editorCam);
 }
 
 void SandboxApp::Resize(int InWidth, int InHeight)

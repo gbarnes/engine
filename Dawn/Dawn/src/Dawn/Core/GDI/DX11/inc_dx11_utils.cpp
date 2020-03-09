@@ -77,7 +77,7 @@ D3D11_BUFFER_DESC Dawn::ToDX11BufferDesc(const GfxBufferDesc& InDesc)
 	desc.Usage = ToDX11Usage(InDesc.Usage);
 	desc.CPUAccessFlags = ToDX11AccessFlags(InDesc.AccessFlags);
 	desc.BindFlags = ToDX11BindFlags(InDesc.BindFlags);
-	desc.StructureByteStride = InDesc.StructureByteStride;
+	//desc.StructureByteStride = InDesc.StructureByteStride;
 	desc.ByteWidth = InDesc.ByteWidth;
 	desc.MiscFlags = 0;
 	return desc;
@@ -245,26 +245,77 @@ i32 GetSemanticIndexFromType(Dawn::GfxShaderDataType InType)
 	return semanticIndex;
 }
 
+i32 ShaderTypeToSize(Dawn::GfxShaderDataType InType)
+{
+	if (InType == Dawn::GfxShaderDataType::Position)
+	{
+		return sizeof(float) * 3;
+	}
+
+	if (InType == Dawn::GfxShaderDataType::Color)
+	{
+		return sizeof(float) * 4;
+	}
+
+	if (InType == Dawn::GfxShaderDataType::Matrix)
+	{
+		return sizeof(float) * 4 * 4;
+	}
+
+	if (InType == Dawn::GfxShaderDataType::TexCoord0)
+	{
+		return sizeof(float) * 2;
+	}
+
+	if (InType == Dawn::GfxShaderDataType::TexCoord1)
+	{
+		return sizeof(float) * 2;
+	}
+
+	if (InType == Dawn::GfxShaderDataType::Normal)
+	{
+		return sizeof(float) * 3;
+	}
+
+	return sizeof(float);
+}
+
 std::vector<D3D11_INPUT_ELEMENT_DESC> Dawn::ToDX11Layout(const GfxInputLayout& InLayout)
 {
 	std::vector<D3D11_INPUT_ELEMENT_DESC> descEntries;
-	
+	i32 offset = 0;
 	for (auto it = InLayout.Begin(); it != InLayout.End(); ++it)
 	{
 		if (it->Type == GfxShaderDataType::Matrix)
 		{
 			for (int i = 0; i < 4; ++i)
 			{
+				D3D11_INPUT_ELEMENT_DESC desc = {};
+
+				char* ws = new char[it->SemanticName.size() + 1]; // +1 for zero at the end
+				copy(it->SemanticName.begin(), it->SemanticName.end(), ws);
+				ws[it->SemanticName.size()] = 0; // zero at the end
+
+				desc.SemanticName = ws;
+				desc.SemanticIndex = i;
+				desc.InputSlot = 1;
+				desc.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+				desc.Format = ShaderTypeToDX11Format(it->Type);
+
+
 				if (it->IsPerInstance)
-				{
-					D3D11_INPUT_ELEMENT_DESC desc = { it->SemanticName.c_str(), i, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_INSTANCE_DATA, 1 };
-					descEntries.push_back(desc);
+				{	
+					desc.InstanceDataStepRate = 1;
+					desc.InputSlotClass = D3D11_INPUT_PER_INSTANCE_DATA;
 				}
 				else
 				{
-					D3D11_INPUT_ELEMENT_DESC desc = { it->SemanticName.c_str(), i, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 };
+					D3D11_INPUT_ELEMENT_DESC desc = { it->SemanticName.c_str(), i, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 };
 					descEntries.push_back(desc);
 				}
+
+
+				descEntries.push_back(desc);
 			}
 		}
 		else
@@ -279,11 +330,13 @@ std::vector<D3D11_INPUT_ELEMENT_DESC> Dawn::ToDX11Layout(const GfxInputLayout& I
 
 			desc.SemanticName = ws;
 			desc.SemanticIndex = GetSemanticIndexFromType(it->Type);
-			desc.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+			desc.AlignedByteOffset = offset;
 			desc.Format = ShaderTypeToDX11Format(it->Type);
 			desc.InstanceDataStepRate = 0;
 			desc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 			descEntries.push_back(desc);
+
+			offset += ShaderTypeToSize(it->Type);
 		}
 	}
 

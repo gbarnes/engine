@@ -13,7 +13,6 @@
 #include "Core/GDI/inc_gfx.h"
 #include "Core/Math.h"
 #include "Core/GDI/Base/GfxRTBundle.h"
-#include "PSOCache.h"
 #include <random>
 
 namespace Dawn
@@ -76,7 +75,8 @@ void Dawn::DeferredRenderer::CreatePasses(Application* InApplication)
 {
 	// Push passes in the order you want them to be processed!!
 
-	/*auto* shadowPass = BeginPass("Shadow");
+	auto* shadowPass = BeginPass("Shadow");
+	shadowPass->IsActive = false;
 	shadowPass->Setup = [&](RenderPass* InPass)
 	{
 		auto Settings = InApplication->GetSettings();
@@ -97,11 +97,11 @@ void Dawn::DeferredRenderer::CreatePasses(Application* InApplication)
 		ShadowPassCmd->ShaderId = CommonShaderHandles::ShadowMapCompute;
 		ShadowPassCmd->LightSpace = directionalLights[0]->LightSpace;
 	};
-	PushPass(shadowPass);*/
+	PushPass(shadowPass);
 
 	// -----------------------------------------------------------------------------------------
 	auto* geometryPass = BeginPass("Geometry");
-	geometryPass->Setup = [&](RenderPass* InPass) 
+	geometryPass->Setup = [](RenderPass* InPass) 
 	{
 		auto Settings = g_Application->GetSettings();
 		InPass->RenderTargets.SetGDI(g_Application->GetGDI());
@@ -222,8 +222,9 @@ void Dawn::DeferredRenderer::BeginFrame(GfxGDI* InGDI, Camera* InCamera)
 
 void Dawn::DeferredRenderer::Submit(Application* InApp)
 {
-	BROFILER_EVENT("Rendering_Submit")
+	BROFILER_EVENT("Rendering_Submit");
 
+	// todo (gb): do this in parallel.
 	for (auto* pass : Passes)
 	{
 		if (pass->IsActive)

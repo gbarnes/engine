@@ -30,10 +30,11 @@ namespace Dawn
 		const DrawIndexedData* RenderData = static_cast<const DrawIndexedData*>(data);
 
 		// todo (gb): change this?!
-		//InRenderer->CurrentShader->SetInt("isInstanced", 0);
-		//InRenderer->CurrentShader->SetMat4("model", RenderData->Model);
-		InGDI->DrawIndexed(RenderData->VertexArrayId);
+		CBPerObjectData objectData = {};
+		objectData.World = RenderData->Model;
+		InGDI->UpdateConstantBuffer(CommonConstantBuffers::PerObjectData, &objectData, sizeof(objectData));
 
+		InGDI->DrawIndexed(RenderData->VertexArrayId);
 		InRenderer->Stats.DrawCalls += 1;
 	}
 

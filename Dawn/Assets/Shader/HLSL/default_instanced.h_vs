@@ -5,11 +5,6 @@ cbuffer PerFrame : register( b1 )
 {
     matrix viewMatrix;
 }
- 
-cbuffer PerObject : register( b2 )
-{
-    matrix worldMatrix;
-}
 
 struct VSOutput
 {
@@ -23,21 +18,21 @@ struct VSInput
 	float3 normal : NORMAL;
 	float2 uv: TEXCOORD0;
     float2 uv1: TEXCOORD1;
+	float4x4 model : MATRIX;
 };
 
-
-VSOutput Main( VSInput IN )
+VSOutput Main( VSInput IN, uint instanceID : SV_InstanceID )
 {
     VSOutput OUT;
  
-    matrix mvp = mul( projectionMatrix, mul( viewMatrix, worldMatrix ) ); 
+    matrix mvp = mul( projectionMatrix, mul( viewMatrix, IN.model ) ); 
     OUT.position = mul( mvp, float4( IN.position, 1.0f ) );
 	
 	
-	float4 normal = mul(IN.normal, transpose(inverse(worldMatrix)));
-    float lightIntensity = dot(normal, normalize(float4(0.0f, 0.0f, -10.0f, 1.0f) - float4(10.0f, 10.0f, 0.0f, 1.0f)));
+	//float4 normal = mul(IN.normal, transpose(inverse(IN.model)));
+    //float lightIntensity = dot(normal, normalize(float4(0.0f, 0.0f, -10.0f, 1.0f) - float4(10.0f, 10.0f, 0.0f, 1.0f)));
 	
-	OUT.color = float4(IN.normal, 1.0f);
+	OUT.color = float4(IN.normal, 1.0f); //saturate(float4(1.0f, 1.0f, 1.0f, 1.0f) * 0.2f * lightIntensity);
  
     return OUT;
 }

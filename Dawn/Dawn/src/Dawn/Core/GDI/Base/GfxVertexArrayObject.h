@@ -14,6 +14,7 @@ namespace Dawn
 
 		virtual void AttachVertexBuffer(GfxBuffer* InBuffer) = 0;
 		virtual void SetIndexBuffer(GfxBuffer* InBuffer) = 0;
+		virtual i32 GetIndiceCount() const = 0;
 	};
 
 	struct GfxVAOCreationData

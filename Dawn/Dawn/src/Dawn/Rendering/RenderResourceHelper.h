@@ -18,6 +18,7 @@ namespace Dawn
 
 		static ResourceId DebugVS;
 		static ResourceId DebugPS;
+		static ResourceId DebugInstancedVS;
 		static ResourceId ShadowMapVS;
 		static ResourceId ColoredSimplePS;
 	};
@@ -53,6 +54,7 @@ namespace Dawn
 	{
 		PSO_Debug,
 		PSO_Shadow,
+		PSO_DebugInstanced,
 		PSO_Num
 	};
 
@@ -61,8 +63,6 @@ namespace Dawn
 
 	namespace RenderResourceHelper
 	{
-		
-
 		DAWN_API void LoadCommonShaders(ResourceSystem* InResourceSystem);
 		DAWN_API void CreateConstantBuffers(GfxGDI* InGDI);
 		DAWN_API GfxResId CreateConstantBuffer(GfxGDI* InGDI, void* InData, i32 InSize);

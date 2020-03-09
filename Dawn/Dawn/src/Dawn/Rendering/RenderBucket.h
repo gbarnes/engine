@@ -24,6 +24,7 @@ namespace Dawn
 		{
 			HeapMemory = Memory::HeapArea(_2MB);
 			Allocator = Allocators::LinearAllocator(HeapMemory.GetStart(), HeapMemory.GetEnd());
+			CommandCount = 0;
 		}
 
 		~RenderBucket()
@@ -130,7 +131,12 @@ namespace Dawn
 					ResId.IsValid = true;
 
 					auto Material = Resources->FindMaterial(ResId);
-					auto Shader = Resources->FindShader(Material->ShaderId);
+					// todo (gb): check if the same pso is already bound if so don't set a new one
+					GDI->SetPipelineState(Material->PSOId);
+					GDI->BindPipelineShaders();
+					GDI->CommitShaderResources(Material->PSOId);
+
+					//auto Shader = Resources->FindShader(Material->ShaderId);
 
 					/*if (Renderer->CurrentShader == nullptr || Renderer->CurrentShader->GetId().Index != Shader->ResourceId.Index)
 					{

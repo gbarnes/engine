@@ -22,7 +22,7 @@ namespace Dawn
 
 	ResourceId CommonShaderHandles::DebugVS;
 	ResourceId CommonShaderHandles::DebugPS;
-
+	ResourceId CommonShaderHandles::DebugInstancedVS;
 	ResourceId CommonShaderHandles::ShadowMapVS;
 	ResourceId CommonShaderHandles::ColoredSimplePS;
 
@@ -39,7 +39,7 @@ namespace Dawn
 		EditorShaderHandles::Grid = InResourceSystem->LoadFile("Shader/editor_grid.shader");
 		CommonShaderHandles::ShadowMapCompute = InResourceSystem->LoadFile("Shader/shadowmap_compute.shader");*/
 
-
+		CommonShaderHandles::DebugInstancedVS = InResourceSystem->LoadFile("Shader/HLSL/default_instanced.h_vs");
 		CommonShaderHandles::DebugVS = InResourceSystem->LoadFile("Shader/HLSL/default.h_vs");
 		CommonShaderHandles::DebugPS = InResourceSystem->LoadFile("Shader/HLSL/default.h_ps");
 
@@ -87,9 +87,9 @@ namespace Dawn
 
 		// Create DEBUG PSO!
 		GfxPipelineStateObjectDesc desc = {};
-		desc.RasterizerState.CullMode = GfxCullMode::CullNone;
+		desc.RasterizerState.CullMode = GfxCullMode::CullBack;
 		desc.RasterizerState.FillMode = GfxFillMode::FillSolid;
-		desc.RasterizerState.FrontCounterClockwise =1;
+		desc.RasterizerState.FrontCounterClockwise = 0;
 
 		desc.BlendState.RenderTarget[0].BlendEnable = FALSE;
 		desc.BlendState.RenderTarget[0].RenderTargetWriteMask = (((1 | 2) | 4) | 8);
@@ -100,6 +100,22 @@ namespace Dawn
 		desc.VertexShaderId = rs->FindShader(CommonShaderHandles::DebugVS)->GfxShaderId;
 
 		CachePSO("Debug", gdi->CreatePSO(desc, nullptr));
+
+		// Create DEBUG PSO!
+		GfxPipelineStateObjectDesc instanceDesc = {};
+		instanceDesc.RasterizerState.CullMode = GfxCullMode::CullBack;
+		instanceDesc.RasterizerState.FillMode = GfxFillMode::FillSolid;
+		instanceDesc.RasterizerState.FrontCounterClockwise = 0;
+
+		instanceDesc.BlendState.RenderTarget[0].BlendEnable = FALSE;
+		instanceDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = (((1 | 2) | 4) | 8);
+
+		instanceDesc.InputLayout = gPositionNormUV2InstancedLayout;
+		instanceDesc.TopologyType = GfxTopologyType::TopologyPolygon;
+		instanceDesc.PixelShaderId = rs->FindShader(CommonShaderHandles::DebugPS)->GfxShaderId;
+		instanceDesc.VertexShaderId = rs->FindShader(CommonShaderHandles::DebugInstancedVS)->GfxShaderId;
+
+		CachePSO("DebugInstanced", gdi->CreatePSO(instanceDesc, nullptr));
 
 		// Create Shadow PSO
 		GfxPipelineStateObjectDesc shadowDesc = {};
