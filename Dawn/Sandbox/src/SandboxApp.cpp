@@ -37,7 +37,7 @@ void SandboxApp::Load()
 		"Cam",
 		Settings.Width,
 		Settings.Height,
-		0.0f, 1000.0f, 65.0f,
+		0.01f, 1000.0f, 65.0f,
 		vec4(0.4f, 0.6f, 0.9f, 1.0f),
 		vec3(0, 0, 2.0f)
 	);
@@ -84,7 +84,7 @@ void SandboxApp::Load()
 		"EditorCam",
 		Settings.Width,
 		Settings.Height,
-		0.1f, 1000.0f, 65.0f,
+		0.01f, 1000.0f, 65.0f,
 		vec4(0.4f, 0.6f, 0.9f, 1.0f),
 		CamTransform->Position,
 		CamTransform->Rotation

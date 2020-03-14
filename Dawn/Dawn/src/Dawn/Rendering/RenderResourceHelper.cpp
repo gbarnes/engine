@@ -91,6 +91,10 @@ namespace Dawn
 		desc.RasterizerState.FillMode = GfxFillMode::FillSolid;
 		desc.RasterizerState.FrontCounterClockwise = 0;
 
+		desc.DepthStencilState.DepthEnable = true;
+		desc.DepthStencilState.DepthFunc = GfxComparisonFunc::LessEqual;
+		desc.DepthStencilState.DepthWriteMask = GfxDepthWriteMask::DepthWriteMaskAll;
+		
 		desc.BlendState.RenderTarget[0].BlendEnable = FALSE;
 		desc.BlendState.RenderTarget[0].RenderTargetWriteMask = (((1 | 2) | 4) | 8);
 
@@ -105,7 +109,11 @@ namespace Dawn
 		GfxPipelineStateObjectDesc instanceDesc = {};
 		instanceDesc.RasterizerState.CullMode = GfxCullMode::CullBack;
 		instanceDesc.RasterizerState.FillMode = GfxFillMode::FillSolid;
-		instanceDesc.RasterizerState.FrontCounterClockwise = 0;
+		instanceDesc.RasterizerState.FrontCounterClockwise = 1;
+
+		instanceDesc.DepthStencilState.DepthEnable = true;
+		instanceDesc.DepthStencilState.DepthFunc = GfxComparisonFunc::LessEqual;
+		instanceDesc.DepthStencilState.DepthWriteMask = GfxDepthWriteMask::DepthWriteMaskAll;
 
 		instanceDesc.BlendState.RenderTarget[0].BlendEnable = FALSE;
 		instanceDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = (((1 | 2) | 4) | 8);

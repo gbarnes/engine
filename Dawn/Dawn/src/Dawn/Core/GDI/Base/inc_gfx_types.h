@@ -114,14 +114,26 @@ namespace Dawn
 	};
 
 	enum class GfxComparisonFunc {
-		Never,
-		Less,
-		Equal,
-		LessEqual,
-		Greater,
-		NotEqual,
-		GreaterEqual,
-		Always
+		Never = 1,
+		Less = 2,
+		Equal = 3,
+		LessEqual = 4,
+		Greater = 5,
+		NotEqual = 6,
+		GreaterEqual = 7,
+		Always = 8
+	};
+
+	enum class GfxStencilOp
+	{
+		OpKeep = 1,
+		OpZero = 2,
+		OpReplace = 3,
+		OpIncrementSat = 4,
+		OpDecrementSat = 5,
+		OpInvert = 6,
+		OpIncrement = 7,
+		OpDecrement = 8
 	};
 
 	enum class GfxBlend
@@ -442,6 +454,14 @@ namespace Dawn
 		u32 ForcedSampleCount;
 	};
 
+	struct GfxDepthStencilOpDesc
+	{
+		GfxStencilOp StencilFailOp;
+		GfxStencilOp StencilDepthFailOp;
+		GfxStencilOp StencilPassOp;
+		GfxComparisonFunc StencilFunc;
+	};
+
 	struct GfxDepthStencilDesc
 	{
 		i32 DepthEnable;
@@ -450,9 +470,8 @@ namespace Dawn
 		i32 StencilEnable;
 		u8 StencilReadMask;
 		u8 StencilWriteMask;
-		//D3D12_DEPTH_STENCILOP_DESC FrontFace;
-		//D3D12_DEPTH_STENCILOP_DESC BackFace;
-		
+		GfxDepthStencilOpDesc FrontFace;
+		GfxDepthStencilOpDesc BackFace;
 	};
 
 	struct GfxPipelineStateObjectDesc

@@ -228,12 +228,7 @@ namespace Dawn
 					TranslateMessage(&msg);
 					DispatchMessage(&msg);
 				}
-
-
-				//GDI->ClearWithColor(vec4(0.4, 0.4, 0.8, 1));
-				//GDI->DrawIndexed(vao->GetId());
-				//OnPostRender(GDI.get(), Renderer.get());
-				//GDI->Present();
+				
 				Tick();
 			}
 		}

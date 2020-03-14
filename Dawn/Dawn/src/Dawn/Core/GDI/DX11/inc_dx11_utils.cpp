@@ -346,7 +346,25 @@ std::vector<D3D11_INPUT_ELEMENT_DESC> Dawn::ToDX11Layout(const GfxInputLayout& I
 D3D11_DEPTH_STENCIL_DESC Dawn::ToDX11DepthStencilDesc(const GfxDepthStencilDesc& InDesc)
 {
 	D3D11_DEPTH_STENCIL_DESC desc = {};
-	memcpy(&desc, &InDesc, sizeof(GfxDepthStencilDesc));
+	desc.DepthEnable = InDesc.DepthEnable;
+	desc.DepthWriteMask = (D3D11_DEPTH_WRITE_MASK)InDesc.DepthWriteMask;
+	desc.DepthFunc = (D3D11_COMPARISON_FUNC)InDesc.DepthFunc;
+
+	desc.StencilEnable = InDesc.StencilEnable;
+	desc.StencilReadMask = InDesc.StencilReadMask;
+	desc.StencilWriteMask = InDesc.StencilWriteMask;
+
+	// Stencil operations if pixel is front-facing
+	desc.FrontFace.StencilFailOp = (D3D11_STENCIL_OP)InDesc.FrontFace.StencilFailOp;
+	desc.FrontFace.StencilDepthFailOp = (D3D11_STENCIL_OP)InDesc.FrontFace.StencilDepthFailOp;
+	desc.FrontFace.StencilPassOp = (D3D11_STENCIL_OP)InDesc.FrontFace.StencilPassOp;
+	desc.FrontFace.StencilFunc = (D3D11_COMPARISON_FUNC)InDesc.FrontFace.StencilFunc;
+
+	// Stencil operations if pixel is back-facing
+	desc.BackFace.StencilFailOp = (D3D11_STENCIL_OP)InDesc.BackFace.StencilFailOp;
+	desc.BackFace.StencilDepthFailOp = (D3D11_STENCIL_OP)InDesc.BackFace.StencilDepthFailOp;
+	desc.BackFace.StencilPassOp = (D3D11_STENCIL_OP)InDesc.BackFace.StencilPassOp;
+	desc.BackFace.StencilFunc = (D3D11_COMPARISON_FUNC)InDesc.BackFace.StencilFunc;
 	return desc;
 }
 

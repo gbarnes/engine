@@ -280,6 +280,9 @@ namespace Dawn
 		mat4 model = mat4(1);
 		DrawSphere(model, SampleMaterial->Id, Parent->GetResourceSystem().get(), Parent->GetRenderer().get(), usedModel);
 
+	//	mat4 model2 = glm::translate(mat4(1), glm::vec3(0.0f, 0.0f, 0.6f));
+	//	DrawSphere(model2, SampleMaterial->Id, Parent->GetResourceSystem().get(), Parent->GetRenderer().get(), usedModel);
+
 		auto DrawCmd = Renderer->GetPass(RenderPassId::Geometry)->Bucket.AddCommand<Draw::DrawInstancedData>(CubeDrawKey);
 		DrawCmd->VertexArrayId = CubeMeshArray->GetId();
 		DrawCmd->IndexCount = CubeMeshArray->GetIndiceCount();

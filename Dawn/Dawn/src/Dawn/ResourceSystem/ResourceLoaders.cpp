@@ -226,7 +226,7 @@ namespace Dawn
 		Assimp::Importer Importer;
 
 		const aiScene* scene = Importer.ReadFile(combinedPath.c_str(),
-			aiProcess_Triangulate |  aiProcess_GenNormals | aiProcessPreset_TargetRealtime_MaxQuality
+			aiProcess_Triangulate |  aiProcess_GenNormals | aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_FlipWindingOrder | aiProcess_FixInfacingNormals
 		);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)

@@ -60,6 +60,7 @@ namespace Dawn
 		ComPtr<IDXGISwapChain> SwapChain;
 		ComPtr<ID3D11Debug> Debug;
 		GfxResId BackbufferId;
+		GfxResId DSBufferViewId;
 		DX11PipelineStateObject* CurrentPipelineState;
 
 		void CreateBackbufferRT();
