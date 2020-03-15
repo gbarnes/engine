@@ -1,0 +1,34 @@
+struct VSOutput
+{
+    float4 position : SV_POSITION;
+	float3 normal : NORMAL;
+};
+ 
+struct PSOutput
+{
+    float4 position : SV_Target0;
+    float4 normal: SV_Target1;
+	float4 albedo_ao : SV_Target2;
+	float4 material : SV_Target3;
+};
+
+cbuffer Material : register( b1 )
+{
+	float4 albedo;
+    float4 emissive;
+    float metallic;
+    float roughness;
+	float ao;
+}
+
+PSOutput Main( VSOutput IN )
+{
+	PSOutput OUT;
+	
+	OUT.position = IN.position;
+	OUT.normal = float4(IN.normal, 1);
+	OUT.albedo_ao = float4(albedo.rgb, ao);
+	OUT.material = float4(metallic, roughness, 0, 0);
+	
+	return OUT;
+}

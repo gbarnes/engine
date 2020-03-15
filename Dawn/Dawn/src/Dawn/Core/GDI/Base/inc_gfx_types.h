@@ -53,7 +53,9 @@ namespace Dawn
 		RGBA16F,
 		RGB16F,
 		RGBA8UN,
-		D24S8 // Depth 24 Bits unsigned normalized integers , Stencil 8 Bits unsigned integers
+		D24S8, // Depth 24 Bits unsigned normalized integers , Stencil 8 Bits unsigned integers
+		R24X8TYPELESS,
+		R24G8TYPELESS
 	};
 
 	enum GfxTextureViewType
@@ -401,6 +403,7 @@ namespace Dawn
 	class GfxTexture;
 	struct GfxTextureViewDesc
 	{
+		GfxFormat Format;
 		GfxTextureViewType Type;
 		void* AdressToGPU;
 	};

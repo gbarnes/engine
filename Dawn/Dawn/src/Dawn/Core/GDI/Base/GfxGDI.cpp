@@ -43,6 +43,7 @@ namespace Dawn
 		GFX_FREE_OBJECTS(ReturnShader, ShaderPool);
 	}
 
+
 	void GfxGDI::ReturnTextureView(const GfxResId& InId)
 	{
 		static_cast<GfxTextureView*>(TextureViewPool.Find(InId))->~GfxTextureView();

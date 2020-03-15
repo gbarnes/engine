@@ -156,20 +156,38 @@ void Dawn::DX11GDI::SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom
 	Context->RSSetScissorRects(1, &rect);
 }
 
+void Dawn::DX11GDI::SetRenderTargetBundle(const GfxRTBundle* InBundle)
+{
+	// Todo(gb): can we speed this up?!
+	Array<ID3D11RenderTargetView*> rts;
+	for (u32 i = 0; i < InBundle->GetRenderTargetCount(); ++i)
+	{
+		rts.Push(static_cast<ID3D11RenderTargetView*>(static_cast<DX11TextureView*>(InBundle->GetColorTarget(i))->GetD3DView()));
+	}
+
+	ID3D11DepthStencilView* dsView = nullptr;
+	if (InBundle->HasDepthStencilTarget())
+		dsView = static_cast<ID3D11DepthStencilView*>(static_cast<DX11TextureView*>(InBundle->GetDepthStencilTarget())->GetD3DView());
+
+	Context->OMSetRenderTargets(InBundle->GetRenderTargetCount(), rts.Data(), dsView);
+}
+
 void Dawn::DX11GDI::ClearWithColor(const GfxResId& InTextureViewId, const vec4& InColor)
 {
 	auto* buffer = static_cast<DX11TextureView*>(GetTextureView(InTextureViewId));
 	auto* rt = static_cast<ID3D11RenderTargetView*>(buffer->GetD3DView());
 
-
-	auto* dsbuffer = static_cast<DX11TextureView*>(GetTextureView(DSBufferViewId));
-	auto* ds = static_cast<ID3D11DepthStencilView*>(dsbuffer->GetD3DView());
-	
-	Context->OMSetRenderTargets(1, &rt, ds);
-
-	D_ASSERT(buffer != nullptr, "Backbuffer not found!");
+	D_ASSERT(buffer != nullptr, "RenderTarget not found!");
 	Context->ClearRenderTargetView(rt, &InColor[0]);
-	Context->ClearDepthStencilView(ds, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+}
+
+void Dawn::DX11GDI::ClearDepthStencil(const GfxResId& InDepthStencilId, float InDepth, i32 InStencil)
+{
+	auto* buffer = static_cast<DX11TextureView*>(GetTextureView(InDepthStencilId));
+	auto* rt = static_cast<ID3D11DepthStencilView*>(buffer->GetD3DView());
+
+	D_ASSERT(buffer != nullptr, "DepthStencil not found!");
+	Context->ClearDepthStencilView(rt, D3D11_CLEAR_STENCIL | D3D11_CLEAR_DEPTH, InDepth, InStencil);
 }
 
 void Dawn::DX11GDI::Clear()
@@ -360,41 +378,6 @@ void Dawn::DX11GDI::CreateBackbufferRT()
 	GfxTextureView* view;
 	BackbufferId = CreateTextureView(desc, &view);
 	view->SetName("Backbuffer RenderTarget");
-	
-	GfxTextureDesc dsDesc = {};
-	dsDesc.Width = 1280;
-	dsDesc.Height = 720;
-	dsDesc.Format = GfxFormat::D24S8;
-	dsDesc.Usage = GfxUsageFlags::Usage_Default;
-	dsDesc.CpuAccess = GfxCpuAccessFlags::CpuAccess_None;
-	dsDesc.ArraySize = 1;
-	dsDesc.MipLevels = 1;
-	dsDesc.BindFlags = GfxBindFlags::Bind_DepthStencilView;
-	dsDesc.SampleCount = 1;
-	dsDesc.SampleQuality = 0;
-
-	GfxTextureData dsData = {};
-	dsData.Data = nullptr;
-	dsData.ChannelsPerPixel = 4;
-	dsData.Size = 0;
-
-
-	GfxTexture* dsTexture = nullptr;
-	CreateTexture(dsDesc, dsData, &dsTexture);
-	D_ASSERT(dsTexture != nullptr, "Couldn't create texture resource for depth stencil buffer!");
-
-	dsTexture->SetName(fmt::format("Texture DepthStencil {0} {1}", 1280, 720));
-
-	GfxTextureViewDesc viewDesc = {};
-	viewDesc.AdressToGPU = dsTexture->GetGPUAddress();
-	viewDesc.Type = GfxTextureViewType::DepthStencilView;
-
-	GfxTextureView* dsView = nullptr;
-	DSBufferViewId = dsTexture->CreateView(viewDesc, &dsView);
-
-	auto* rt = static_cast<ID3D11RenderTargetView*>(static_cast<DX11TextureView*>(view)->GetD3DView());
-	auto* ds = static_cast<ID3D11DepthStencilView*>(static_cast<DX11TextureView*>(dsView)->GetD3DView());
-	Context->OMSetRenderTargets(1, &rt, ds);
 
 	backBuffer = nullptr;
 }

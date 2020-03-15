@@ -29,8 +29,6 @@ void Dawn::DX11TextureView::Create(const GfxTextureViewDesc& InDesc)
 	D_ASSERT(InDesc.AdressToGPU != nullptr, "No texture set to create view from!");
 
 	ID3D11Texture2D* texture = static_cast<ID3D11Texture2D*>(InDesc.AdressToGPU);
-	D3D11_TEXTURE2D_DESC desc = {};
-	texture->GetDesc(&desc);
 
 	if (InDesc.Type == GfxTextureViewType::RenderTargetView)
 	{
@@ -42,7 +40,7 @@ void Dawn::DX11TextureView::Create(const GfxTextureViewDesc& InDesc)
 	else if (InDesc.Type == GfxTextureViewType::DepthStencilView)
 	{
 		D3D11_DEPTH_STENCIL_VIEW_DESC desc = {};
-		desc.Format = desc.Format;
+		desc.Format = ToDX11Format(InDesc.Format);
 		desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 		
 		ComPtr<ID3D11DepthStencilView> dsView;
@@ -53,10 +51,10 @@ void Dawn::DX11TextureView::Create(const GfxTextureViewDesc& InDesc)
 	else if (InDesc.Type == GfxTextureViewType::ShaderResourceView)
 	{
 		D3D11_SHADER_RESOURCE_VIEW_DESC desc = {};
-		desc.Format = desc.Format;
+		desc.Format = ToDX11Format(InDesc.Format);
 		desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 		desc.Texture2D.MostDetailedMip = 0;
-		desc.Texture2D.MipLevels = 1;
+		desc.Texture2D.MipLevels = -1;
 
 		ComPtr<ID3D11ShaderResourceView> ssView;
 		HRESULT hr = device->CreateShaderResourceView(texture, &desc, &ssView);

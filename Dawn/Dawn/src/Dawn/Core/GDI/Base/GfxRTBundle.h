@@ -14,10 +14,23 @@ namespace Dawn
 		~GfxRTBundle();
 
 		void AttachColorTarget(u32 InWidth, u32 InHeight, GfxFormat InFormat);
-		void SetDepthStencilTarget(u32 InWidth, u32 InHeight, GfxFormat InFormat);
+		void SetDepthStencilTarget(u32 InWidth, u32 InHeight);
 
 		GfxTextureView* GetColorTarget(i32 InIndex) const;
 		GfxTextureView* GetDepthStencilTarget() const;
+
+		GfxTextureView* GetRenderTargetShaderView(i32 InIndex) const;
+		GfxTextureView* GetDepthStencilShaderView() const;
+
+		inline GfxResId GetRenderTargetId(i32 InIndex) const
+		{
+			return RenderTargets[InIndex];
+		}
+
+		inline GfxResId GetDepthStencilTargetId() const
+		{
+			return DepthStencilTarget;
+		}
 
 		inline bool HasDepthStencilTarget() const
 		{
@@ -26,7 +39,7 @@ namespace Dawn
 
 		inline u32 GetRenderTargetCount() const
 		{
-			return CurrentRTIndex + 1;
+			return CurrentRTIndex;
 		}
 
 		inline void SetGDI(GfxGDIPtr InGDI)
@@ -38,6 +51,8 @@ namespace Dawn
 		u32 CurrentRTIndex;
 		GfxGDIPtr GDI;
 		GfxResId RenderTargets[7];
+		GfxResId ShaderViews[7];
 		GfxResId DepthStencilTarget;
+		GfxResId DSShaderView;
 	};
 }

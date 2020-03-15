@@ -81,6 +81,9 @@ namespace Dawn
 
 		void PushPass(RenderPass* InPass)
 		{
+			if(InPass->Setup != nullptr)
+				InPass->Setup(InPass);
+
 			Passes.push_back(InPass);
 		}
 

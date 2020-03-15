@@ -188,8 +188,10 @@ namespace Dawn
 		pso->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(GDI->GetBuffer(CommonConstantBuffers::PerFrameData));
 		pso->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(GDI->GetBuffer(CommonConstantBuffers::PerObjectData));
 
-		GDI->SetPipelineState(psoId);
-		GDI->CommitShaderResources(psoId);
+		auto psoGeomId = RenderResourceHelper::GetCachedPSO("GeometryPass");
+		auto* geomPso = GDI->GetPipelineState(psoGeomId);
+		geomPso->GetResourceCache(GfxShaderType::Pixel)->BindConstantBuffer(GDI->GetBuffer(CommonConstantBuffers::MaterialData));
+		
 
 		CBPerAppData appData = {};
 		appData.Projection = World::GetActiveCamera()->GetProjection();

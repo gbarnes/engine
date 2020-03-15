@@ -12,6 +12,7 @@ namespace Dawn
 	class GfxPipelineStateObject;
 	class GfxInputLayout;
 	class GfxSampler;
+	class GfxRTBundle;
 	//class GfxImmediatePrimitives;
 
 	typedef HandleObjectSlot<GfxBuffer> BufferSlot;
@@ -40,7 +41,9 @@ namespace Dawn
 		virtual void DrawInstanced(const GfxResId& VertexArrayId, u32 InAmount) = 0;
 		void SetClearColor(const vec4& InColor);
 		virtual void SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom) = 0;
+		virtual void SetRenderTargetBundle(const GfxRTBundle* InBundle) = 0;
 		virtual void ClearWithColor(const GfxResId& InTextureViewId, const vec4& InColor) = 0;
+		virtual void ClearDepthStencil(const GfxResId& InDepthStencilId, float InDepth, i32 InStencil) = 0;
 		virtual void Clear() = 0;
 
 		virtual void SetPipelineState(const GfxResId& InId) = 0;
@@ -49,6 +52,7 @@ namespace Dawn
 		virtual void BindPipelineShaders() = 0;
 		virtual void UpdateConstantBuffer(const GfxResId& InBufferId, void* InData, i32 InSize) = 0;
 		virtual GfxResId GetBackBufferId() = 0;
+
 	public:
 		virtual GfxResId CreateBuffer(const GfxBufferDesc& InDesc, const GfxBufferData& InData, GfxBuffer** OutBuffer) = 0;
 		virtual GfxResId CreateVertexArrayObject(GfxVertexArrayObject** OutBuffer) = 0;

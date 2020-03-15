@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/GDI/Base/GfxGDI.h"
+#include "Core/GDI/Base/GfxRTBundle.h"
 #include "inc_dx11.h"
 
 namespace Dawn
@@ -19,7 +20,9 @@ namespace Dawn
 		virtual void DrawArray(const GfxResId& VertexArrayId) override;
 		virtual void DrawInstanced(const GfxResId& VertexArrayId, u32 InAmount) override;
 		virtual void SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom) override;
+		virtual void SetRenderTargetBundle(const GfxRTBundle* InBundle) override;
 		virtual void ClearWithColor(const GfxResId& InTextureViewId, const vec4& InColor) override;
+		virtual void ClearDepthStencil(const GfxResId& InDepthStencilId, float InDepth, i32 InStencil) override;
 		virtual void Clear() override;
 
 		virtual void SetPipelineState(const GfxResId& InId) override;
@@ -60,7 +63,6 @@ namespace Dawn
 		ComPtr<IDXGISwapChain> SwapChain;
 		ComPtr<ID3D11Debug> Debug;
 		GfxResId BackbufferId;
-		GfxResId DSBufferViewId;
 		DX11PipelineStateObject* CurrentPipelineState;
 
 		void CreateBackbufferRT();

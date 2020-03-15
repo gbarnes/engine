@@ -85,7 +85,7 @@ void Dawn::DeferredRenderer::CreatePasses(Application* InApplication)
 	};
 	shadowPass->PerFrameSetup = [&](RenderPass* InPass)
 	{
-		InPass->Bucket.Reset(2048, &InPass->RenderTargets, mat4(), mat4());
+		InPass->Bucket.Reset(2048, mat4(), mat4());
 
 		Shared<World> world = InApplication->GetWorld();
 		auto directionalLights = world->GetComponentsByType<DirectionalLight>();
@@ -109,16 +109,21 @@ void Dawn::DeferredRenderer::CreatePasses(Application* InApplication)
 		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA32F); // Normal
 		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA32F); // Albedo, AO
 		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA32F); // Metallic,Roughness
-		InPass->RenderTargets.SetDepthStencilTarget(Settings->Width, Settings->Height, GfxFormat::D24S8);
+		InPass->RenderTargets.SetDepthStencilTarget(Settings->Width, Settings->Height);
 	};
 	geometryPass->PerFrameSetup = [](RenderPass* InPass) 
 	{
 		auto* cam = World::GetActiveCamera();
 		auto gdi = g_Application->GetGDI();
 
-		InPass->Bucket.Reset(2048, &InPass->RenderTargets, cam->GetView(), cam->GetProjection());
+		InPass->Bucket.Reset(2048, cam->GetView(), cam->GetProjection());
 
-		gdi->ClearWithColor(gdi->GetBackBufferId(), vec4(0.4f, 0.5f, 0.7f, 1.0f));
+		gdi->SetRenderTargetBundle(&InPass->RenderTargets);
+		gdi->ClearWithColor(InPass->RenderTargets.GetRenderTargetId(0), vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		gdi->ClearWithColor(InPass->RenderTargets.GetRenderTargetId(1), vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		gdi->ClearWithColor(InPass->RenderTargets.GetRenderTargetId(2), vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		gdi->ClearWithColor(InPass->RenderTargets.GetRenderTargetId(3), vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		gdi->ClearDepthStencil(InPass->RenderTargets.GetDepthStencilTargetId(), 1.0f, 0);
 	};
 	PushPass(geometryPass);
 

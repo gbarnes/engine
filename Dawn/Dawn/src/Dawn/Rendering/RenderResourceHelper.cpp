@@ -25,6 +25,7 @@ namespace Dawn
 	ResourceId CommonShaderHandles::DebugInstancedVS;
 	ResourceId CommonShaderHandles::ShadowMapVS;
 	ResourceId CommonShaderHandles::ColoredSimplePS;
+	ResourceId CommonShaderHandles::GBufferFillPS;
 
 	void RenderResourceHelper::LoadCommonShaders(ResourceSystem* InResourceSystem)
 	{
@@ -39,12 +40,13 @@ namespace Dawn
 		EditorShaderHandles::Grid = InResourceSystem->LoadFile("Shader/editor_grid.shader");
 		CommonShaderHandles::ShadowMapCompute = InResourceSystem->LoadFile("Shader/shadowmap_compute.shader");*/
 
-		CommonShaderHandles::DebugInstancedVS = InResourceSystem->LoadFile("Shader/HLSL/default_instanced.h_vs");
-		CommonShaderHandles::DebugVS = InResourceSystem->LoadFile("Shader/HLSL/default.h_vs");
-		CommonShaderHandles::DebugPS = InResourceSystem->LoadFile("Shader/HLSL/default.h_ps");
+		CommonShaderHandles::DebugInstancedVS = InResourceSystem->LoadFile("Shader/HLSL/debug_instanced.h_vs");
+		CommonShaderHandles::DebugVS = InResourceSystem->LoadFile("Shader/HLSL/debug.h_vs");
+		CommonShaderHandles::DebugPS = InResourceSystem->LoadFile("Shader/HLSL/debug.h_ps");
 
 		CommonShaderHandles::ShadowMapVS = InResourceSystem->LoadFile("Shader/HLSL/shadowpass.h_vs");
 		CommonShaderHandles::ColoredSimplePS = InResourceSystem->LoadFile("Shader/HLSL/colored_simple.h_ps");
+		CommonShaderHandles::GBufferFillPS = InResourceSystem->LoadFile("Shader/HLSL/gbuffer_fill.h_ps");
 	}
 
 	GfxResId CommonConstantBuffers::PerAppData;
@@ -61,6 +63,9 @@ namespace Dawn
 		CommonConstantBuffers::PerFrameData = CreateConstantBuffer(InGDI, &perFrameData, sizeof(perFrameData));
 		CBPerObjectData perObjectData = {};
 		CommonConstantBuffers::PerObjectData = CreateConstantBuffer(InGDI, &perObjectData, sizeof(perObjectData));
+
+		CBMaterial materialData = {};
+		CommonConstantBuffers::MaterialData = CreateConstantBuffer(InGDI, &materialData, sizeof(materialData));
 	}
 
 	GfxResId RenderResourceHelper::CreateConstantBuffer(GfxGDI* InGDI, void* InData, i32 InSize)

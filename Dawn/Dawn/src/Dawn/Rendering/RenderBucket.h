@@ -40,10 +40,8 @@ namespace Dawn
 			CommandCount = 0;
 		}
 
-		void Reset(u32 InMaxSize, GfxRTBundle* InBundle, const mat4& InViewMatrix, const mat4& InProjMatrix)
+		void Reset(u32 InMaxSize,const mat4& InViewMatrix, const mat4& InProjMatrix)
 		{
-			RenderBundle = InBundle;
-
 			if (Keys == nullptr && Data == nullptr)
 			{
 				Keys = new Key[InMaxSize];
@@ -144,14 +142,14 @@ namespace Dawn
 						//Renderer->CurrentShader->Bind();
 					}*/
 
-					//Renderer->CurrentShader->SetMat4("proj", Projection);
-					//Renderer->CurrentShader->SetMat4("view", View);
 
-					//Renderer->CurrentShader->SetVec4("material.albedo", Material->Albedo);
-					//Renderer->CurrentShader->SetVec4("material.emissive", Material->Emissive);
-					//Renderer->CurrentShader->SetFloat("material.metallic", Material->Metallic);
-					//Renderer->CurrentShader->SetFloat("material.roughness", Material->Roughness);
-					//Renderer->CurrentShader->SetFloat("material.ao", Material->Ao);
+					CBMaterial material = {};
+					material.Albedo = Material->Albedo;
+					material.AO = Material->Ao;
+					material.Emissive = Material->Emissive;
+					material.Metallic = Material->Metallic;
+					material.Roughness = Material->Roughness;
+					GDI->UpdateConstantBuffer(CommonConstantBuffers::MaterialData, &material, sizeof(material));
 
 					// remove this again! this is only here as a test
 					// but since we use a deferred renderer later this should really
@@ -170,7 +168,6 @@ namespace Dawn
 			}
 		}
 	private:
-		GfxRTBundle* RenderBundle;
 		Key* Keys;
 		CommandPacket* Data;
 		std::atomic<u32> CommandCount;

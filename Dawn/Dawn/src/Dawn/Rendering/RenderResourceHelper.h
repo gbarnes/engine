@@ -21,6 +21,7 @@ namespace Dawn
 		static ResourceId DebugInstancedVS;
 		static ResourceId ShadowMapVS;
 		static ResourceId ColoredSimplePS;
+		static ResourceId GBufferFillPS;
 	};
 
 	struct DAWN_API EditorShaderHandles
@@ -33,6 +34,7 @@ namespace Dawn
 		static GfxResId PerAppData;
 		static GfxResId PerObjectData;
 		static GfxResId PerFrameData;
+		static GfxResId MaterialData;
 	};
 
 	struct CBPerAppData
@@ -48,6 +50,15 @@ namespace Dawn
 	struct CBPerObjectData
 	{
 		mat4 World;
+	};
+
+	struct CBMaterial
+	{
+		vec4 Albedo;
+		vec4 Emissive;
+		float Metallic;
+		float Roughness;
+		float AO;
 	};
 
 	enum RenderCachedPSO

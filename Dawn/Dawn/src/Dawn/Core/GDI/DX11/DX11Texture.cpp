@@ -37,6 +37,7 @@ void Dawn::DX11Texture2D::Create(const GfxTextureDesc& InDesc, const GfxTextureD
 
 void Dawn::DX11Texture2D::SetName(const std::string& InName)
 {
+	D_ASSERT(Resource != nullptr, "Somehow the underlying dx11 resource is null!");
 	Resource->SetPrivateData(WKPDID_D3DDebugObjectName, InName.size(), InName.c_str());
 }
 
