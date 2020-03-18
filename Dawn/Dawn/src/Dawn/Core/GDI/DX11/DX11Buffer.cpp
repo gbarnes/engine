@@ -26,7 +26,7 @@ void Dawn::DX11Buffer::Create(const GfxBufferDesc& InDesc, const GfxBufferData& 
 	resourceData.pSysMem = InData.Data;
 
 	HRESULT hr = gdi->GetD3D11Device()->CreateBuffer(&bufferDesc, &resourceData, &Buffer);
-	D_ASSERT(SUCCEEDED(hr), "Couldn't create index buffer!");
+	D_ASSERT(SUCCEEDED(hr), "Couldn't create buffer!");
 
 	Stride = InDesc.StructureByteStride;
 	Offset = 0;

@@ -52,6 +52,7 @@ namespace Dawn
 		mat4 World;
 	};
 
+	__declspec(align(16))
 	struct CBMaterial
 	{
 		vec4 Albedo;

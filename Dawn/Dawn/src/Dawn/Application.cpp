@@ -188,19 +188,13 @@ namespace Dawn
 		pso->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(GDI->GetBuffer(CommonConstantBuffers::PerFrameData));
 		pso->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(GDI->GetBuffer(CommonConstantBuffers::PerObjectData));
 
-		auto psoGeomId = RenderResourceHelper::GetCachedPSO("GeometryPass");
-		auto* geomPso = GDI->GetPipelineState(psoGeomId);
-		geomPso->GetResourceCache(GfxShaderType::Pixel)->BindConstantBuffer(GDI->GetBuffer(CommonConstantBuffers::MaterialData));
+		//auto psoGeomId = RenderResourceHelper::GetCachedPSO("GeometryPass");
+		//auto* geomPso = GDI->GetPipelineState(psoGeomId);
+		//geomPso->GetResourceCache(GfxShaderType::Pixel)->BindConstantBuffer(GDI->GetBuffer(CommonConstantBuffers::MaterialData));
 		
-
 		CBPerAppData appData = {};
 		appData.Projection = World::GetActiveCamera()->GetProjection();
 		GDI->UpdateConstantBuffer(CommonConstantBuffers::PerAppData, &appData, sizeof(appData));
-
-
-		CBPerFrameData frameData = {};
-		frameData.View = World::GetActiveCamera()->GetView();
-		GDI->UpdateConstantBuffer(CommonConstantBuffers::PerFrameData, &frameData, sizeof(frameData));
 
 		CBPerObjectData objectData = {};
 		objectData.World = glm::scale(mat4(1), vec3(0.2f)) * glm::rotate(mat4(1), glm::radians(80.0f), vec3(1.f, -1.0f, 1.0f));
@@ -210,10 +204,6 @@ namespace Dawn
 		ImGuizmo::SetOrthographic(false);
 		
 		DWN_CORE_INFO("Core Context initialized.");
-
-		auto* vao = GfxPrimitiveFactory::AllocateCube(GDI.get());
-		
-		GDI->BindPipelineShaders();
 		
 		{
 			InitTime(Time);

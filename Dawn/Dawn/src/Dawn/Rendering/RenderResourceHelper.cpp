@@ -52,6 +52,7 @@ namespace Dawn
 	GfxResId CommonConstantBuffers::PerAppData;
 	GfxResId CommonConstantBuffers::PerObjectData;
 	GfxResId CommonConstantBuffers::PerFrameData;
+	GfxResId CommonConstantBuffers::MaterialData;
 
 	Map<std::string, Dawn::GfxResId> CachedObjects;
 
@@ -63,7 +64,6 @@ namespace Dawn
 		CommonConstantBuffers::PerFrameData = CreateConstantBuffer(InGDI, &perFrameData, sizeof(perFrameData));
 		CBPerObjectData perObjectData = {};
 		CommonConstantBuffers::PerObjectData = CreateConstantBuffer(InGDI, &perObjectData, sizeof(perObjectData));
-
 		CBMaterial materialData = {};
 		CommonConstantBuffers::MaterialData = CreateConstantBuffer(InGDI, &materialData, sizeof(materialData));
 	}
