@@ -40,12 +40,12 @@ namespace Dawn
 
 			auto Key = GenDrawKey64(true, material->Id.Index, RenderLayer::StaticGeom, 0.0f);
 
-			/*auto DrawCmd = renderer->PerFrameData.GeometryBucket.AddCommand<Draw::DrawIndexedData>(Key);
+			auto DrawCmd = renderer->GetPass(RenderPassId::Geometry)->Bucket.AddCommand<Draw::DrawIndexedData>(Key);
 			DrawCmd->IndexCount = mesh->NumIndices;
 			DrawCmd->VertexArrayId = mesh->VertexArrayId;
 			DrawCmd->Model = transform->WorldSpace;
 
-			auto ShadowDrawCmd = renderer->PerFrameData.ShadowBucket.AddCommand<Draw::DrawIndexedData>(0u);
+			/*auto ShadowDrawCmd = renderer->PerFrameData.ShadowBucket.AddCommand<Draw::DrawIndexedData>(0u);
 			ShadowDrawCmd->IndexCount = mesh->NumIndices;
 			ShadowDrawCmd->VertexArrayId = mesh->VertexArrayId;
 			ShadowDrawCmd->Model = transform->WorldSpace;*/

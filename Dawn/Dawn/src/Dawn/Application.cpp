@@ -144,7 +144,6 @@ namespace Dawn
 		Renderer->CreatePasses(this);
 		Renderer->OnPostRender = std::bind(&OnPostRender, std::placeholders::_1, std::placeholders::_2);
 
-		
 		JobSystem::Initialize();
 
 		// Boot up World!
@@ -176,31 +175,12 @@ namespace Dawn
 
 		InitInput(Window->GetInstance(), Window->GetHwnd(), Settings.Width, Settings.Height);
 		Load();
+		SetupLayers();
 
-		RenderResourceHelper::LoadCommonShaders(ResourceSystem.get());
-		RenderResourceHelper::CreatePSODefaults(this);
-		RenderResourceHelper::CreateConstantBuffers(GDI.get());
-
-		auto psoId = RenderResourceHelper::GetCachedPSO("Debug");
-
-		auto* pso = GDI->GetPipelineState(psoId);
-		pso->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(GDI->GetBuffer(CommonConstantBuffers::PerAppData));
-		pso->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(GDI->GetBuffer(CommonConstantBuffers::PerFrameData));
-		pso->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(GDI->GetBuffer(CommonConstantBuffers::PerObjectData));
-
-		//auto psoGeomId = RenderResourceHelper::GetCachedPSO("GeometryPass");
-		//auto* geomPso = GDI->GetPipelineState(psoGeomId);
-		//geomPso->GetResourceCache(GfxShaderType::Pixel)->BindConstantBuffer(GDI->GetBuffer(CommonConstantBuffers::MaterialData));
-		
 		CBPerAppData appData = {};
 		appData.Projection = World::GetActiveCamera()->GetProjection();
 		GDI->UpdateConstantBuffer(CommonConstantBuffers::PerAppData, &appData, sizeof(appData));
 
-		CBPerObjectData objectData = {};
-		objectData.World = glm::scale(mat4(1), vec3(0.2f)) * glm::rotate(mat4(1), glm::radians(80.0f), vec3(1.f, -1.0f, 1.0f));
-		GDI->UpdateConstantBuffer(CommonConstantBuffers::PerObjectData, &objectData, sizeof(objectData));
-
-		SetupLayers();
 		ImGuizmo::SetOrthographic(false);
 		
 		DWN_CORE_INFO("Core Context initialized.");
@@ -210,18 +190,23 @@ namespace Dawn
 			IsInitialized = true;
 			bool bExit = false;
 		
+			MSG msg;
+			ZeroMemory(&msg, sizeof(MSG));
 			while (!bExit)
 			{BROFILER_FRAME("MainThread");
 			
-				MSG msg;
-				while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+				
+				if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 				{
-					if (msg.message == WM_QUIT) bExit = true;
+					if (msg.message == WM_QUIT)
+						break;
 					TranslateMessage(&msg);
 					DispatchMessage(&msg);
 				}
-				
-				Tick();
+				else
+				{
+					Tick();
+				}
 			}
 		}
 
@@ -247,7 +232,7 @@ namespace Dawn
 
 	void Application::Tick()
 	{
-		UpdateInput();
+		
 		Time.FrameCount++;
 		
 #if DAWN_DEBUG
@@ -255,13 +240,23 @@ namespace Dawn
 		{
 			bIsInEditMode = !bIsInEditMode;
 			
-			if(bIsInEditMode)
+			if (bIsInEditMode)
+			{
 				World::SetActiveCamera(EditorWorld->GetCamera(0));
+
+				CBPerAppData appData = {};
+				appData.Projection = EditorWorld->GetCamera(0)->GetProjection();
+				GDI->UpdateConstantBuffer(CommonConstantBuffers::PerAppData, &appData, sizeof(appData));
+			}
 			else 
 			{
 				auto* Cam = World->GetCamera(0);
 				World::SetActiveCamera(Cam);
 				CameraUtils::CalculateView(Cam, Cam->GetTransform(World.get()));
+
+				CBPerAppData appData = {};
+				appData.Projection = Cam->GetProjection();
+				GDI->UpdateConstantBuffer(CommonConstantBuffers::PerAppData, &appData, sizeof(appData));
 			}
 		}
 
@@ -274,8 +269,7 @@ namespace Dawn
 			Time.AlignedUpdateDeltaTime += Time.FrameDeltaTime;
 			while (Time.AlignedUpdateDeltaTime >= Time::TargetUpdateRate)
 			{
-				Update(Time.AlignedUpdateDeltaTime * Time.TimeScale); 
-				
+				Update(Time.FrameDeltaTime * Time.TimeScale);
 				Time.AlignedUpdateDeltaTime -= Time::TargetUpdateRate;
 			}
 		}
@@ -285,7 +279,7 @@ namespace Dawn
 			// The physics engine is being updated at a different fixed 
 			// rate to have more consistent results. 
 			// The framerate is being updated every 33ms 
-			Time.AlignedPhysicsDeltaTime += Time.FrameDeltaTime;
+			/*Time.AlignedPhysicsDeltaTime += Time.FrameDeltaTime;
 			while (Time.AlignedPhysicsDeltaTime >= Time::TargetPhysicsUpdateRate)
 			{
 				const float FixedTime = Time.AlignedPhysicsDeltaTime * Time.TimeScale;
@@ -300,26 +294,26 @@ namespace Dawn
 
 				ResourceSystem->Refresh();
 				Time.AlignedPhysicsDeltaTime -= Time::TargetPhysicsUpdateRate;
-			}
+			}*/
 		}
+
+		for (auto Layer : Layers)
+			Layer->Render();
+
+		// todo (gb): do this differently?! :D
+		GetWorld()->GetSystemByType<MeshFilterSystem>(MeshFilterSystem::GetType())->Update(GetWorld().get());
 
 		// Rendering
 		{BROFILER_EVENT("Rendering")
 			World->UpdateSceneGraph();
 			
 			Renderer->BeginFrame(GDI.get(), World::GetActiveCamera());
-		
-			for (auto Layer : Layers)
-				Layer->Render();
-
-			// todo (gb): do this differently?! :D
-			//GetWorld()->GetSystemByType<MeshFilterSystem>(MeshFilterSystem::GetType())->Update(GetWorld().get());
-
 			Renderer->Submit(this);
 			Renderer->EndFrame(GDI.get());
 		}
 
 		StepTime(Time);
+		UpdateInput();
 	}
 
 	void Application::Render()

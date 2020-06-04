@@ -1,4 +1,4 @@
 cbuffer PerApplication : register( b0 )
 {
     matrix projectionMatrix;
-}
+};

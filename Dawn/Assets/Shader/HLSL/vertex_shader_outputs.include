@@ -1,0 +1,12 @@
+struct OUTPosNormal
+{
+    float4 position : SV_POSITION;
+	float3 normal : NORMAL;
+	float3 worldPosition : POSITION;
+};
+
+struct OUTPosUV
+{
+	float4 position : SV_POSITION;
+	float2 uv : TEXCOORD0;
+};

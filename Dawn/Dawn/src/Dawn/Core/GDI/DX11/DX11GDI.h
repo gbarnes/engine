@@ -29,8 +29,12 @@ namespace Dawn
 		virtual void SetVAO(const GfxResId& InId) override;
 		virtual void BindPipelineShaders() override;
 		virtual void CommitShaderResources(const GfxResId& InPSOId) override;
+		virtual void ClearShaderResources() override;
 		virtual void UpdateConstantBuffer(const GfxResId& InBufferId, void* InData, i32 InSize) override;
-		GfxResId GetBackBufferId() override
+		virtual void SetToBackbuffer() override;
+		virtual GfxResId GetCurrentPSOId() override;
+
+		GfxResId GetBackbufferId() override
 		{
 			return BackbufferId;
 		}
@@ -42,7 +46,7 @@ namespace Dawn
 		virtual GfxResId CreateTextureView(const GfxTextureViewDesc& InDesc, GfxTextureView** OutTexture) override;
 		virtual GfxResId CreateSampler(const GfxSamplerDesc& InDesc, GfxSampler** OutTexture) override;
 		virtual GfxResId CreatePSO(const GfxPipelineStateObjectDesc& InDesc, GfxPipelineStateObject** OutSampler) override;
-	//	virtual GfxResId CreateRenderBuffer(GfxRenderBuffer** OutTexture) override;
+	
 
 		inline ID3D11Device* GetD3D11Device() const {
 			return Device.Get();

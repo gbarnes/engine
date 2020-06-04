@@ -1,4 +1,4 @@
-#pragma include "PerApplicationBuffers.include"
+#pragma include "per_application_buffers.include"
 #pragma include "functions.include"
 
 cbuffer PerFrame : register( b1 )

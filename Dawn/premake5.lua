@@ -62,7 +62,7 @@ project "Dawn"
 		
 	}
 	
-	libdirs { "Dawn/vendor/assimp/lib/x64/*", "Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/*", "Dawn/vendor/DirectX/Lib/*" }
+	libdirs { "Dawn/vendor/assimp/lib/x64/*",  "Dawn/vendor/DirectX/Lib/*" }
 
 	filter "system:windows"
 		cppdialect "C++17"
@@ -75,16 +75,10 @@ project "Dawn"
 			"DAWN_BUILD_DLL"
 		}
 		
-
 		postbuildcommands 
 		{
 			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox"),
 			("{COPY} vendor/assimp/bin/x64 ../bin/" .. outputdir .. "/Sandbox"),
-			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysX_64.dll ../bin/" .. outputdir .. "/Sandbox"),
-			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCommon_64.dll ../bin/" .. outputdir .. "/Sandbox"),
-			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXFoundation_64.dll ../bin/" .. outputdir .. "/Sandbox"),
-			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCooking_64.dll ../bin/" .. outputdir .. "/Sandbox"),
-			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXGPU_64.dll ../bin/" .. outputdir .. "/Sandbox")
 		}
 
 	filter "configurations:Debug" 
@@ -92,6 +86,16 @@ project "Dawn"
 		defines "DAWN_DEBUG"
 		symbols "On"
 		optimize "Off"
+		libdirs { "Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/debug/*"}
+
+		postbuildcommands 
+		{
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysX_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCommon_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXFoundation_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCooking_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXGPU_64.dll ../bin/" .. outputdir .. "/Sandbox")
+		}
 
 	filter "configurations:Release" 
 		flags {LinkTimeOptimization}
@@ -99,6 +103,16 @@ project "Dawn"
 		defines "DAWN_RELEASE;NDEBUG"
 		symbols "Off"
 		optimize "Full"
+		libdirs { "Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/release/*"}
+		postbuildcommands 
+		{
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysX_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXCommon_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXFoundation_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXCooking_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXGPU_64.dll ../bin/" .. outputdir .. "/Sandbox")
+		}
+
 
 	filter "configurations:Dist" 
 		flags {LinkTimeOptimization}
@@ -106,6 +120,16 @@ project "Dawn"
 		defines "DAWN_DIST;NDEBUG"
 		symbols "Off"
 		optimize "Speed"
+		libdirs { "Dawn/vendor/physx/physx/bin/win.x86_64.vc141.mt/release/*"}
+		postbuildcommands 
+		{
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysX_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXCommon_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXFoundation_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXCooking_64.dll ../bin/" .. outputdir .. "/Sandbox"),
+			("{COPY} vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXGPU_64.dll ../bin/" .. outputdir .. "/Sandbox")
+		}
+
 
     -- shadermodel("5.0")
 
@@ -141,7 +165,7 @@ project "Sandbox"
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 	pchheader "pch.h"
 	pchsource "Sandbox/src/pch.cpp"
-	linkoptions { '/NODEFAULTLIB:"libcmt.lib"' }
+	
 	
 	files
 	{
@@ -177,19 +201,7 @@ project "Sandbox"
 		"Brofiler",
 		"glad",
 		"pugixml",
-		"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysX_64.lib",
-		"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCommon_64.lib",
-		"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXFoundation_64.lib",
-		"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCooking_64.lib",
-		"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXExtensions_static_64.lib",
-		"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXPvdSDK_static_64.lib",
-		"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXTask_static_64.lib",
-		"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXVehicle_static_64.lib",
-		"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCharacterKinematic_static_64.lib",
-		"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevelDynamics_static_64.lib",
-		"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevelAABB_static_64.lib",
-		"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/FastXml_static_64.lib",
-		"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevel_static_64.lib",
+		
 		"Dawn/vendor/assimp/lib/x64/assimp-vc140-mt.lib",
 		"Dawn/vendor/DirectX/Lib/*",
 		"Dawn"
@@ -209,6 +221,22 @@ project "Sandbox"
 		defines "DAWN_DEBUG"
 		symbols "On"
 		optimize "Off"
+		linkoptions { '/NODEFAULTLIB:"libcmt.lib"' }
+		links  {
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysX_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCommon_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXFoundation_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCooking_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXExtensions_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXPvdSDK_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXTask_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXVehicle_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/PhysXCharacterKinematic_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevelDynamics_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevelAABB_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/FastXml_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/debug/LowLevel_static_64.lib"
+		}
 
 	filter "configurations:Release" 
 		flags {LinkTimeOptimization}
@@ -216,8 +244,40 @@ project "Sandbox"
 		symbols "On"
 		optimize "Full"
 
+		links  {
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysX_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXCommon_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXFoundation_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXCooking_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXExtensions_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXPvdSDK_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXTask_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXVehicle_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXCharacterKinematic_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/LowLevelDynamics_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/LowLevelAABB_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/FastXml_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/LowLevel_static_64.lib"
+		}
+
 	filter "configurations:Dist" 
 		flags {LinkTimeOptimization}
 		defines "DAWN_DIST;NDEBUG"
-		symbols "On"
+		symbols "Off"
 		optimize "Speed"
+
+		links  {
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysX_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXCommon_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXFoundation_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXCooking_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXExtensions_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXPvdSDK_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXTask_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXVehicle_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/PhysXCharacterKinematic_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/LowLevelDynamics_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/LowLevelAABB_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/FastXml_static_64.lib",
+			"Dawn/vendor/Physx/physx/bin/win.x86_64.vc141.mt/release/LowLevel_static_64.lib"
+		}

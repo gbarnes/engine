@@ -8,6 +8,7 @@
 #include "DX11PipelineStateObject.h"
 #include "DX11Sampler.h"
 #include "DX11ShaderResourceCache.h"
+#include "Brofiler.h"
 #include "inc_dx11_utils.h"
 
 bool Dawn::DX11GDI::Init(const AppSettings& InSettings)
@@ -15,24 +16,36 @@ bool Dawn::DX11GDI::Init(const AppSettings& InSettings)
 	DXGI_SWAP_CHAIN_DESC scd;
 	ZeroMemory(&scd, sizeof(DXGI_SWAP_CHAIN_DESC));
 
-	scd.BufferCount = 2;
+	scd.BufferCount = 1;
 	scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	scd.OutputWindow = InSettings.Hwnd;
 	scd.SampleDesc.Count = 1;
 	scd.SampleDesc.Quality = 0;
 	scd.Windowed = true;
-	scd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+	scd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	scd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 	DXGI_ADAPTER_DESC adapter;
 	ZeroMemory(&adapter, sizeof(DXGI_ADAPTER_DESC));
 	
 	UINT flags = 0;
-	
+	flags |= D3D11_CREATE_DEVICE_SINGLETHREADED;
 #ifdef _DEBUG
-	flags |= D3D11_CREATE_DEVICE_DEBUG;
+	//flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
+
+	D3D_FEATURE_LEVEL featureLevels[] =
+	{
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_11_0,
+		D3D_FEATURE_LEVEL_10_1,
+		D3D_FEATURE_LEVEL_10_0,
+		D3D_FEATURE_LEVEL_9_3,
+		D3D_FEATURE_LEVEL_9_2,
+		D3D_FEATURE_LEVEL_9_1
+	};
+
 
 	HRESULT hr = D3D11CreateDeviceAndSwapChain
 	(
@@ -40,8 +53,8 @@ bool Dawn::DX11GDI::Init(const AppSettings& InSettings)
 		D3D_DRIVER_TYPE_HARDWARE,				// Driver Type always Hardware!
 		0,										// no need to set this
 		flags,				// flags 
-		nullptr,								// Which feature levels should be used
-		0,										// 
+		featureLevels,								// Which feature levels should be used
+		_countof(featureLevels),									// 
 		D3D11_SDK_VERSION, 
 		&scd, 
 		&SwapChain, 
@@ -79,10 +92,19 @@ void Dawn::DX11GDI::Resize(i32 InWidth, i32 InHeight)
 	SetViewport(0, 0, InWidth, InHeight);
 }
 
+Dawn::GfxResId Dawn::DX11GDI::GetCurrentPSOId()
+{
+	if (CurrentPipelineState == nullptr)
+		return INVALID_HANDLE;
+
+	return CurrentPipelineState->GetId();
+}
 
 void Dawn::DX11GDI::Present()
 {
-	SwapChain->Present(1, 0);
+	BROFILER_CATEGORY("GDI_Present", Brofiler::Color::Red);
+	SwapChain->Present(0, 0);
+	Context->ClearState();
 }
 
 void Dawn::DX11GDI::Shutdown()
@@ -108,6 +130,8 @@ void Dawn::DX11GDI::ActivateTextureSlot(u32 InIndex)
 
 void Dawn::DX11GDI::DrawIndexed(const GfxResId& InVertexArrayId)
 {
+	BROFILER_CATEGORY("GDI_DrawIndexed", Brofiler::Color::Red);
+
 	DX11VertexArrayObject* vao = static_cast<DX11VertexArrayObject*>(GetVertexArrayObject(InVertexArrayId));
 	
 	ID3D11Buffer* ib = vao->GetD3D11IndexBuffer();
@@ -125,6 +149,8 @@ void Dawn::DX11GDI::DrawArray(const GfxResId& VertexArrayId)
 
 void Dawn::DX11GDI::DrawInstanced(const GfxResId& VertexArrayId, u32 InAmount)
 {
+	BROFILER_CATEGORY("GDI_DrawInstanced", Brofiler::Color::Red);
+
 	DX11VertexArrayObject* vao = static_cast<DX11VertexArrayObject*>(GetVertexArrayObject(VertexArrayId));
 
 	ID3D11Buffer* ib = vao->GetD3D11IndexBuffer();
@@ -158,6 +184,8 @@ void Dawn::DX11GDI::SetViewport(u32 InLeft, u32 InTop, u32 InRight, u32 InBottom
 
 void Dawn::DX11GDI::SetRenderTargetBundle(const GfxRTBundle* InBundle)
 {
+	BROFILER_CATEGORY("GDI_SetRenderTargetBundle", Brofiler::Color::Red);
+
 	// Todo(gb): can we speed this up?!
 	Array<ID3D11RenderTargetView*> rts;
 	for (u32 i = 0; i < InBundle->GetRenderTargetCount(); ++i)
@@ -174,6 +202,8 @@ void Dawn::DX11GDI::SetRenderTargetBundle(const GfxRTBundle* InBundle)
 
 void Dawn::DX11GDI::ClearWithColor(const GfxResId& InTextureViewId, const vec4& InColor)
 {
+	BROFILER_CATEGORY("GDI_ClearWithColor", Brofiler::Color::Red);
+
 	auto* buffer = static_cast<DX11TextureView*>(GetTextureView(InTextureViewId));
 	auto* rt = static_cast<ID3D11RenderTargetView*>(buffer->GetD3DView());
 
@@ -183,6 +213,8 @@ void Dawn::DX11GDI::ClearWithColor(const GfxResId& InTextureViewId, const vec4& 
 
 void Dawn::DX11GDI::ClearDepthStencil(const GfxResId& InDepthStencilId, float InDepth, i32 InStencil)
 {
+	BROFILER_CATEGORY("GDI_ClearDepthStencil", Brofiler::Color::Red);
+
 	auto* buffer = static_cast<DX11TextureView*>(GetTextureView(InDepthStencilId));
 	auto* rt = static_cast<ID3D11DepthStencilView*>(buffer->GetD3DView());
 
@@ -190,16 +222,29 @@ void Dawn::DX11GDI::ClearDepthStencil(const GfxResId& InDepthStencilId, float In
 	Context->ClearDepthStencilView(rt, D3D11_CLEAR_STENCIL | D3D11_CLEAR_DEPTH, InDepth, InStencil);
 }
 
+void Dawn::DX11GDI::SetToBackbuffer()
+{
+	BROFILER_CATEGORY("GDI_SetToBackbuffer", Brofiler::Color::Red);
+
+	ID3D11RenderTargetView* rt = static_cast<ID3D11RenderTargetView*>(static_cast<DX11TextureView*>(GetTextureView(BackbufferId))->GetD3DView());
+	D_ASSERT(rt != nullptr, "Backbuffer not found!");
+	Context->OMSetRenderTargets(1, &rt, nullptr);
+}
+
 void Dawn::DX11GDI::Clear()
 {
-
+	Context->ClearState();
 }
 
 void Dawn::DX11GDI::SetPipelineState(const GfxResId& InId)
 {
+	BROFILER_CATEGORY("GDI_SetPipelineState", Brofiler::Color::Red);
+
 	auto CastedState = static_cast<DX11PipelineStateObject*>(GetPipelineState(InId));
 	if (CastedState == CurrentPipelineState)
 		return;
+
+	SetViewport(0, 0, 1280, 720);
 
 	CurrentPipelineState = CastedState;
 
@@ -218,6 +263,7 @@ void Dawn::DX11GDI::SetPipelineState(const GfxResId& InId)
 
 void Dawn::DX11GDI::SetVAO(const GfxResId& InId)
 {
+	BROFILER_CATEGORY("GDI_SetVAO", Brofiler::Color::Red);
 	auto* vao = static_cast<DX11VertexArrayObject*>(GetVertexArrayObject(InId));
 	Context->IASetVertexBuffers(0, vao->GetVertexBufferCount(), vao->GetD3D11VertexBuffers(), vao->GetStrides(), 0);
 
@@ -228,6 +274,8 @@ void Dawn::DX11GDI::SetVAO(const GfxResId& InId)
 
 void Dawn::DX11GDI::BindPipelineShaders()
 {
+	BROFILER_CATEGORY("GDI_BindPipelineShaders", Brofiler::Color::Red);
+
 	D_ASSERT(CurrentPipelineState != nullptr, "No Pipeline State Object bound!");
 	
 	auto& vsShader = CurrentPipelineState->GetDesc().VertexShaderId;
@@ -247,6 +295,8 @@ void Dawn::DX11GDI::BindPipelineShaders()
 
 void Dawn::DX11GDI::CommitShaderResources(const GfxResId& InPSOId)
 {
+	BROFILER_CATEGORY("GDI_CommitShaderResources", Brofiler::Color::Red);
+
 	DX11PipelineStateObject* pso = static_cast<DX11PipelineStateObject*>(GetPipelineState(InPSOId));
 	const Array<u8>& shaders = pso->GetBoundShaderTypes();
 	for (u32 i = 0; i < shaders.Count(); ++i)
@@ -256,18 +306,54 @@ void Dawn::DX11GDI::CommitShaderResources(const GfxResId& InPSOId)
 		
 		if (type == GfxShaderType::Pixel)
 		{
-			Context->PSSetConstantBuffers(0, u32(cache->NumConstantBuffers()), cache->ToConstantBuffers());
+			if (cache->NumConstantBuffers() > 0)
+				Context->PSSetConstantBuffers(0, u32(cache->NumConstantBuffers()), cache->ToConstantBuffers());
+
+			if (cache->NumSamplers() > 0)
+				Context->PSSetSamplers(0, u32(cache->NumSamplers()), cache->ToSamplers());
+			if(cache->NumShaderResourceViews() > 0)
+				Context->PSSetShaderResources(0, u32(cache->NumShaderResourceViews()), cache->ToShaderResourceViews());
 		}
 
 		if (type == GfxShaderType::Vertex)
 		{
-			Context->VSSetConstantBuffers(0, u32(cache->NumConstantBuffers()), cache->ToConstantBuffers());
+			if (cache->NumConstantBuffers() > 0)
+				Context->VSSetConstantBuffers(0, u32(cache->NumConstantBuffers()), cache->ToConstantBuffers());
+
+			if (cache->NumSamplers() > 0)
+				Context->VSSetSamplers(0, u32(cache->NumSamplers()), cache->ToSamplers());
+
+			if (cache->NumShaderResourceViews() > 0)
+				Context->VSSetShaderResources(0, u32(cache->NumShaderResourceViews()), cache->ToShaderResourceViews());
 		}
 	}
 }
 
+void Dawn::DX11GDI::ClearShaderResources()
+{
+	BROFILER_CATEGORY("GDI_ClearShaderResources", Brofiler::Color::Red);
+
+	ID3D11ShaderResourceView* srvs[128] = { 0 };
+	memset(srvs, 0, sizeof(srvs));
+	Context->PSSetShaderResources(0, 128, srvs);
+	Context->VSSetShaderResources(0, 128, srvs);
+
+	//ID3D11Buffer* buffers[5] = { 0 };
+	//memset(buffers, 0, sizeof(buffers));
+	//Context->PSSetConstantBuffers(0, 5, buffers);
+	//Context->VSSetConstantBuffers(0, 5, buffers);
+
+	/*ID3D11SamplerState* samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT] = { 0 };
+	memset(samplers, 0, sizeof(samplers));
+	Context->PSSetSamplers(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, samplers);
+	Context->VSSetSamplers(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, samplers);*/
+
+}
+
 void Dawn::DX11GDI::UpdateConstantBuffer(const GfxResId& InBufferId, void* InData, i32 InSize)
 {
+	BROFILER_CATEGORY("GDI_UpdateConstantBuffer", Brofiler::Color::Red);
+
 	// todo (gb): should this method be written to take multiple buffers??
 	DX11Buffer* buffer = static_cast<DX11Buffer*>(GetBuffer(InBufferId));
 	D_ASSERT(buffer != nullptr, "The constant buffer couldn't be found!");

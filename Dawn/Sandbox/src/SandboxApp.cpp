@@ -33,18 +33,19 @@ void SandboxApp::Load()
 	//RenderResourceHelper::LoadCommonShaders(ResourceSystem.get());
 
 	
-	auto Cam1 = CreateCamera(GetWorld().get(),
+	/*auto Cam1 = CreateCamera(GetWorld().get(),
 		"Cam",
 		Settings.Width,
 		Settings.Height,
-		0.01f, 1000.0f, 65.0f,
+		0.1f, 1000.0f, 65.0f,
 		vec4(0.4f, 0.6f, 0.9f, 1.0f),
-		vec3(0, 0, 2.0f)
+		vec3(0, 0, 10.0f),
+		quat()
 	);
 
 	TransformUtils::CalculateForward(Cam1->GetTransform(GetWorld().get()));
 	CameraUtils::CalculatePerspective(Cam1);
-	CameraUtils::CalculateView(Cam1, Cam1->GetTransform(GetWorld().get()));
+	CameraUtils::CalculateView(Cam1, Cam1->GetTransform(GetWorld().get()));*/
 
 	//auto Id = ResourceSystem->LoadFile("Textures/grid.png");
 	//if (auto GridImage = ResourceSystem->FindImage(Id))
@@ -67,24 +68,25 @@ void SandboxApp::Load()
 	//g_ScreenQuadVAO = GfxPrimitiveFactory::AllocateQuad(GDI.get(), vec2(1.0f, -1.0f), 1.0f);
 
 	ImGuiWrapper::Create(this->Settings.Hwnd, this->GetGDI().get());
-	World::SetActiveCamera(Cam1);
+	//World::SetActiveCamera(Cam1);
 
 	//GetWorld()->CreateModelEntity(std::string("spaceCraft"), std::string("Model/spaceCraft1.fbx"), vec3(0, 0, 0));
 	//GetWorld()->CreateModelEntity(std::string("spaceCraft2"), std::string("Model/spaceCraft1.fbx"), vec3(-20, 0, 0));
 	//GetWorld()->CreateModelEntity(std::string("tank"), std::string("Model/Tank.fbx"), vec3(20, 0, 0), vec3(0.05f, 0.05f, 0.05f));
 
 
-	/*auto LevelId = ResourceSystem->LoadFile("Scenes/Test.level");
+	auto LevelId = ResourceSystem->LoadFile("Scenes/Test.level");
 	auto Level = ResourceSystem->FindLevel(LevelId);
-	World::LoadLevel(GetWorld().get(), Level);*/
+	World::LoadLevel(GetWorld().get(), Level);
 
 	auto* CamTransform = GetWorld()->GetCamera(0)->GetTransform(GetWorld().get()); 
-	
+	World::SetActiveCamera(GetWorld()->GetCamera(0));
+
 	auto editorCam = CreateCamera(GetEditorWorld().get(),
 		"EditorCam",
 		Settings.Width,
 		Settings.Height,
-		0.01f, 1000.0f, 65.0f,
+		0.1f, 1000.0f, 65.0f,
 		vec4(0.4f, 0.6f, 0.9f, 1.0f),
 		CamTransform->Position,
 		CamTransform->Rotation

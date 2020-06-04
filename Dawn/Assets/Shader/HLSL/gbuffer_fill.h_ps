@@ -1,8 +1,4 @@
-struct VSOutput
-{
-    float4 position : SV_POSITION;
-	float3 normal : NORMAL;
-};
+#pragma include "vertex_shader_outputs.include"
  
 struct PSOutput
 {
@@ -12,21 +8,21 @@ struct PSOutput
 	float4 material : SV_Target3;
 };
 
-cbuffer Material : register( b1 )
+cbuffer Material : register( b0 )
 {
 	float4 albedo;
     float4 emissive;
     float metallic;
     float roughness;
 	float ao;
-}
+};
 
-PSOutput Main( VSOutput IN )
+PSOutput Main( OUTPosNormal IN )
 {
 	PSOutput OUT;
 	
-	OUT.position = IN.position;
-	OUT.normal = float4(IN.normal, 1);
+	OUT.position = float4(IN.worldPosition, 1.0); 
+	OUT.normal = float4(IN.normal, 0.0);
 	OUT.albedo_ao = float4(albedo.rgb, ao);
 	OUT.material = float4(metallic, roughness, 0, 0);
 	

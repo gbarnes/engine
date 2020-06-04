@@ -1,0 +1,19 @@
+#pragma include "per_application_buffers.include"
+#pragma include "per_frame_buffers.include"
+#pragma include "vertex_shader_inputs.include"
+#pragma include "vertex_shader_outputs.include"
+#pragma include "functions.include"
+
+OUTPosNormal Main( INPosNormUV2Inst IN, uint instanceID : SV_InstanceID )
+{
+    OUTPosNormal OUT;
+
+	float4 world = mul( IN.model, float4( IN.position, 1.0f ) );
+	float4 screen = mul( projectionMatrix, mul( viewMatrix, world));
+	
+    OUT.position = screen;
+	OUT.normal = IN.normal;
+	OUT.worldPosition = world.xyz;
+    
+	return OUT;
+}

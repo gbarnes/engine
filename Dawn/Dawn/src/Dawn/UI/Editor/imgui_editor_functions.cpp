@@ -338,7 +338,6 @@ namespace Dawn
 		if (g_showAssetBrowser)
 			ShowAssetBrowserWindow();
 
-		
 		if (g_ShowSceneWindow)
 			ShowSceneWindow();
 		
@@ -355,10 +354,9 @@ namespace Dawn
 		{
 			World->DestroyEntity(SceneData->SelectionData.Entity);
 			SceneData->SelectionData.Entity = INVALID_ENTITY;
-			
+		
 		}
 
-		
 		Editor_BeginGizmoFrame();
 		Editor_RenderObjectManipulationGizmo(EditorCamera, World.get(), Editor_GetSceneData());
 		Editor_RenderDirectionalLightGizmos(GDI.get(), EditorCamera, World.get(), SceneData, Resources);

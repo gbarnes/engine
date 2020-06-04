@@ -212,6 +212,8 @@ namespace Dawn
 		if (ImGuiWrapper::InputHandling(hwnd, message, wParam, lParam))
 			return true;
 
+		PAINTSTRUCT paintStruct;
+		HDC hDC;
 
 		switch (message)
 		{
@@ -265,16 +267,12 @@ namespace Dawn
 			break;
 		}*/
 
-		/*case WM_PAINT:
+		case WM_PAINT:
 		{
-			Window* window = (Window*)GetProp(hwnd, L"Window");
-			if (NULL != window)
-			{
-				if (window->OnWindowPaint != nullptr)
-					window->OnWindowPaint();
-			}
+			hDC = BeginPaint(hwnd, &paintStruct);
+			EndPaint(hwnd, &paintStruct);
 			
-		} break;*/
+		} break;
 		default:
 			return DefWindowProc(hwnd, message, wParam, lParam);
 			break;

@@ -126,13 +126,11 @@ namespace Dawn
 		auto MatId = RS->CreateMaterial(&SampleMaterial);
 		SampleMaterial->Albedo = vec4(0.7f, 0.7f, 0.7f, 1.0f);
 		SampleMaterial->ShaderId = CommonShaderHandles::StandardInstanced;
-		SampleMaterial->PSOId = RenderResourceHelper::GetCachedPSO("Debug");
-
-		
+		SampleMaterial->PSOId = RenderResourceHelper::GetCachedPSO("GeometryPass");
 
 		auto MatId2 = RS->CreateMaterial(&SampleMaterial2);
 		SampleMaterial2->Albedo = vec4(0.7f, 0.7f, 0.7f, 1.0f);
-		SampleMaterial2->PSOId = RenderResourceHelper::GetCachedPSO("DebugInstanced");
+		SampleMaterial2->PSOId = RenderResourceHelper::GetCachedPSO("GeometryPassInstanced");
 
 		glm::mat4* modelMatrices = new glm::mat4[Size];
 		u32 row = 0;
@@ -240,6 +238,7 @@ namespace Dawn
 
 				CBPerFrameData frameData = {};
 				frameData.View = g_camera->GetView();
+				frameData.CameraPosition = g_camTransform->GetWorldPosition();
 				g_Application->GetGDI()->UpdateConstantBuffer(CommonConstantBuffers::PerFrameData, &frameData, sizeof(frameData));
 			}
 		}
@@ -277,17 +276,20 @@ namespace Dawn
 		auto ActiveCam = World->GetActiveCamera();
 		auto ActiveCamTransform = ActiveCam->GetTransform(ActiveCam->WorldRef);
 
-		mat4 model = mat4(1);
+		/*mat4 model = mat4(1);
 		DrawSphere(model, SampleMaterial->Id, Parent->GetResourceSystem().get(), Parent->GetRenderer().get(), usedModel);
 
-	//	mat4 model2 = glm::translate(mat4(1), glm::vec3(0.0f, 0.0f, 0.6f));
-	//	DrawSphere(model2, SampleMaterial->Id, Parent->GetResourceSystem().get(), Parent->GetRenderer().get(), usedModel);
+		model = glm::translate(mat4(1), vec3(2.0f, 0.0f, -2.0f));
+		DrawSphere(model, SampleMaterial->Id, Parent->GetResourceSystem().get(), Parent->GetRenderer().get(), usedModel);
+
+		mat4 model2 = glm::translate(mat4(1), glm::vec3(0.0f, 0.0f, 0.6f));
+		DrawSphere(model2, SampleMaterial->Id, Parent->GetResourceSystem().get(), Parent->GetRenderer().get(), usedModel);
 
 		auto DrawCmd = Renderer->GetPass(RenderPassId::Geometry)->Bucket.AddCommand<Draw::DrawInstancedData>(CubeDrawKey);
 		DrawCmd->VertexArrayId = CubeMeshArray->GetId();
 		DrawCmd->IndexCount = CubeMeshArray->GetIndiceCount();
-		DrawCmd->Amount = Size;
-
+		DrawCmd->Amount = Size;*/
+		
 		/*auto DrawShadowCmd = Renderer->PerFrameData.ShadowBucket.AddCommand<Draw::DrawInstancedData>(0u);
 		DrawShadowCmd->VertexArrayId = CubeMeshArray->GetId();
 		DrawShadowCmd->IndexCount = CubeMeshArray->GetIndexBuffer(GDI.get())->GetSize();

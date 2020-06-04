@@ -22,6 +22,12 @@ namespace Dawn
 		static ResourceId ShadowMapVS;
 		static ResourceId ColoredSimplePS;
 		static ResourceId GBufferFillPS;
+		static ResourceId GBufferFillVS;
+		static ResourceId GBufferFillInstancedVS;
+
+		static ResourceId PBRLightingPS;
+		static ResourceId FxaaPS;
+		static ResourceId FullscreenQuadVS;
 	};
 
 	struct DAWN_API EditorShaderHandles
@@ -35,21 +41,54 @@ namespace Dawn
 		static GfxResId PerObjectData;
 		static GfxResId PerFrameData;
 		static GfxResId MaterialData;
+		static GfxResId DirLightData;
+		static GfxResId PointLightData;
 	};
 
+	struct CommonSamplers
+	{
+		static GfxResId DefaultSampler;
+	};
+
+	__declspec(align(16))
 	struct CBPerAppData
 	{
 		mat4 Projection;
 	};
 
+	__declspec(align(16))
 	struct CBPerFrameData
 	{
 		mat4 View;
+		vec3 CameraPosition;
 	};
 
+	__declspec(align(16))
 	struct CBPerObjectData
 	{
 		mat4 World;
+	};
+
+	__declspec(align(16))
+	struct CBDirLightData
+	{
+		mat4 LightSpace;
+		vec4 Color;
+		vec4 ShadowColor;
+		vec3 Direction;
+		float Intensity;
+	};
+
+	constexpr i32 MaxLightCount = 32;
+
+	__declspec(align(16))
+	struct CBPointLightData
+	{
+		vec3 Position[MaxLightCount];
+		vec4 Color[MaxLightCount];
+		float Intensity[MaxLightCount];
+		float Range[MaxLightCount];
+		int Num = 0;
 	};
 
 	__declspec(align(16))
@@ -79,6 +118,7 @@ namespace Dawn
 		DAWN_API void CreateConstantBuffers(GfxGDI* InGDI);
 		DAWN_API GfxResId CreateConstantBuffer(GfxGDI* InGDI, void* InData, i32 InSize);
 
+		void CreateSamplers(GfxGDI* InGDI);
 		DAWN_API void CreatePSODefaults(Application* InApplication);
 		DAWN_API void CachePSO(const std::string& InName, Dawn::GfxResId InId);
 		DAWN_API Dawn::GfxResId GetCachedPSO(const std::string& InName);

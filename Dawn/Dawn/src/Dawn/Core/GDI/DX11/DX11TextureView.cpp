@@ -54,7 +54,7 @@ void Dawn::DX11TextureView::Create(const GfxTextureViewDesc& InDesc)
 		desc.Format = ToDX11Format(InDesc.Format);
 		desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 		desc.Texture2D.MostDetailedMip = 0;
-		desc.Texture2D.MipLevels = -1;
+		desc.Texture2D.MipLevels = 1;
 
 		ComPtr<ID3D11ShaderResourceView> ssView;
 		HRESULT hr = device->CreateShaderResourceView(texture, &desc, &ssView);

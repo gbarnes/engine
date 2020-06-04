@@ -31,7 +31,7 @@ namespace Dawn
 		this->Type = InDesc.Type;
 		DX11GDI* gdi = static_cast<DX11GDI*>(this->GDI.get());
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		// todo (gb): we should pre-compile the shader in release builds but for now its hot compiled of course!
 		ComPtr<ID3D10Blob> errorBlob;
 		HRESULT result = D3DX11CompileFromMemory(InData.Data, InData.Size, InDesc.FileName, nullptr, nullptr, InDesc.FunctionName, InDesc.ProfileName,
@@ -46,7 +46,7 @@ namespace Dawn
 
 			return;
 		}
-#endif
+//#endif
 
 		if (this->Type == Dawn::GfxShaderType::Vertex)
 		{

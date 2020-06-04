@@ -52,7 +52,9 @@ namespace Dawn
 		RGB32F,
 		RGBA16F,
 		RGB16F,
+		RGBA8F,
 		RGBA8UN,
+		RGBA8UN_SRGB,
 		D24S8, // Depth 24 Bits unsigned normalized integers , Stencil 8 Bits unsigned integers
 		R24X8TYPELESS,
 		R24G8TYPELESS

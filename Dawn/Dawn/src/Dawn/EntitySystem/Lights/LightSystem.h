@@ -1,6 +1,7 @@
 #pragma once
 #include "../System.h"
 #include "LightComponents.h"
+#include "EntitySystem/Camera/Camera.h"
 #include "Rendering/Renderer.h"
 
 namespace Dawn
@@ -8,9 +9,11 @@ namespace Dawn
 	class DAWN_API LightSystem
 	{
 	public:
-		static void Update(World* InWorld, GfxShader* InShader)
+		static void Update(World* InWorld)
 		{
 			BROFILER_EVENT("LightSystem Update");
+
+			CBPointLightData plData = {};
 
 			u32 i = 0;
 			auto pointLights = InWorld->GetComponentSets<PointLight, Transform>();
@@ -21,17 +24,20 @@ namespace Dawn
 
 				if (meta->bIsActive)
 				{
-					//InShader->SetVec3("pointLights[" + std::to_string(i) + "].position", pair.second->Position);
-					//InShader->SetVec3("pointLights[" + std::to_string(i) + "].color", pair.first->Color);
-					//InShader->SetFloat("pointLights[" + std::to_string(i) + "].intensity", pair.first->Intensity);
-					//InShader->SetFloat("pointLights[" + std::to_string(i) + "].range", pair.first->Range);
+					plData.Position[i] = pair.second->Position;
+					plData.Color[i] = pair.first->Color;
+					plData.Intensity[i] = pair.first->Intensity;
+					plData.Range[i] = pair.first->Range;
 					++i;
 				}
 				
 			}
-			//InShader->SetInt("pointLightNum", i);
+			
+			plData.Num = i;
 
-			i = 0;
+			// note (gb): this will always take the last directional light that is active!
+			//			  find a better solution for this?!
+			CBDirLightData dirData = {};
 			auto directionalLights = InWorld->GetComponentSets<DirectionalLight, Transform>();
 			for (std::pair<DirectionalLight*, Transform*> pair : directionalLights)
 			{
@@ -41,16 +47,19 @@ namespace Dawn
 				if (meta->bIsActive)
 				{
 					TransformUtils::CalculateForward(pair.second);
-					//InShader->SetVec3("directionalLights[" + std::to_string(i) + "].direction", pair.second->Forward);
-					//InShader->SetVec3("directionalLights[" + std::to_string(i) + "].color", pair.first->Color);
-					//InShader->SetFloat("directionalLights[" + std::to_string(i) + "].intensity", pair.first->Intensity);
-					//InShader->SetMat4("directionalLights[" + std::to_string(i) + "].lightSpace", pair.first->LightSpace);
-					++i;
+
+					LightUtils::CalculateOrthoLightMatrix(InWorld, pair.first, World::GetActiveCamera()->NearZ, World::GetActiveCamera()->FarZ);
+
+					dirData.Direction = pair.second->Forward;
+					dirData.Color = pair.first->Color;
+					dirData.Intensity = pair.first->Intensity;
+					dirData.LightSpace = pair.first->LightSpace;
 				}
 				
 			}
 
-			//InShader->SetInt("directionalLightsNum", i);
+			//g_Application->GetGDI()->UpdateConstantBuffer(CommonConstantBuffers::PointLightData, &plData, sizeof(plData));
+			g_Application->GetGDI()->UpdateConstantBuffer(CommonConstantBuffers::DirLightData, &dirData, sizeof(dirData));
 		}
 	};
 

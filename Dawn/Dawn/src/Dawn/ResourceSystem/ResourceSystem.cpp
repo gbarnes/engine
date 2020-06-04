@@ -23,7 +23,7 @@ namespace Dawn
 		if (InExtension == ".jpg" || InExtension == ".png" || InExtension == ".bmp" || InExtension == ".PNG")
 			return ResourceType_Image;
 
-		if (InExtension == ".shader")
+		if (InExtension == ".h_ps" || InExtension == ".h_vs")
 			return ResourceType_Shader;
 
 		if (InExtension == ".level")
@@ -62,7 +62,7 @@ namespace Dawn
 		for (const auto& entry : it)
 		{
 			std::string extension = entry.path().extension().string();
-			if (entry.is_regular_file() && IsValidFilter(extension))
+			if ((entry.is_character_file() || entry.is_regular_file()) && IsValidFilter(extension))
 			{
 				auto file = entry.path();
 

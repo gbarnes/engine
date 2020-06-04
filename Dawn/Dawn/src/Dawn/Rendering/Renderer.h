@@ -49,7 +49,9 @@ namespace Dawn
 	// https://kosmonautblog.wordpress.com/ great resource
 	// http://svenandersson.se/2014/realtime-rendering-blogs.html more resources
 	// https://seanmiddleditch.com/
-	//
+	// https://bell0bytes.eu/game-programming/
+	// https://bell0bytes.eu/inputsystem/
+	// https://www.reddit.com/r/gamedev/
 	class DAWN_API IRenderer
 	{
 	public:
@@ -74,9 +76,12 @@ namespace Dawn
 		virtual void Submit(Application* InApp) = 0;
 		virtual void EndFrame(GfxGDI* InGDI) = 0;
 
-		RenderPass* BeginPass(const char* InName)
+		RenderPass* BeginPass(const char* InName, i32 InMaxSize)
 		{
-			return new (PassAllocator.Allocate(sizeof(RenderPass), __alignof(RenderPass), 0)) RenderPass(InName);
+			auto* pass = new (PassAllocator.Allocate(sizeof(RenderPass), __alignof(RenderPass), 0)) RenderPass(InName);
+			pass->Bucket.Allocate(InMaxSize);
+
+			return pass;
 		}
 
 		void PushPass(RenderPass* InPass)
@@ -126,16 +131,13 @@ namespace Dawn
 		GfxResId PerAppBuffer;
 		GfxResId PerFrameBuffer;
 		GfxResId PerObjectBuffer;
+
+		GfxResId QuadVAOId;
 	};
 
 	struct Camera;
 	struct DAWN_API PerFrameData
 	{
-		RenderBucket<u8> ShadowBucket;
-		RenderBucket<u64> GeometryBucket;
-		RenderBucket<u8> SSAOBucket;
-		RenderBucket<u8> LightingBucket;
-		RenderBucket<u8> FinalPassBucket;
 		Camera* Camera;
 	};
 

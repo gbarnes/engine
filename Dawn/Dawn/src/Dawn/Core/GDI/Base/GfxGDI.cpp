@@ -36,6 +36,7 @@ namespace Dawn
 	void GfxGDI::Shutdown()
 	{
 		GFX_FREE_OBJECTS(ReturnVertexArrayObject, VertexArrayObjectPool);
+		GFX_FREE_OBJECTS(ReturnSampler, SamplerPool);
 		GFX_FREE_OBJECTS(ReturnBuffer, BufferPool);
 		GFX_FREE_OBJECTS(ReturnTextureView, TextureViewPool);
 		GFX_FREE_OBJECTS(ReturnTexture, TexturePool);
@@ -78,6 +79,12 @@ namespace Dawn
 	{
 		static_cast<GfxPipelineStateObject*>(PipelineStatePool.Find(InId))->~GfxPipelineStateObject();
 		this->PipelineStatePool.Free(InId);
+	}
+
+	void GfxGDI::ReturnSampler(const GfxResId& InId)
+	{
+		static_cast<GfxSampler*>(SamplerPool.Find(InId))->~GfxSampler();
+		this->SamplerPool.Free(InId);
 	}
 
 	void GfxGDI::SetClearColor(const vec4& InColor)

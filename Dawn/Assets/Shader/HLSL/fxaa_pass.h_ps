@@ -1,0 +1,12 @@
+#pragma include "vertex_shader_outputs.include"
+
+Texture2D rt0 : register(t0);
+SamplerState rt0Sampler : register(s0);
+
+float4 Main( OUTPosUV IN ) : SV_TARGET
+{
+	float4 color =  rt0.Sample(rt0Sampler, IN.uv);
+	clip((color.r ==  0 && color.g ==  0 && color.b ==  0) ?  -1 : 1);
+		
+	return color; 
+}

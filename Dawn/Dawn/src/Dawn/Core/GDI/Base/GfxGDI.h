@@ -49,9 +49,12 @@ namespace Dawn
 		virtual void SetPipelineState(const GfxResId& InId) = 0;
 		virtual void SetVAO(const GfxResId& InId) = 0;
 		virtual void CommitShaderResources(const GfxResId& InPSOId) = 0;
+		virtual void ClearShaderResources() = 0;
 		virtual void BindPipelineShaders() = 0;
 		virtual void UpdateConstantBuffer(const GfxResId& InBufferId, void* InData, i32 InSize) = 0;
-		virtual GfxResId GetBackBufferId() = 0;
+		virtual void SetToBackbuffer() = 0;
+		virtual GfxResId GetBackbufferId() = 0;
+		virtual GfxResId GetCurrentPSOId() = 0;
 
 	public:
 		virtual GfxResId CreateBuffer(const GfxBufferDesc& InDesc, const GfxBufferData& InData, GfxBuffer** OutBuffer) = 0;
@@ -108,6 +111,7 @@ namespace Dawn
 		void ReturnVertexArrayObject(const GfxResId& InId);
 		void ReturnShader(const GfxResId& InId);
 		void ReturnPipelineState(const GfxResId& InId);
+		void ReturnSampler(const GfxResId& InId);
 	protected:
 		//Unique<GfxImmediatePrimitives> Primitives;
 		HandleObjectArray<GfxBuffer> BufferPool;

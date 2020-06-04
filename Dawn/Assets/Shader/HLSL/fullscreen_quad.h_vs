@@ -1,0 +1,13 @@
+#pragma include "vertex_shader_outputs.include"
+#pragma include "vertex_shader_inputs.include"
+
+
+OUTPosUV Main( INPosUV IN )
+{
+    OUTPosUV OUT;
+	
+    OUT.position = float4(IN.position, 1);
+	OUT.uv = IN.uv;
+     
+	return OUT;
+}

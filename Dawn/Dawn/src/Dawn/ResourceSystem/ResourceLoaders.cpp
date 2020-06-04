@@ -195,8 +195,7 @@ namespace Dawn
 					aiGetMaterialFloat(aiMaterial, AI_MATKEY_REFLECTIVITY, &reflection);
 					Material->Metallic = reflection;*/
 
-
-					Material->ShaderId = CommonShaderHandles::Standard;
+					Material->PSOId = RenderResourceHelper::GetCachedPSO("GeometryPass");
 					Mesh->Materials.push_back(Material->Id);
 				}
 
@@ -484,26 +483,30 @@ namespace Dawn
 			image->Height = y;
 			image->ChannelsPerPixel = n;
 
-			/*GfxTextureDesc Desc = 
-			{
-				GfxTextureFormat::RGBA32F,
-				GfxMemoryType::UnsignedByte,
-				GfxTextureFormat::RGBA32F,
-				data, // raw pixel data
-				(u32)x, // width of the image
-				(u32)y, // height of the image
-				(u16)n, // channels per pixel
-				{ GL_REPEAT, GL_REPEAT }, // wrap settings 
-				{ GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR }, // filter settings
-				true
-			};
+			GfxTextureDesc desc = {};
+			desc.Height = y;
+			desc.Width = x;
+			desc.CpuAccess = GfxCpuAccessFlags::CpuAccess_None;
+			desc.Usage = GfxUsageFlags::Usage_Default;
+			desc.BindFlags = GfxBindFlags::Bind_ShaderResource;
+			desc.Filter.Min = 0;
+			desc.Filter.Mag = 1;
+			desc.ArraySize = 1;
+			desc.Format = GfxFormat::RGBA8UN;
+			desc.MipLevels = 1;
+			desc.SampleCount = 1;
+			desc.SampleQuality = 0;
+			
 
+			GfxTextureData dataDesc = {};
+			dataDesc.Data = data;
+			dataDesc.Size = x * y * n * sizeof(float);
+			dataDesc.ChannelsPerPixel = n;
 
 			// these settings will later be filled by meta files
 			// associated to the file
-			image->TextureId = GDI->CreateTexture(Desc, nullptr);
-			*/
-
+			image->TextureId = GDI->CreateTexture(desc, dataDesc, nullptr);
+			
 			// Note(gb): remove this later since we don't want another dependency in the resource
 			//			 system - maybe there shouldn't be a dependency to the gdi as well
 			Renderer->Stats.TextureMemory += InFile->Size;

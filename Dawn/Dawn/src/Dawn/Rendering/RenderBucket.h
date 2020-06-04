@@ -9,6 +9,7 @@
 #include "EntitySystem/Lights/LightComponents.h"
 #include "EntitySystem/Entity.h"
 #include "RenderResourceHelper.h"
+#include "Core/Logging/Log.h"
 
 namespace Dawn
 {
@@ -25,6 +26,7 @@ namespace Dawn
 			HeapMemory = Memory::HeapArea(_2MB);
 			Allocator = Allocators::LinearAllocator(HeapMemory.GetStart(), HeapMemory.GetEnd());
 			CommandCount = 0;
+
 		}
 
 		~RenderBucket()
@@ -40,15 +42,18 @@ namespace Dawn
 			CommandCount = 0;
 		}
 
-		void Reset(u32 InMaxSize,const mat4& InViewMatrix, const mat4& InProjMatrix)
+		void Allocate(i32 InMaxSize)
 		{
-			if (Keys == nullptr && Data == nullptr)
+			MaxSize = InMaxSize;
+			if (Keys == nullptr && Data == nullptr && InMaxSize > 0)
 			{
 				Keys = new Key[InMaxSize];
 				Data = new CommandPacket[InMaxSize];
 			}
+		}
 
-			CommandCount = 0;
+		void Reset(const mat4& InViewMatrix, const mat4& InProjMatrix)
+		{
 			Projection = InProjMatrix;
 			View = InViewMatrix;
 		}
@@ -101,15 +106,12 @@ namespace Dawn
 			const Shared<World> World = InApp->GetWorld();
 			const Shared<DeferredRenderer> Renderer = InApp->GetRenderer();
 
-			/*ScopedGfxBind<GfxRenderBuffer> Binder;
-			if (RenderBufferId.IsValid)
-			{
-				auto Buffer = GDI->GetRenderBuffer(RenderBufferId);
-				Binder.Bind(Buffer);
-			}*/
-
 			u32 LastMatId = UINT_MAX;
-			GfxShader* GfxShader = nullptr;
+
+			if (Keys == nullptr || Data == nullptr) 
+			{
+				return;
+			}
 
 			for (u32 i = 0; i < CommandCount; ++i)
 			{
@@ -129,27 +131,22 @@ namespace Dawn
 					ResId.IsValid = true;
 
 					auto Material = Resources->FindMaterial(ResId);
-					// todo (gb): check if the same pso is already bound if so don't set a new one
-					GDI->SetPipelineState(Material->PSOId);
-					GDI->BindPipelineShaders();
-					GDI->CommitShaderResources(Material->PSOId);
 
-					//auto Shader = Resources->FindShader(Material->ShaderId);
-
-					/*if (Renderer->CurrentShader == nullptr || Renderer->CurrentShader->GetId().Index != Shader->ResourceId.Index)
+					auto currentPsoId = GDI->GetCurrentPSOId();
+					if (!currentPsoId.IsValid || currentPsoId.Index != Material->PSOId.Index)
 					{
-						Renderer->CurrentShader = GDI->GetShader(Shader->ResourceId);
-						//Renderer->CurrentShader->Bind();
-					}*/
+						GDI->SetPipelineState(Material->PSOId);
+						GDI->BindPipelineShaders();
+						GDI->CommitShaderResources(Material->PSOId);
 
-
-					CBMaterial material = {};
-					material.Albedo = Material->Albedo;
-					material.AO = Material->Ao;
-					material.Emissive = Material->Emissive;
-					material.Metallic = Material->Metallic;
-					material.Roughness = Material->Roughness;
-					GDI->UpdateConstantBuffer(CommonConstantBuffers::MaterialData, &material, sizeof(material));
+						CBMaterial material = {};
+						material.Albedo = Material->Albedo;
+						material.AO = Material->Ao;
+						material.Emissive = Material->Emissive;
+						material.Metallic = Material->Metallic;
+						material.Roughness = Material->Roughness;
+						GDI->UpdateConstantBuffer(CommonConstantBuffers::MaterialData, &material, sizeof(material));
+					}
 
 					// remove this again! this is only here as a test
 					// but since we use a deferred renderer later this should really
@@ -166,6 +163,8 @@ namespace Dawn
 					packet = commandPacket::LoadNextCommandPacket(packet);
 				} while (packet != nullptr);
 			}
+
+			GDI->ClearShaderResources();
 		}
 	private:
 		Key* Keys;
@@ -173,7 +172,7 @@ namespace Dawn
 		std::atomic<u32> CommandCount;
 		Allocators::LinearAllocator Allocator;
 		Memory::HeapArea HeapMemory;
-
+		i32 MaxSize;
 
 		mat4 Projection;
 		mat4 View;

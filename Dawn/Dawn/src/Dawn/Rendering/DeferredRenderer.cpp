@@ -9,10 +9,13 @@
 #include "Core/GDI/Base/GfxRTBundle.h"
 #include "Core/GDI/Base/GfxPipelineStateObject.h"
 #include "Core/GDI/Base/GfxInputLayouts.h"
+#include "Core/GDI/Base/GfxShaderResourceCache.h"
 #include "Core/GDI/Base/GfxGDI.h"
 #include "Core/GDI/inc_gfx.h"
 #include "Core/Math.h"
 #include "Core/GDI/Base/GfxRTBundle.h"
+#include "Core/GDI/Base/GfxVertexArrayObject.h"
+#include "EntitySystem/Lights/LightSystem.h"
 #include <random>
 
 namespace Dawn
@@ -54,7 +57,7 @@ namespace Dawn
 		desc.BindFlags = Dawn::GfxBindFlags::Bind_ShaderResource;
 		desc.Width = 4;
 		desc.Height = 4;
-		desc.Format = Dawn::GfxFormat::RGB16F;
+		desc.Format = Dawn::GfxFormat::RGBA8UN;
 		desc.Wrap.WrapS = 0;
 		desc.Wrap.WrapT = 0;
 		desc.SampleQuality = 0;
@@ -73,19 +76,25 @@ Dawn::GfxResId gDefaultPSO;
 
 void Dawn::DeferredRenderer::CreatePasses(Application* InApplication)
 {
+	RenderResourceHelper::LoadCommonShaders(InApplication->GetResourceSystem().get());
+	RenderResourceHelper::CreatePSODefaults(InApplication);
+	RenderResourceHelper::CreateConstantBuffers(InApplication->GetGDI().get());
+	RenderResourceHelper::CreateSamplers(InApplication->GetGDI().get());
+	TransientData.QuadVAOId = GfxPrimitiveFactory::AllocateQuad(InApplication->GetGDI().get(), vec2(1.0, 1.0f), 1.0f)->GetId();
+
 	// Push passes in the order you want them to be processed!!
 
-	auto* shadowPass = BeginPass("Shadow");
+	auto* shadowPass = BeginPass("Shadow", 2048);
 	shadowPass->IsActive = false;
 	shadowPass->Setup = [&](RenderPass* InPass)
 	{
 		auto Settings = InApplication->GetSettings();
 		InPass->RenderTargets.SetGDI(InApplication->GetGDI());
-		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA32F);
+		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA8UN_SRGB);
 	};
 	shadowPass->PerFrameSetup = [&](RenderPass* InPass)
 	{
-		InPass->Bucket.Reset(2048, mat4(), mat4());
+		InPass->Bucket.Reset(mat4(), mat4());
 
 		Shared<World> world = InApplication->GetWorld();
 		auto directionalLights = world->GetComponentsByType<DirectionalLight>();
@@ -100,55 +109,114 @@ void Dawn::DeferredRenderer::CreatePasses(Application* InApplication)
 	PushPass(shadowPass);
 
 	// -----------------------------------------------------------------------------------------
-	auto* geometryPass = BeginPass("Geometry");
+	auto* geometryPass = BeginPass("Geometry", 2048);
 	geometryPass->Setup = [](RenderPass* InPass) 
 	{
 		auto Settings = g_Application->GetSettings();
 		InPass->RenderTargets.SetGDI(g_Application->GetGDI());
-		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA32F); // Position
-		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA32F); // Normal
-		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA32F); // Albedo, AO
-		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA32F); // Metallic,Roughness
+		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA8UN_SRGB); // Position
+		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA8UN_SRGB); // Normal
+		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA8UN_SRGB); // Albedo, AO
+		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA8UN_SRGB); // Metallic,Roughness
 		InPass->RenderTargets.SetDepthStencilTarget(Settings->Width, Settings->Height);
+
+		auto psoId = RenderResourceHelper::GetCachedPSO("GeometryPass");
+
+		auto gdi = g_Application->GetGDI();
+		auto* pso = gdi->GetPipelineState(psoId);
+		pso->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(gdi->GetBuffer(CommonConstantBuffers::PerAppData));
+		pso->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(gdi->GetBuffer(CommonConstantBuffers::PerFrameData));
+		pso->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(gdi->GetBuffer(CommonConstantBuffers::PerObjectData));
+		pso->GetResourceCache(GfxShaderType::Pixel)->BindConstantBuffer(gdi->GetBuffer(CommonConstantBuffers::MaterialData));
+
+		auto psoInstanceId = RenderResourceHelper::GetCachedPSO("GeometryPassInstanced");
+		auto* psoInstanced = gdi->GetPipelineState(psoInstanceId);
+		psoInstanced->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(gdi->GetBuffer(CommonConstantBuffers::PerAppData));
+		psoInstanced->GetResourceCache(GfxShaderType::Vertex)->BindConstantBuffer(gdi->GetBuffer(CommonConstantBuffers::PerFrameData));
+		psoInstanced->GetResourceCache(GfxShaderType::Pixel)->BindConstantBuffer(gdi->GetBuffer(CommonConstantBuffers::MaterialData));
 	};
+
 	geometryPass->PerFrameSetup = [](RenderPass* InPass) 
 	{
 		auto* cam = World::GetActiveCamera();
 		auto gdi = g_Application->GetGDI();
+		gdi->Clear();
 
-		InPass->Bucket.Reset(2048, cam->GetView(), cam->GetProjection());
+		InPass->Bucket.Reset(cam->GetView(), cam->GetProjection());
+
+		CBPerFrameData frameData = {};
+		frameData.View = cam->GetView();
+		frameData.CameraPosition = cam->GetTransform(cam->WorldRef)->GetWorldPosition();
+		gdi->UpdateConstantBuffer(CommonConstantBuffers::PerFrameData, &frameData, sizeof(frameData));
 
 		gdi->SetRenderTargetBundle(&InPass->RenderTargets);
-		gdi->ClearWithColor(InPass->RenderTargets.GetRenderTargetId(0), vec4(0.0f, 0.0f, 0.0f, 1.0f));
-		gdi->ClearWithColor(InPass->RenderTargets.GetRenderTargetId(1), vec4(0.0f, 0.0f, 0.0f, 1.0f));
-		gdi->ClearWithColor(InPass->RenderTargets.GetRenderTargetId(2), vec4(0.0f, 0.0f, 0.0f, 1.0f));
-		gdi->ClearWithColor(InPass->RenderTargets.GetRenderTargetId(3), vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		gdi->ClearWithColor(InPass->RenderTargets.GetRenderTargetId(0), vec4(0.0f, 0.0f, 0.0f, 0.0f));
+		gdi->ClearWithColor(InPass->RenderTargets.GetRenderTargetId(1), vec4(0.0f, 0.0f, 0.0f, 0.0f));
+		gdi->ClearWithColor(InPass->RenderTargets.GetRenderTargetId(2), vec4(0.0f, 0.0f, 0.0f, 0.0f));
+		gdi->ClearWithColor(InPass->RenderTargets.GetRenderTargetId(3), vec4(0.0f, 0.0f, 0.0f, 0.0f));
 		gdi->ClearDepthStencil(InPass->RenderTargets.GetDepthStencilTargetId(), 1.0f, 0);
 	};
 	PushPass(geometryPass);
 
 	// -----------------------------------------------------------------------------------------
-	/*auto* lightingPass = BeginPass("Lighting");
+	auto* lightingPass = BeginPass("Lighting", 0);
 	lightingPass->Setup = [&](RenderPass* InPass)
 	{
-		
+		auto gdi = g_Application->GetGDI();
+		auto Settings = g_Application->GetSettings();
+
+		InPass->RenderTargets.SetGDI(g_Application->GetGDI());
+		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA8UN_SRGB); // Position
+
+		auto psoId = RenderResourceHelper::GetCachedPSO("PBRLightingPass"); // todo(gb): cache the id?! :D
+		auto pso = gdi->GetPipelineState(psoId);
+
+		pso->GetResourceCache(GfxShaderType::Pixel)->BindConstantBuffer(gdi->GetBuffer(CommonConstantBuffers::DirLightData));
+		pso->GetResourceCache(GfxShaderType::Pixel)->BindConstantBuffer(gdi->GetBuffer(CommonConstantBuffers::PerFrameData));
+		//pso->GetResourceCache(GfxShaderType::Pixel)->BindConstantBuffer(gdi->GetBuffer(CommonConstantBuffers::PointLightData));
+		pso->GetResourceCache(GfxShaderType::Pixel)->BindSampler(gdi->GetSampler(CommonSamplers::DefaultSampler));
+		pso->GetResourceCache(GfxShaderType::Pixel)->BindSampler(gdi->GetSampler(CommonSamplers::DefaultSampler));
+		pso->GetResourceCache(GfxShaderType::Pixel)->BindSampler(gdi->GetSampler(CommonSamplers::DefaultSampler));
+		pso->GetResourceCache(GfxShaderType::Pixel)->BindSampler(gdi->GetSampler(CommonSamplers::DefaultSampler));
 	};
+
 	lightingPass->PerFrameSetup = [&](RenderPass* InPass)
 	{
-		auto ClearColor = InPass->Bucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
-		ClearColor->ClearColor = World::GetActiveCamera()->ClearColor;
+		auto* cam = World::GetActiveCamera();
+		auto gdi = g_Application->GetGDI();
+		auto renderer = g_Application->GetRenderer();
 
-		auto LightingPassData = InPass->Bucket.AppendCommand<Draw::LightingPassData>(ClearColor);
-		LightingPassData->ShaderId = CommonShaderHandles::LightingPass;
-		/*LightingPassData->GBufferId = InPass->Bucket.GBufferId;
-		LightingPassData->FSQuadVAOId = FinalPassQuadId;
-		LightingPassData->ViewPosition = World::GetActiveCamera()->GetTransform()->Position;
-		LightingPassData->SSAOBufferId = SSAOBlurBufferId;*/
-	/*};
+		LightSystem::Update(g_Application->GetWorld().get());
+
+		auto* lightingPass = renderer->GetPass(RenderPassId::Geometry);
+		auto rt0 = lightingPass->RenderTargets.GetRenderTargetShaderView(0);
+		auto rt1 = lightingPass->RenderTargets.GetRenderTargetShaderView(1);
+		auto rt2 = lightingPass->RenderTargets.GetRenderTargetShaderView(2);
+		auto rt3 = lightingPass->RenderTargets.GetRenderTargetShaderView(3);
+
+		auto psoId = RenderResourceHelper::GetCachedPSO("PBRLightingPass"); // todo(gb): cache the id?! :D
+		auto pso = gdi->GetPipelineState(psoId);
+
+		auto psoCache = pso->GetResourceCache(GfxShaderType::Pixel);
+
+		gdi->Clear();
+		gdi->SetPipelineState(psoId);
+		gdi->SetRenderTargetBundle(&InPass->RenderTargets);
+		gdi->ClearWithColor(InPass->RenderTargets.GetRenderTargetId(0), vec4(0.0f, 0.0f, 0.0f, 0.0f));
+
+		psoCache->ClearShaderResourceViews();
+		psoCache->BindShaderResourceView(rt0);
+		psoCache->BindShaderResourceView(rt1);
+		psoCache->BindShaderResourceView(rt2);
+		psoCache->BindShaderResourceView(rt3);
+		gdi->CommitShaderResources(psoId);
+		gdi->BindPipelineShaders();
+		gdi->DrawIndexed(this->TransientData.QuadVAOId);
+	};
 	PushPass(lightingPass);
 
 	// -----------------------------------------------------------------------------------------
-	auto* ssaoPass = BeginPass("SSAO");
+	/*auto* ssaoPass = BeginPass("SSAO");
 	ssaoPass->Setup = [&](RenderPass* InPass)
 	{
 		auto Settings = InApplication->GetSettings();
@@ -180,29 +248,42 @@ void Dawn::DeferredRenderer::CreatePasses(Application* InApplication)
 		//SSAOBlurPass->SSAOBufferId = Renderer->TransientData.SSAOBufferId;
 		//SSAOBlurPass->FSQuadVAOId = FinalPassQuadId;
 	};
-	PushPass(ssaoPass);
+	PushPass(ssaoPass);*/
 
 	// -----------------------------------------------------------------------------------------
-	auto* fxaaPass = BeginPass("FXAA");
+	auto* fxaaPass = BeginPass("FXAA", 0);
 	fxaaPass->Setup = [&](RenderPass* InPass)
 	{
-		auto Settings = InApplication->GetSettings();
-		InPass->RenderTargets.SetGDI(InApplication->GetGDI());
-		InPass->RenderTargets.AttachColorTarget(Settings->Width, Settings->Height, GfxFormat::RGBA32F);
+		auto gdi = g_Application->GetGDI();
+		auto psoId = RenderResourceHelper::GetCachedPSO("FXAAPass"); // todo(gb): cache the id?! :D
+		auto pso = gdi->GetPipelineState(psoId);
+		pso->GetResourceCache(GfxShaderType::Pixel)->BindSampler(gdi->GetSampler(CommonSamplers::DefaultSampler));
 	};
+
 	fxaaPass->PerFrameSetup = [&](RenderPass* InPass)
 	{
-		InPass->Bucket.Reset(2, &InPass->RenderTargets, mat4(), mat4());
+		auto* cam = World::GetActiveCamera();
+		auto gdi = g_Application->GetGDI();
+		auto renderer = g_Application->GetRenderer();
+		auto* lightingPass = renderer->GetPass(RenderPassId::Lighting);
+		auto rt0 = lightingPass->RenderTargets.GetRenderTargetShaderView(0);
+		auto psoId = RenderResourceHelper::GetCachedPSO("FXAAPass"); // todo(gb): cache the id?! :D
+		auto pso = gdi->GetPipelineState(psoId);
 
-		auto ClearFinalPass = InPass->Bucket.AddCommand<Draw::ClearSceneWithColorData>(0u);
-		ClearFinalPass->ClearColor = World::GetActiveCamera()->ClearColor;
+		auto psoCache = pso->GetResourceCache(GfxShaderType::Pixel);
 
-		auto FXAAPass = InPass->Bucket.AppendCommand<Draw::FXAAData>(ClearFinalPass);
-		FXAAPass->ShaderId = CommonShaderHandles::FXAA;
-		//FXAAPass->RenderBufferId = Renderer->TransientData.FinalBufferId;
-		//FXAAPass->FSQuadVAOId = FinalPassQuadId;
+		gdi->Clear();
+		gdi->SetPipelineState(psoId);
+		gdi->SetToBackbuffer();
+		gdi->ClearWithColor(gdi->GetBackbufferId(), cam->ClearColor);
+
+		psoCache->ClearShaderResourceViews();
+		psoCache->BindShaderResourceView(rt0);
+		gdi->BindPipelineShaders();
+		gdi->CommitShaderResources(psoId);
+		gdi->DrawIndexed(this->TransientData.QuadVAOId);
 	};
-	PushPass(fxaaPass);*/
+	PushPass(fxaaPass);
 }
 void Dawn::DeferredRenderer::Resize(GfxGDI* InGDI, u32 InWidth, u32 InHeight)
 {
@@ -217,12 +298,7 @@ void Dawn::DeferredRenderer::BeginFrame(GfxGDI* InGDI, Camera* InCamera)
 	Stats.DrawCalls = 0;
 	PerFrameData.Camera = InCamera;
 
-	for(auto* pass : Passes)
-	{
-		D_ASSERT(pass->PerFrameSetup != nullptr, "");
-		if(pass->IsActive)
-			pass->PerFrameSetup(pass);
-	}
+	InGDI->SetViewport(0, 0, InCamera->Width, InCamera->Height);
 }
 
 void Dawn::DeferredRenderer::Submit(Application* InApp)
@@ -239,13 +315,16 @@ void Dawn::DeferredRenderer::Submit(Application* InApp)
 	for (auto* pass : Passes)
 	{
 		if (pass->IsActive)
+		{
+			pass->PerFrameSetup(pass);
 			pass->Bucket.Submit(InApp);
+		}
 	}
 }
 
 void Dawn::DeferredRenderer::EndFrame(GfxGDI* InGDI)
 {
-	BROFILER_EVENT("Rendering_EndFrame")
+	BROFILER_EVENT("Rendering_EndFrame");
 
 	if (OnPostRender)
 		OnPostRender(InGDI, this);
@@ -254,7 +333,6 @@ void Dawn::DeferredRenderer::EndFrame(GfxGDI* InGDI)
 
 	for (auto* pass : Passes)
 	{
-		if (pass->IsActive)
-			pass->Bucket.Free();
+		pass->Bucket.Free();
 	}
 }

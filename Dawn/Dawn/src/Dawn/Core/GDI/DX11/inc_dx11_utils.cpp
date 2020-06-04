@@ -111,6 +111,9 @@ DXGI_FORMAT Dawn::ToDX11Format(GfxFormat InFormat)
 	case GfxFormat::R24G8TYPELESS:
 		return DXGI_FORMAT::DXGI_FORMAT_R24G8_TYPELESS;
 		break;
+	case GfxFormat::RGBA8UN_SRGB:
+		return DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+		break;
 	}
 
 	return DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -180,7 +183,7 @@ DXGI_FORMAT Dawn::ShaderTypeToDX11Format(GfxShaderDataType InType)
 {
 	if (InType == Dawn::GfxShaderDataType::Position)
 	{
-		return DXGI_FORMAT_R32G32B32_FLOAT;
+		return DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT;
 	}
 
 	if (InType == Dawn::GfxShaderDataType::Color)
@@ -190,7 +193,7 @@ DXGI_FORMAT Dawn::ShaderTypeToDX11Format(GfxShaderDataType InType)
 
 	if (InType == Dawn::GfxShaderDataType::Matrix)
 	{
-		return DXGI_FORMAT_R32G32B32A32_FLOAT;
+		return DXGI_FORMAT_R32G32B32_FLOAT;
 	}
 
 	if (InType == Dawn::GfxShaderDataType::TexCoord0 || InType == Dawn::GfxShaderDataType::TexCoord1)

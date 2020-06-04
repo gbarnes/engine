@@ -1,0 +1,94 @@
+#pragma include "vertex_shader_outputs.include"
+
+cbuffer DirectionalLight : register(b0)
+{
+	float4x4 DL_LightSpace;
+	float4 DL_Color;
+	float4 DL_ShadowColor;
+	float3 DL_Direction;
+	float DL_Intensity;
+};
+
+#pragma include "per_frame_buffers.include"
+#pragma include "functions.include"
+#pragma include "pbr_functions.include"
+
+static const int MaxPointLights = 32;
+
+/*
+cbuffer PointLights
+{
+	float3 PL_Position[MaxPointLights];
+	float4 PL_Color[MaxPointLights];
+	float PL_Intensity[MaxPointLights];
+	float PL_Range[MaxPointLights];
+	int PL_Num;
+};
+*/
+
+Texture2D positionRT : register(t0);
+SamplerState positionRTSampler : register(s0);
+
+Texture2D normalRT : register(t1);
+SamplerState normalRTSampler : register(s1);
+
+Texture2D colorRT : register(t2);
+SamplerState colorRTSampler : register(s2);
+
+Texture2D materialRT : register(t3);
+SamplerState materialRTSampler : register(s3);
+
+float CalculateAttenuation(float3 WorldPos, float3 LightPosition)
+{
+	float distance  = length(LightPosition - WorldPos);
+    float attenuation = 1.0 / (distance * distance);
+	return attenuation;
+}
+
+float3 ApplyFog(float3 rgb, float distance, float3  rayDir, float3  sunDir, float density, float3 colorA, float3 colorB)  // camera to point vector
+{
+	float fogAmount = 1.0 - exp( -distance*density );
+    float sunAmount = max( dot( rayDir, sunDir ), 0.0 );
+    float3  fogColor  = lerp( colorA, colorB, pow(sunAmount,8.0) );
+    return lerp( rgb, fogColor, fogAmount );
+}
+
+float4 Main( OUTPosUV IN ) : SV_TARGET
+{
+	float4 Normal = normalRT.Sample(normalRTSampler, IN.uv);
+	Normal.a = 1; 
+
+	/*matrix inverseView = viewMatrix;
+
+	float3 WorldPos = positionRT.Sample(positionRTSampler, IN.uv).rgb;
+	float3 Albedo = colorRT.Sample(colorRTSampler, IN.uv).rgb;
+	float AO = colorRT.Sample(colorRTSampler, IN.uv).a;
+    float Metallic = materialRT.Sample(materialRTSampler, IN.uv).r;
+	float Roughness = materialRT.Sample(materialRTSampler, IN.uv).g;
+	
+
+	float3 N = normalize(Normal.rgb);
+	float3 V = normalize(viewPosition - WorldPos);  
+	
+	float3 F0 = float3(0.04, 0.04, 0.04); 
+	F0 = lerp(F0, Albedo, Metallic);
+	  
+	float3 Lo = float3(0.0,0.0,0.0); 
+
+	// Calculate directional light!
+	float3 L = normalize(-DL_Direction);
+	float3 H = normalize(V + L); 
+	 
+	float3 radiance = float3(DL_Color.rgb) * DL_Intensity;
+	Lo += CalculateIrradiance(radiance, L, V, N, H, F0, Roughness, Metallic, Albedo);
+	
+	float3 ambient = float3(0.03, 0.03, 0.03) * Albedo;
+    float3 color = ambient + Lo ;
+	
+    color = color / (color + float3(1.0, 1.0, 1.0));
+	color = pow(color, float3(1.0/2.2, 1.0/2.2, 1.0/2.2));
+   
+	return float4(ApplyFog(color, distance(viewPosition, WorldPos), V, DL_Direction, 0.008, float3(0.5,0.6,0.7), DL_Color), 1);*/
+	
+	return Normal;
+}

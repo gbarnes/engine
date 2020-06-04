@@ -26,6 +26,11 @@ namespace Dawn
 	ResourceId CommonShaderHandles::ShadowMapVS;
 	ResourceId CommonShaderHandles::ColoredSimplePS;
 	ResourceId CommonShaderHandles::GBufferFillPS;
+	ResourceId CommonShaderHandles::GBufferFillVS;
+	ResourceId CommonShaderHandles::GBufferFillInstancedVS;
+	ResourceId CommonShaderHandles::FxaaPS;
+	ResourceId CommonShaderHandles::FullscreenQuadVS;
+	ResourceId CommonShaderHandles::PBRLightingPS;
 
 	void RenderResourceHelper::LoadCommonShaders(ResourceSystem* InResourceSystem)
 	{
@@ -47,14 +52,22 @@ namespace Dawn
 		CommonShaderHandles::ShadowMapVS = InResourceSystem->LoadFile("Shader/HLSL/shadowpass.h_vs");
 		CommonShaderHandles::ColoredSimplePS = InResourceSystem->LoadFile("Shader/HLSL/colored_simple.h_ps");
 		CommonShaderHandles::GBufferFillPS = InResourceSystem->LoadFile("Shader/HLSL/gbuffer_fill.h_ps");
+		CommonShaderHandles::GBufferFillVS = InResourceSystem->LoadFile("Shader/HLSL/gbuffer_fill.h_vs");
+		CommonShaderHandles::GBufferFillInstancedVS = InResourceSystem->LoadFile("Shader/HLSL/gbuffer_fill_instanced.h_vs");
+
+		CommonShaderHandles::PBRLightingPS = InResourceSystem->LoadFile("Shader/HLSL/pbr_lighting.h_ps");
+		CommonShaderHandles::FxaaPS = InResourceSystem->LoadFile("Shader/HLSL/fxaa_pass.h_ps");
+		CommonShaderHandles::FullscreenQuadVS = InResourceSystem->LoadFile("Shader/HLSL/fullscreen_quad.h_vs");
 	}
 
 	GfxResId CommonConstantBuffers::PerAppData;
 	GfxResId CommonConstantBuffers::PerObjectData;
 	GfxResId CommonConstantBuffers::PerFrameData;
 	GfxResId CommonConstantBuffers::MaterialData;
+	GfxResId CommonConstantBuffers::PointLightData;
+	GfxResId CommonConstantBuffers::DirLightData;
 
-	Map<std::string, Dawn::GfxResId> CachedObjects;
+	std::unordered_map<std::string, Dawn::GfxResId> CachedObjects;
 
 	void RenderResourceHelper::CreateConstantBuffers(GfxGDI* InGDI)
 	{
@@ -66,6 +79,24 @@ namespace Dawn
 		CommonConstantBuffers::PerObjectData = CreateConstantBuffer(InGDI, &perObjectData, sizeof(perObjectData));
 		CBMaterial materialData = {};
 		CommonConstantBuffers::MaterialData = CreateConstantBuffer(InGDI, &materialData, sizeof(materialData));
+		CBPointLightData lightData = {};
+		CommonConstantBuffers::PointLightData = CreateConstantBuffer(InGDI, &lightData, sizeof(lightData));
+		CBPointLightData dirLightData = {};
+		CommonConstantBuffers::DirLightData = CreateConstantBuffer(InGDI, &dirLightData, sizeof(dirLightData));
+	}
+
+	GfxResId CommonSamplers::DefaultSampler;
+	void RenderResourceHelper::CreateSamplers(GfxGDI* InGDI)
+	{
+		GfxSamplerDesc desc = {};
+		desc.AddressU = GfxTextureAddressMode::Wrap;
+		desc.AddressV = GfxTextureAddressMode::Wrap;
+		desc.AddressW = GfxTextureAddressMode::Wrap;
+		desc.Filter = GfxFilter::MinMagMipLinear;
+		desc.MaxAnisotropy = 0;
+		desc.MipLODBias = 0;
+
+		CommonSamplers::DefaultSampler = InGDI->CreateSampler(desc, nullptr);
 	}
 
 	GfxResId RenderResourceHelper::CreateConstantBuffer(GfxGDI* InGDI, void* InData, i32 InSize)
@@ -90,9 +121,10 @@ namespace Dawn
 		auto gdi = InApplication->GetGDI();
 		auto rs = InApplication->GetResourceSystem();
 
+		// data driven?!
 		// Create DEBUG PSO!
 		GfxPipelineStateObjectDesc desc = {};
-		desc.RasterizerState.CullMode = GfxCullMode::CullBack;
+		desc.RasterizerState.CullMode = GfxCullMode::CullNone;
 		desc.RasterizerState.FillMode = GfxFillMode::FillSolid;
 		desc.RasterizerState.FrontCounterClockwise = 0;
 
@@ -112,7 +144,7 @@ namespace Dawn
 
 		// Create DEBUG PSO!
 		GfxPipelineStateObjectDesc instanceDesc = {};
-		instanceDesc.RasterizerState.CullMode = GfxCullMode::CullBack;
+		instanceDesc.RasterizerState.CullMode = GfxCullMode::CullNone;
 		instanceDesc.RasterizerState.FillMode = GfxFillMode::FillSolid;
 		instanceDesc.RasterizerState.FrontCounterClockwise = 1;
 
@@ -132,7 +164,7 @@ namespace Dawn
 
 		// Create Shadow PSO
 		GfxPipelineStateObjectDesc shadowDesc = {};
-		shadowDesc.RasterizerState.CullMode = GfxCullMode::CullFront;
+		shadowDesc.RasterizerState.CullMode = GfxCullMode::CullNone;
 		shadowDesc.RasterizerState.FillMode = GfxFillMode::FillSolid;
 		shadowDesc.RasterizerState.FrontCounterClockwise = 0;
 
@@ -145,17 +177,82 @@ namespace Dawn
 		shadowDesc.VertexShaderId = rs->FindShader(CommonShaderHandles::ShadowMapVS)->GfxShaderId;
 
 		CachePSO("Shadow", gdi->CreatePSO(shadowDesc, nullptr));
+
+		// Create Geometry PSO
+		GfxPipelineStateObjectDesc geometryPassDesc = {};
+		geometryPassDesc.RasterizerState.CullMode = GfxCullMode::CullBack;
+		geometryPassDesc.RasterizerState.FillMode = GfxFillMode::FillSolid;
+		geometryPassDesc.RasterizerState.FrontCounterClockwise = 0;
+		geometryPassDesc.RasterizerState.AntialiasedLineEnable = false;
+
+		geometryPassDesc.DepthStencilState.DepthEnable = true;
+		geometryPassDesc.DepthStencilState.DepthFunc = GfxComparisonFunc::LessEqual;
+		geometryPassDesc.DepthStencilState.DepthWriteMask = GfxDepthWriteMask::DepthWriteMaskAll;
+
+		geometryPassDesc.BlendState.RenderTarget[0].BlendEnable = FALSE;
+		geometryPassDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = (((1 | 2) | 4) | 8);
+		geometryPassDesc.BlendState.RenderTarget[1].BlendEnable = FALSE;
+		geometryPassDesc.BlendState.RenderTarget[1].RenderTargetWriteMask = (((1 | 2) | 4) | 8);
+		geometryPassDesc.BlendState.RenderTarget[2].BlendEnable = FALSE;
+		geometryPassDesc.BlendState.RenderTarget[2].RenderTargetWriteMask = (((1 | 2) | 4) | 8);
+		geometryPassDesc.BlendState.RenderTarget[3].BlendEnable = FALSE;
+		geometryPassDesc.BlendState.RenderTarget[3].RenderTargetWriteMask = (((1 | 2) | 4) | 8);
+
+		geometryPassDesc.InputLayout = gPositionNormUV2Layout;
+		geometryPassDesc.TopologyType = GfxTopologyType::TopologyPolygon;
+		geometryPassDesc.PixelShaderId = rs->FindShader(CommonShaderHandles::GBufferFillPS)->GfxShaderId;
+		geometryPassDesc.VertexShaderId = rs->FindShader(CommonShaderHandles::GBufferFillVS)->GfxShaderId;
+
+		CachePSO("GeometryPass", gdi->CreatePSO(geometryPassDesc, nullptr));
+
+		// instead of doing this we should have functions to change the winding order http://www.dillonbhuff.com/?p=30
+		geometryPassDesc.RasterizerState.FrontCounterClockwise = 0; 
+		geometryPassDesc.InputLayout = gPositionNormUV2InstancedLayout;
+		geometryPassDesc.VertexShaderId = rs->FindShader(CommonShaderHandles::GBufferFillInstancedVS)->GfxShaderId;
+		CachePSO("GeometryPassInstanced", gdi->CreatePSO(geometryPassDesc, nullptr));
+
+		// Create PBR-Pass PSO
+		GfxPipelineStateObjectDesc pbrLightPassDesc = {};
+		pbrLightPassDesc.RasterizerState.CullMode = GfxCullMode::CullBack;
+		pbrLightPassDesc.RasterizerState.FillMode = GfxFillMode::FillSolid;
+		pbrLightPassDesc.RasterizerState.FrontCounterClockwise = 0;
+
+		pbrLightPassDesc.BlendState.RenderTarget[0].BlendEnable = FALSE;
+		pbrLightPassDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = (((1 | 2) | 4) | 8);
+
+		pbrLightPassDesc.InputLayout = gPositionUVLayout;
+		pbrLightPassDesc.TopologyType = GfxTopologyType::TopologyPolygon;
+		pbrLightPassDesc.PixelShaderId = rs->FindShader(CommonShaderHandles::PBRLightingPS)->GfxShaderId;
+		pbrLightPassDesc.VertexShaderId = rs->FindShader(CommonShaderHandles::FullscreenQuadVS)->GfxShaderId;
+
+		CachePSO("PBRLightingPass", gdi->CreatePSO(pbrLightPassDesc, nullptr));
+
+		// Create FXAA-Pass PSO
+		GfxPipelineStateObjectDesc fxaaPassDesc = {};
+		fxaaPassDesc.RasterizerState.CullMode = GfxCullMode::CullBack;
+		fxaaPassDesc.RasterizerState.FillMode = GfxFillMode::FillSolid;
+		fxaaPassDesc.RasterizerState.FrontCounterClockwise = 0;
+
+		fxaaPassDesc.BlendState.RenderTarget[0].BlendEnable = FALSE;
+		fxaaPassDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = (((1 | 2) | 4) | 8);
+
+		fxaaPassDesc.InputLayout = gPositionUVLayout;
+		fxaaPassDesc.TopologyType = GfxTopologyType::TopologyPolygon;
+		fxaaPassDesc.PixelShaderId = rs->FindShader(CommonShaderHandles::FxaaPS)->GfxShaderId;
+		fxaaPassDesc.VertexShaderId = rs->FindShader(CommonShaderHandles::FullscreenQuadVS)->GfxShaderId;
+
+		CachePSO("FXAAPass", gdi->CreatePSO(fxaaPassDesc, nullptr));
 	}
 
 	void RenderResourceHelper::CachePSO(const std::string& InName, Dawn::GfxResId InId)
 	{
-		D_ASSERT(!CachedObjects.Exists(InName), std::string("PSO with the same name " + InName + " already added!").c_str());
-		CachedObjects.Push(InName, InId);
+		D_ASSERT(CachedObjects.find(InName) == CachedObjects.end(), std::string("PSO with the same name " + InName + " already added!").c_str());
+		CachedObjects.insert(std::pair(InName, InId));
 	}
 
 	Dawn::GfxResId RenderResourceHelper::GetCachedPSO(const std::string& InName)
 	{
-		D_ASSERT(CachedObjects.Exists(InName), std::string("Couldn't find PSO with name " + InName).c_str());
+		D_ASSERT(CachedObjects.find(InName) != CachedObjects.end(), std::string("Couldn't find PSO with name " + InName).c_str());
 		return CachedObjects[InName];
 	}
 }

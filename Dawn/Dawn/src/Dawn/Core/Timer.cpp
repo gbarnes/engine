@@ -5,7 +5,7 @@ namespace Dawn
 {
 	float Timer::CyclesPerSecond = 0.0f;
 	LARGE_INTEGER Time::ClockFrequency;
-	float Time::TargetUpdateRate = 1.0f / 60.0f;
+	float Time::TargetUpdateRate = 1.0f / 120.0f;
 	float Time::TargetPhysicsUpdateRate = 1.0f / 30.0f;
 
 	void InitTime(Time& InTime, float InTargetUpdateRate)

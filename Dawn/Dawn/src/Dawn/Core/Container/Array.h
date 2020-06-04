@@ -35,16 +35,17 @@ namespace Dawn
 
 		~Array() 
 		{
-			Clear();
-		}
-
-		void Clear()
-		{
-			if (this->Values) 
+			if (this->Values)
 			{
 				free(this->Values);
 				this->Values = nullptr;
 			}
+		}
+
+		void Clear()
+		{
+			memset(this->Values, 0, sizeof(T) * Capacity);
+			this->Size = 0;
 		}
 
 		void Push(T Data) 

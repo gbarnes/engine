@@ -1,0 +1,6 @@
+cbuffer PerFrame : register(b1)
+{
+    float4x4 viewMatrix;
+	float3 viewPosition;
+};
+ 
